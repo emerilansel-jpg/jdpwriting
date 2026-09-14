@@ -1,0 +1,94 @@
+{
+  "name": "JDP Step 6A — Google Search Console Indexing",
+  "nodes": [
+    {
+      "id": "trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [100, 300],
+      "parameters": {}
+    },
+    {
+      "id": "read_config",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [300, 300],
+      "parameters": {
+        "operation": "read",
+        "sheetName": "CONFIG",
+        "range": "A2:Z100",
+        "options": {}
+      },
+      "credentials": { "googleSheetsOAuth2Api": "google-sheets" }
+    },
+    {
+      "id": "find_gsc_config",
+      "type": "n8n-nodes-base.code",
+      "position": [500, 300],
+      "parameters": {
+        "jsCode": "const rows = $input.first().json.data;\nconst siteUrl = rows.find(r => r[0] === 'gsc_site_url')?.[1] || '';\nconst saEmail = rows.find(r => r[0] === 'gsc_service_account_email')?.[1] || '';\nconst saKey = rows.find(r => r[0] === 'gsc_service_account_key')?.[1] || '';\nif (!siteUrl) throw new Error('GSC site URL not configured');\nreturn [{\n  json: {\n    site_url: siteUrl,\n    sa_email: saEmail,\n    sa_key: saKey\n  }\n}];"
+      }
+    },
+    {
+      "id": "prepare_request",
+      "type": "n8n-nodes-base.code",
+      "position": [700, 300],
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst cfg = $input.first().json;\nconst postUrl = input.post_url || input.postUrl || '';\nif (!postUrl) throw new Error('No post_url provided for indexing');\nreturn [{\n  json: {\n    url: postUrl,\n    type: 'URL_UPDATED',\n    site_url: cfg.site_url\n  }\n}];"
+      }
+    },
+    {
+      "id": "request_indexing",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [900, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "https://indexing.googleapis.com/v3/urlNotifications:publish",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "googleServiceAccountAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ url: $json.url, type: $json.type }) }}"
+      },
+      "credentials": { "googleServiceAccountAuth": "gsc-service-account" }
+    },
+    {
+      "id": "parse_response",
+      "type": "n8n-nodes-base.code",
+      "position": [1100, 300],
+      "parameters": {
+        "jsCode": "const resp = $input.first().json;\nreturn [{\n  json: {\n    notification_url: resp.urlNotificationMetadata?.url || '',\n    status: resp.urlNotificationMetadata?.latestUpdate?.type || 'UNKNOWN',\n    notify_time: resp.urlNotificationMetadata?.latestUpdate?.notifyTime || '',\n    step: '6A',\n    post_url: $input.first().json.url\n  }\n}];"
+      }
+    },
+    {
+      "id": "save_tracking",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [1300, 300],
+      "parameters": {
+        "operation": "append",
+        "sheetName": "TRACKING",
+        "range": "A:Z",
+        "values": {
+          "mappingMode": "autoMapInputData",
+          "value": "={{ JSON.stringify({ step_id: '6A', post_url: $json.post_url, status: $json.status, notify_time: $json.notify_time, timestamp: new Date().toISOString() }) }}"
+        }
+      },
+      "credentials": { "googleSheetsOAuth2Api": "google-sheets" }
+    },
+    {
+      "id": "return",
+      "type": "n8n-nodes-base.code",
+      "position": [1500, 300],
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    index_status: $input.first().json.status,\n    post_url: $input.first().json.post_url,\n    status: 'done',\n    step: '6A'\n  }\n}];"
+      }
+    }
+  ],
+  "connections": {
+    "trigger": { "main": [[{ "node": "read_config", "type": "main", "index": 0 }]] },
+    "read_config": { "main": [[{ "node": "find_gsc_config", "type": "main", "index": 0 }]] },
+    "find_gsc_config": { "main": [[{ "node": "prepare_request", "type": "main", "index": 0 }]] },
+    "prepare_request": { "main": [[{ "node": "request_indexing", "type": "main", "index": 0 }]] },
+    "request_indexing": { "main": [[{ "node": "parse_response", "type": "main", "index": 0 }]] },
+    "parse_response": { "main": [[{ "node": "save_tracking", "type": "main", "index": 0 }]] },
+    "save_tracking": { "main": [[{ "node": "return", "type": "main", "index": 0 }]] }
+  }
+}

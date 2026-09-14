@@ -1,0 +1,182 @@
+{
+  "n8n-templates/generic-llm-step.json": {
+    "mtime": 1783670520.767029,
+    "ast_hash": "ac905a0e6eec686eff8ec0a17fbae9a5",
+    "semantic_hash": "ac905a0e6eec686eff8ec0a17fbae9a5"
+  },
+  "n8n-templates/step-1a-serp.json": {
+    "mtime": 1783670604.5469282,
+    "ast_hash": "d931ecdc773f809848544c118005a692",
+    "semantic_hash": "d931ecdc773f809848544c118005a692"
+  },
+  "n8n-templates/step-1b-info-gain.json": {
+    "mtime": 1783670604.547429,
+    "ast_hash": "39ddb76f5838a66c875435efd6cd93d4",
+    "semantic_hash": "39ddb76f5838a66c875435efd6cd93d4"
+  },
+  "n8n-templates/step-1c-lsi-keywords.json": {
+    "mtime": 1783670604.5479288,
+    "ast_hash": "c51113b2e0410bde91087bc0ff6ee99b",
+    "semantic_hash": "c51113b2e0410bde91087bc0ff6ee99b"
+  },
+  "n8n-templates/step-1d-outline.json": {
+    "mtime": 1783670604.5484297,
+    "ast_hash": "3ad2448aa64a6535585cacc5ae0bd73d",
+    "semantic_hash": "3ad2448aa64a6535585cacc5ae0bd73d"
+  },
+  "n8n-templates/step-1e-article.json": {
+    "mtime": 1783670604.5489283,
+    "ast_hash": "8999c62d8754c7f0f8acd311310da649",
+    "semantic_hash": "8999c62d8754c7f0f8acd311310da649"
+  },
+  "n8n-templates/step-2a-title-meta.json": {
+    "mtime": 1783670604.5504315,
+    "ast_hash": "98ed586db15db34649bf13afcdb9ef77",
+    "semantic_hash": "98ed586db15db34649bf13afcdb9ef77"
+  },
+  "n8n-templates/step-2b-intro-rewrite.json": {
+    "mtime": 1783670604.5519292,
+    "ast_hash": "5c2620565d81bc2c8230ee38e2958e1c",
+    "semantic_hash": "5c2620565d81bc2c8230ee38e2958e1c"
+  },
+  "n8n-templates/step-2c-originality-rewrite.json": {
+    "mtime": 1783670604.552431,
+    "ast_hash": "3e1d3a68de9dcb92cd80ef64a45ed205",
+    "semantic_hash": "3e1d3a68de9dcb92cd80ef64a45ed205"
+  },
+  "n8n-templates/step-2d-fluff-check.json": {
+    "mtime": 1783670604.5534286,
+    "ast_hash": "20a6d72264ba06e0893e4a1648d2c86d",
+    "semantic_hash": "20a6d72264ba06e0893e4a1648d2c86d"
+  },
+  "n8n-templates/step-2e-faq-generation.json": {
+    "mtime": 1783670604.555429,
+    "ast_hash": "d05f416e0fe54beca24a68f342127bc4",
+    "semantic_hash": "d05f416e0fe54beca24a68f342127bc4"
+  },
+  "n8n-templates/step-2f-conclusion-optimizer.json": {
+    "mtime": 1783670604.5559294,
+    "ast_hash": "d499724338e9e9b045e03c4bf80964d7",
+    "semantic_hash": "d499724338e9e9b045e03c4bf80964d7"
+  },
+  "n8n-templates/step-2g-add-table.json": {
+    "mtime": 1783670604.5569308,
+    "ast_hash": "65e92e681e15bd9068ed2b2b7acebaf6",
+    "semantic_hash": "65e92e681e15bd9068ed2b2b7acebaf6"
+  },
+  "n8n-templates/step-2h-find-embed-quotes.json": {
+    "mtime": 1783670604.557932,
+    "ast_hash": "89a2c8154cb9baf02d1822a94ab9a104",
+    "semantic_hash": "89a2c8154cb9baf02d1822a94ab9a104"
+  },
+  "n8n-templates/step-2i-eeat-hcu-eav.json": {
+    "mtime": 1783670604.5584283,
+    "ast_hash": "e9a2cd501f8eee32e5a79abd805379a8",
+    "semantic_hash": "e9a2cd501f8eee32e5a79abd805379a8"
+  },
+  "n8n-templates/step-2i-evaluator-v2.0.json": {
+    "mtime": 1781695612.7497103,
+    "ast_hash": "132cceb40b52173648173350183b7ca8",
+    "semantic_hash": "132cceb40b52173648173350183b7ca8"
+  },
+  "n8n-templates/step-2j-quality-fact-check.json": {
+    "mtime": 1783670604.5589285,
+    "ast_hash": "ccc20d43328529a3080fe6f7ec5f6d97",
+    "semantic_hash": "ccc20d43328529a3080fe6f7ec5f6d97"
+  },
+  "n8n-templates/step-2k-seo-geo-evaluator.json": {
+    "mtime": 1783670604.5594306,
+    "ast_hash": "8b2d16d6f995fa27776e492622bc608a",
+    "semantic_hash": "8b2d16d6f995fa27776e492622bc608a"
+  },
+  "n8n-templates/step-3a-image-prompts.json": {
+    "mtime": 1783670604.5599303,
+    "ast_hash": "2d6fbe7950781effa3b5aac0f05403c2",
+    "semantic_hash": "2d6fbe7950781effa3b5aac0f05403c2"
+  },
+  "n8n-templates/step-3b-infographic-prompt.json": {
+    "mtime": 1783670604.5609283,
+    "ast_hash": "4f6defec6e420ac72e490d4f49c06134",
+    "semantic_hash": "4f6defec6e420ac72e490d4f49c06134"
+  },
+  "n8n-templates/step-3c-alt-texts.json": {
+    "mtime": 1783670604.5614288,
+    "ast_hash": "f3c682011f03502d47281e9bb6e71de1",
+    "semantic_hash": "f3c682011f03502d47281e9bb6e71de1"
+  },
+  "n8n-templates/step-4a-internal-linking.json": {
+    "mtime": 1783670604.5619292,
+    "ast_hash": "5dc25fd68958e6c2320c98a60b3453ed",
+    "semantic_hash": "5dc25fd68958e6c2320c98a60b3453ed"
+  },
+  "n8n-templates/step-4b-external-linking.json": {
+    "mtime": 1783670604.5629282,
+    "ast_hash": "579aa11795ede34532c04ab50a49a9df",
+    "semantic_hash": "579aa11795ede34532c04ab50a49a9df"
+  },
+  "n8n-templates/step-5a-wordpress.json": {
+    "mtime": 1781695612.7497103,
+    "ast_hash": "f8dd240b28665bbb7da98d19e0ee2492",
+    "semantic_hash": "f8dd240b28665bbb7da98d19e0ee2492"
+  },
+  "n8n-templates/step-6a-indexing.json": {
+    "mtime": 1781695612.7677286,
+    "ast_hash": "6daafb979db3c67c8d50ce3f62583ca3",
+    "semantic_hash": "6daafb979db3c67c8d50ce3f62583ca3"
+  },
+  "scripts/generate-n8n-templates.js": {
+    "mtime": 1783670599.879999,
+    "ast_hash": "3de4ebeac3c5f1ce36dc4692ceb4f680",
+    "semantic_hash": "3de4ebeac3c5f1ce36dc4692ceb4f680"
+  },
+  "scripts/update-generic-template.js": {
+    "mtime": 1783670515.7280438,
+    "ast_hash": "3204028a900014e8b6064f5614682fac",
+    "semantic_hash": "3204028a900014e8b6064f5614682fac"
+  },
+  "update_steps.py": {
+    "mtime": 1781692327.4426756,
+    "ast_hash": "f7827a60a5aeb54d3c9e0eae740b1874",
+    "semantic_hash": "f7827a60a5aeb54d3c9e0eae740b1874"
+  },
+  "worker-deploy/worker.js": {
+    "mtime": 1785306637.849836,
+    "ast_hash": "9e712e57ac51930b360e8e04cd2edcad",
+    "semantic_hash": "9e712e57ac51930b360e8e04cd2edcad"
+  },
+  "admin-ui.html": {
+    "mtime": 1785306406.2183642,
+    "ast_hash": "6b0f3fcf677c6002b4924eb0b8cfc5b8",
+    "semantic_hash": "6b0f3fcf677c6002b4924eb0b8cfc5b8"
+  },
+  "coldstart.md": {
+    "mtime": 1783671818.2667687,
+    "ast_hash": "842e3b993f41ac308331e3a3d8d9a25b",
+    "semantic_hash": "842e3b993f41ac308331e3a3d8d9a25b"
+  },
+  "n8n-setup-guide.md": {
+    "mtime": 1783671765.2454858,
+    "ast_hash": "eb485fe307cd48980a132447564ffe76",
+    "semantic_hash": "eb485fe307cd48980a132447564ffe76"
+  },
+  "pipeline-prompts-v2.1.md": {
+    "mtime": 1781772344.5011117,
+    "ast_hash": "00fe3411ee3a49710e58c603c4fc1167",
+    "semantic_hash": "00fe3411ee3a49710e58c603c4fc1167"
+  },
+  "pipeline-prompts-v2.md": {
+    "mtime": 1781690311.3884175,
+    "ast_hash": "534cd9d46b717a09ac0f48bd5f297b28",
+    "semantic_hash": "534cd9d46b717a09ac0f48bd5f297b28"
+  },
+  "pipeline-redesign-v2.1-proposal.md": {
+    "mtime": 1781771872.9311974,
+    "ast_hash": "56238c38da11e5372376ec9ba95a94c8",
+    "semantic_hash": "56238c38da11e5372376ec9ba95a94c8"
+  },
+  "trello-update-checklist.md": {
+    "mtime": 1781757018.6765757,
+    "ast_hash": "c7e76afc9601b1283fc0b24e9ad169b0",
+    "semantic_hash": "c7e76afc9601b1283fc0b24e9ad169b0"
+  }
+}

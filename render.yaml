@@ -1,0 +1,125 @@
+# render.yaml — JDP Pipeline n8n Blueprint
+# Permanent fix: ensures N8N_ENCRYPTION_KEY survives Render restarts
+#
+# USAGE:
+#   1. Push this file to a GitHub repo
+#   2. Render Dashboard → New → Blueprint → connect repo
+#   3. Or manually set these env vars in existing service
+#
+# Root cause of "redirect to setup" bug:
+#   Render free tier loses ~/.n8n/config (encryption key) on sleep.
+#   Without key, n8n can't decrypt credentials in PostgreSQL → shows setup page.
+#   Setting N8N_ENCRYPTION_KEY as env var makes it permanent.
+#
+# Last updated: 2026-08-26 (troubleshooting session)
+# Sync: render.yaml, coldstart.md, .env
+
+services:
+  - type: web
+    name: n8n-jdp-pipeline
+    runtime: docker
+    image:
+      # PINNED VERSION — prevents schema mismatch ("column User.role does not exist")
+      # Do NOT use :latest or :stable (floating tags = different version every restart)
+      # 2.37.1 = latest stable (Aug 2026). DB schema is 2.x era (239 migrations, 125 tables).
+      # 1.45.0 CANNOT be used — DB schema too new, will error on boot.
+      # Last verified: 2026-08-26
+      url: docker.io/n8nio/n8n:2.37.1
+    plan: free
+    region: oregon
+    healthCheckPath: /healthz
+
+    envVars:
+      # ============================================
+      # CRITICAL: Encryption Key (prevents setup redirect)
+      # This MUST be set — without it, n8n generates a random key
+      # that gets lost on every Render restart.
+      # ============================================
+      - key: N8N_ENCRYPTION_KEY
+        value: jdp-n8n-encryption-2026-permanent
+      # sync: render.yaml,coldstart.md,n8n-setup-guide.md
+
+      # ============================================
+      # Database (PostgreSQL on Render)
+      # Use SHORT internal hostname from inside Render (faster, no external routing)
+      # Full hostname (dpg-...-a.oregon-postgres.render.com) works externally
+      # ============================================
+      - key: DB_TYPE
+        value: postgresdb
+      - key: DB_POSTGRESDB_HOST
+        value: dpg-d9qr5lugekts73e7qsdg-a
+      - key: DB_POSTGRESDB_PORT
+        value: "5432"
+      - key: DB_POSTGRESDB_DATABASE
+        value: n8n_feu7
+      - key: DB_POSTGRESDB_USER
+        value: n8n
+      - key: DB_POSTGRESDB_PASSWORD
+        value: q7kQcoDsZ2OFXfq1xaMK68EB9OXSJbPy
+        # sync: render.yaml,coldstart.md
+      - key: DB_POSTGRESDB_SCHEMA
+        value: public
+
+      # ============================================
+      # Auto-create admin on first boot
+      # Only takes effect if no owner exists yet.
+      # If owner exists, n8n ignores these.
+      # ============================================
+      - key: N8N_DEFAULT_USER_EMAIL
+        value: emerilansel@gmail.com
+      - key: N8N_DEFAULT_USER_PASSWORD
+        value: J3tdigitalpro
+
+      # ============================================
+      # Security & Access
+      # NOTE: N8N_BASIC_AUTH_* removed — deprecated in n8n v1.0+, noise in 2.x
+      # ============================================
+      - key: N8N_HOST
+        value: n8n-jdp-pipeline.onrender.com
+      - key: N8N_PROTOCOL
+        value: https
+      - key: N8N_WEBHOOK_URL
+        value: https://n8n-jdp-pipeline.onrender.com
+      - key: N8N_PROXY_HOPS
+        value: "1"
+
+      # ============================================
+      # Prevent execution loss on restart
+      # ============================================
+      - key: EXECUTIONS_DATA_PRUNE
+        value: "true"
+      - key: EXECUTIONS_DATA_MAX_AGE
+        value: "168"
+      - key: N8N_METRICS
+        value: "false"
+
+      # ============================================
+      # Telemetry & Diagnostics (DISABLED)
+      # Suspected to cause init() hang in n8n 2.x (issue #34490)
+      # Disabling prevents PostHog/telemetry from blocking route registration
+      # ============================================
+      - key: N8N_DIAGNOSTICS_ENABLED
+        value: "false"
+      - key: N8N_VERSION_NOTIFICATIONS_ENABLED
+        value: "false"
+      - key: N8N_HIRING_BANNER
+        value: "false"
+      - key: N8N_PERSONALIZATION_ENABLED
+        value: "false"
+
+      # ============================================
+      # Timezone & Locale
+      # ============================================
+      - key: GENERIC_TIMEZONE
+        value: Asia/Jakarta
+      - key: TZ
+        value: Asia/Jakarta
+
+      # ============================================
+      # Performance (Render free tier: 512MB RAM)
+      # 384MB heap = safe for n8n 2.37.1 boot
+      # 256MB causes OOM during boot (247-248MB usage)
+      # 512MB container - 384MB heap = 128MB for Node overhead + DB pool + OS
+      # ============================================
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=384

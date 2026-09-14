@@ -1,0 +1,22 @@
+# Environment & Secrets
+.env
+_env_payload.json
+_n8n_cookies.txt
+_render_logs.json
+
+# Dependencies & Build
+node_modules/
+.wrangler/
+dist/
+
+# Backups & Temp files
+*.bak*
+*.backup
+*.tmp
+*.log
+
+# Editor & System
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

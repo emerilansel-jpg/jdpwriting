@@ -1,0 +1,6 @@
+name = "jdp-pipeline-admin"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+account_id = "d5cb3e4213b6aa69dbc2feb1499af77a"
+
+workers_dev = true

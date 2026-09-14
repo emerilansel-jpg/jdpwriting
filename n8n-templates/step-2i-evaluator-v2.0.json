@@ -1,0 +1,147 @@
+{
+  "name": "JDP Step 2I — Evaluator (Anthropic via GAS)",
+  "nodes": [
+    {
+      "id": "trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [100, 300],
+      "parameters": {}
+    },
+    {
+      "id": "read_prompts",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [300, 300],
+      "parameters": {
+        "operation": "read",
+        "sheetName": "PROMPTS",
+        "range": "A2:Z100",
+        "options": {}
+      },
+      "credentials": { "googleSheetsOAuth2Api": "google-sheets" }
+    },
+    {
+      "id": "find_config",
+      "type": "n8n-nodes-base.code",
+      "position": [500, 300],
+      "parameters": {
+        "jsCode": "const rows = $input.first().json.data;\nconst step = rows.find(r => r[0] === '2I');\nif (!step) throw new Error('Step 2I not found');\nreturn [{\n  json: {\n    step_id: step[0],\n    step_name: step[1],\n    model: step[2],\n    temperature: parseFloat(step[3]) || 0.2,\n    max_tokens: parseInt(step[4]) || 2500,\n    system_prompt: step[6],\n    user_prompt: step[7]\n  }\n}];"
+      }
+    },
+    {
+      "id": "prepare_prompt",
+      "type": "n8n-nodes-base.code",
+      "position": [700, 300],
+      "parameters": {
+        "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\nlet user = cfg.user_prompt;\nuser = user.replace(/{{keyword}}/g, input.keyword || '');\nuser = user.replace(/{{article}}/g, input.article || '');\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    keyword: input.keyword\n  }\n}];"
+      }
+    },
+    {
+      "id": "call_anthropic_proxy",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [900, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "https://script.google.com/macros/s/AKfycbycRCScQD0PW1zDTQjoG5MXRQ7c22f3AQQaJGylkL3TSktwKmKYg3EiWpJeWZ1k27K-fg/exec",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ action: 'anthropic_proxy', model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, system: $json.system_prompt, messages: [{role: 'user', content: $json.user_prompt}] }) }}"
+      }
+    },
+    {
+      "id": "parse_evaluator",
+      "type": "n8n-nodes-base.code",
+      "position": [1100, 300],
+      "parameters": {
+        "jsCode": "const resp = $input.first().json;\nconst content = resp.content || '';\nlet parsed = {};\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) try { parsed = JSON.parse(m[1]); } catch (e2) { parsed = { raw_output: content }; }\n  else parsed = { raw_output: content };\n}\n\nconst ee = parsed.eeat || {};\nconst hcu = parsed.hcu || {};\nconst eav = parsed.eav || {};\n\n// Calculate overall score\nconst eeScore = ee.score || 0;\nconst hcuScore = hcu.score || 0;\nconst eavScore = eav.score || 0;\nconst overall = (eeScore * 0.35) + (hcuScore * 0.40) + (eavScore * 0.25);\n\nreturn [{\n  json: {\n    evaluator: parsed,\n    ee_score: eeScore,\n    hcu_score: hcuScore,\n    eav_score: eavScore,\n    overall_score: Math.round(overall),\n    pass: overall >= 70,\n    keyword: $input.first().json.keyword,\n    step: '2I',\n    input_tokens: resp.input_tokens || 0,\n    output_tokens: resp.output_tokens || 0,\n    output_json: JSON.stringify(parsed)\n  }\n}];"
+      }
+    },
+    {
+      "id": "gate_decision",
+      "type": "n8n-nodes-base.if",
+      "position": [1300, 300],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "pass",
+              "leftValue": "={{ $json.pass }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "save_pass",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [1500, 200],
+      "parameters": {
+        "operation": "append",
+        "sheetName": "TRACKING",
+        "range": "A:Z",
+        "values": {
+          "mappingMode": "autoMapInputData",
+          "value": "={{ JSON.stringify({ step_id: '2I', keyword: $json.keyword, status: 'PASS', overall_score: $json.overall_score, ee_score: $json.ee_score, hcu_score: $json.hcu_score, eav_score: $json.eav_score, output_json: $json.output_json, timestamp: new Date().toISOString() }) }}"
+        }
+      },
+      "credentials": { "googleSheetsOAuth2Api": "google-sheets" }
+    },
+    {
+      "id": "save_fail",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [1500, 400],
+      "parameters": {
+        "operation": "append",
+        "sheetName": "TRACKING",
+        "range": "A:Z",
+        "values": {
+          "mappingMode": "autoMapInputData",
+          "value": "={{ JSON.stringify({ step_id: '2I', keyword: $json.keyword, status: 'FAIL', overall_score: $json.overall_score, ee_score: $json.ee_score, hcu_score: $json.hcu_score, eav_score: $json.eav_score, output_json: $json.output_json, timestamp: new Date().toISOString() }) }}"
+        }
+      },
+      "credentials": { "googleSheetsOAuth2Api": "google-sheets" }
+    },
+    {
+      "id": "return_pass",
+      "type": "n8n-nodes-base.code",
+      "position": [1700, 200],
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    evaluator: $input.first().json.evaluator,\n    overall_score: $input.first().json.overall_score,\n    pass: true,\n    keyword: $input.first().json.keyword,\n    step: '2I',\n    status: 'done'\n  }\n}];"
+      }
+    },
+    {
+      "id": "return_fail",
+      "type": "n8n-nodes-base.code",
+      "position": [1700, 400],
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    evaluator: $input.first().json.evaluator,\n    overall_score: $input.first().json.overall_score,\n    pass: false,\n    keyword: $input.first().json.keyword,\n    step: '2I',\n    status: 'needs_retry'\n  }\n}];"
+      }
+    }
+  ],
+  "connections": {
+    "trigger": { "main": [[{ "node": "read_prompts", "type": "main", "index": 0 }]] },
+    "read_prompts": { "main": [[{ "node": "find_config", "type": "main", "index": 0 }]] },
+    "find_config": { "main": [[{ "node": "prepare_prompt", "type": "main", "index": 0 }]] },
+    "prepare_prompt": { "main": [[{ "node": "call_anthropic_proxy", "type": "main", "index": 0 }]] },
+    "call_anthropic_proxy": { "main": [[{ "node": "parse_evaluator", "type": "main", "index": 0 }]] },
+    "parse_evaluator": { "main": [[{ "node": "gate_decision", "type": "main", "index": 0 }]] },
+    "gate_decision": {
+      "main": [
+        [{ "node": "save_pass", "type": "main", "index": 0 }],
+        [{ "node": "save_fail", "type": "main", "index": 0 }]
+      ]
+    },
+    "save_pass": { "main": [[{ "node": "return_pass", "type": "main", "index": 0 }]] },
+    "save_fail": { "main": [[{ "node": "return_fail", "type": "main", "index": 0 }]] }
+  }
+}

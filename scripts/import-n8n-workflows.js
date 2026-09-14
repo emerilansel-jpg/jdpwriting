@@ -1,0 +1,5928 @@
+// ═══════════════════════════════════════════════════════════════
+// JDP Pipeline — n8n Workflow Import Script
+// Paste this entire script into browser console (F12) while logged into n8n.
+// Generated: 2026-09-09T09:06:25.574Z
+// Templates: 24 workflows
+// ═══════════════════════════════════════════════════════════════
+(async () => {
+  const workflows = {
+  "step-1a-serp.json": {
+    "name": "JDP Step 1A — AI SERP Research",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_prompts",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "PROMPTS",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "find_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '1A';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'serp_data'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_vars",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+        }
+      },
+      {
+        "id": "call_llm",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.llm_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": "={{ $json.credential }}"
+        }
+      },
+      {
+        "id": "parse_result",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_prompts": {
+        "main": [
+          [
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_vars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_vars": {
+        "main": [
+          [
+            {
+              "node": "call_llm",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "call_llm": {
+        "main": [
+          [
+            {
+              "node": "parse_result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_result": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-1b-info-gain.json": {
+    "name": "JDP Step 1B — Information Gain",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_prompts",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "PROMPTS",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "find_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '1B';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'info_gain'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_vars",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+        }
+      },
+      {
+        "id": "call_llm",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.llm_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": "={{ $json.credential }}"
+        }
+      },
+      {
+        "id": "parse_result",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_prompts": {
+        "main": [
+          [
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_vars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_vars": {
+        "main": [
+          [
+            {
+              "node": "call_llm",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "call_llm": {
+        "main": [
+          [
+            {
+              "node": "parse_result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_result": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-1c-lsi-keywords.json": {
+    "name": "JDP Step 1C — LSI Keywords",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_prompts",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "PROMPTS",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "find_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '1C';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'lsi_keywords'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_vars",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+        }
+      },
+      {
+        "id": "call_llm",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.llm_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": "={{ $json.credential }}"
+        }
+      },
+      {
+        "id": "parse_result",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_prompts": {
+        "main": [
+          [
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_vars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_vars": {
+        "main": [
+          [
+            {
+              "node": "call_llm",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "call_llm": {
+        "main": [
+          [
+            {
+              "node": "parse_result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_result": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-1d-outline.json": {
+    "name": "JDP Step 1D — Outline Creation",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_prompts",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "PROMPTS",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "find_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '1D';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'outline'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_vars",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+        }
+      },
+      {
+        "id": "call_llm",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.llm_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": "={{ $json.credential }}"
+        }
+      },
+      {
+        "id": "parse_result",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_prompts": {
+        "main": [
+          [
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_vars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_vars": {
+        "main": [
+          [
+            {
+              "node": "call_llm",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "call_llm": {
+        "main": [
+          [
+            {
+              "node": "parse_result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_result": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-1e-article.json": {
+    "name": "JDP Step 1E — Generate Article",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_prompts",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "PROMPTS",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "find_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '1E';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'article'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_vars",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+        }
+      },
+      {
+        "id": "call_llm",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.llm_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": "={{ $json.credential }}"
+        }
+      },
+      {
+        "id": "parse_result",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_prompts": {
+        "main": [
+          [
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_vars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_vars": {
+        "main": [
+          [
+            {
+              "node": "call_llm",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "call_llm": {
+        "main": [
+          [
+            {
+              "node": "parse_result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_result": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-2a-title-meta.json": {
+    "name": "JDP Step 2A — Title & Meta",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_prompts",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "PROMPTS",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "find_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '2A';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'title_meta'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_vars",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+        }
+      },
+      {
+        "id": "call_llm",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.llm_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": "={{ $json.credential }}"
+        }
+      },
+      {
+        "id": "parse_result",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_prompts": {
+        "main": [
+          [
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_vars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_vars": {
+        "main": [
+          [
+            {
+              "node": "call_llm",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "call_llm": {
+        "main": [
+          [
+            {
+              "node": "parse_result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_result": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-2b-intro-rewrite.json": {
+    "name": "JDP Step 2B — Intro Rewrite",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_prompts",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "PROMPTS",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "find_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '2B';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'article'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_vars",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+        }
+      },
+      {
+        "id": "call_llm",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.llm_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": "={{ $json.credential }}"
+        }
+      },
+      {
+        "id": "parse_result",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_prompts": {
+        "main": [
+          [
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_vars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_vars": {
+        "main": [
+          [
+            {
+              "node": "call_llm",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "call_llm": {
+        "main": [
+          [
+            {
+              "node": "parse_result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_result": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-2c-originality-rewrite.json": {
+    "name": "JDP Step 2C — Originality Rewrite",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_prompts",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "PROMPTS",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "find_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '2C';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'article'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_vars",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+        }
+      },
+      {
+        "id": "call_llm",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.llm_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": "={{ $json.credential }}"
+        }
+      },
+      {
+        "id": "parse_result",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_prompts": {
+        "main": [
+          [
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_vars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_vars": {
+        "main": [
+          [
+            {
+              "node": "call_llm",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "call_llm": {
+        "main": [
+          [
+            {
+              "node": "parse_result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_result": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-2d-fluff-check.json": {
+    "name": "JDP Step 2D — Fluff Check",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_prompts",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "PROMPTS",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "find_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '2D';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'article'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_vars",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+        }
+      },
+      {
+        "id": "call_llm",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.llm_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": "={{ $json.credential }}"
+        }
+      },
+      {
+        "id": "parse_result",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_prompts": {
+        "main": [
+          [
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_vars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_vars": {
+        "main": [
+          [
+            {
+              "node": "call_llm",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "call_llm": {
+        "main": [
+          [
+            {
+              "node": "parse_result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_result": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-2e-faq-generation.json": {
+    "name": "JDP Step 2E — FAQ Generation",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_prompts",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "PROMPTS",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "find_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '2E';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'faq'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_vars",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+        }
+      },
+      {
+        "id": "call_llm",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.llm_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": "={{ $json.credential }}"
+        }
+      },
+      {
+        "id": "parse_result",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_prompts": {
+        "main": [
+          [
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_vars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_vars": {
+        "main": [
+          [
+            {
+              "node": "call_llm",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "call_llm": {
+        "main": [
+          [
+            {
+              "node": "parse_result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_result": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-2f-conclusion-optimizer.json": {
+    "name": "JDP Step 2F — Conclusion Optimizer",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_prompts",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "PROMPTS",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "find_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '2F';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'article'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_vars",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+        }
+      },
+      {
+        "id": "call_llm",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.llm_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": "={{ $json.credential }}"
+        }
+      },
+      {
+        "id": "parse_result",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_prompts": {
+        "main": [
+          [
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_vars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_vars": {
+        "main": [
+          [
+            {
+              "node": "call_llm",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "call_llm": {
+        "main": [
+          [
+            {
+              "node": "parse_result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_result": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-2g-add-table.json": {
+    "name": "JDP Step 2G — Add Table",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_prompts",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "PROMPTS",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "find_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '2G';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'article'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_vars",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+        }
+      },
+      {
+        "id": "call_llm",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.llm_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": "={{ $json.credential }}"
+        }
+      },
+      {
+        "id": "parse_result",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_prompts": {
+        "main": [
+          [
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_vars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_vars": {
+        "main": [
+          [
+            {
+              "node": "call_llm",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "call_llm": {
+        "main": [
+          [
+            {
+              "node": "parse_result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_result": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-2h-find-embed-quotes.json": {
+    "name": "JDP Step 2H — Find & Embed Quotes",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_prompts",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "PROMPTS",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "find_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '2H';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'article'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_vars",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+        }
+      },
+      {
+        "id": "call_llm",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.llm_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": "={{ $json.credential }}"
+        }
+      },
+      {
+        "id": "parse_result",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_prompts": {
+        "main": [
+          [
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_vars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_vars": {
+        "main": [
+          [
+            {
+              "node": "call_llm",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "call_llm": {
+        "main": [
+          [
+            {
+              "node": "parse_result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_result": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-2i-eeat-hcu-eav.json": {
+    "name": "JDP Step 2I — EEAT+HCU+EAV Analysis",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_prompts",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "PROMPTS",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "find_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '2I';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'eeat_hcu_eav_analysis'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_vars",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+        }
+      },
+      {
+        "id": "call_llm",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.llm_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": "={{ $json.credential }}"
+        }
+      },
+      {
+        "id": "parse_result",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_prompts": {
+        "main": [
+          [
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_vars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_vars": {
+        "main": [
+          [
+            {
+              "node": "call_llm",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "call_llm": {
+        "main": [
+          [
+            {
+              "node": "parse_result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_result": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-2j-quality-fact-check.json": {
+    "name": "JDP Step 2J — Quality + Fact Check",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_prompts",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "PROMPTS",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "find_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '2J';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'quality_fact_check'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_vars",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+        }
+      },
+      {
+        "id": "call_llm",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.llm_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": "={{ $json.credential }}"
+        }
+      },
+      {
+        "id": "parse_result",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_prompts": {
+        "main": [
+          [
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_vars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_vars": {
+        "main": [
+          [
+            {
+              "node": "call_llm",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "call_llm": {
+        "main": [
+          [
+            {
+              "node": "parse_result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_result": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-2k-seo-geo-evaluator.json": {
+    "name": "JDP Step 2K — SEO/GEO Evaluator",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_prompts",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "PROMPTS",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "find_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '2K';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'seo_geo_evaluator'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_vars",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+        }
+      },
+      {
+        "id": "call_llm",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.llm_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": "={{ $json.credential }}"
+        }
+      },
+      {
+        "id": "parse_result",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_prompts": {
+        "main": [
+          [
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_vars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_vars": {
+        "main": [
+          [
+            {
+              "node": "call_llm",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "call_llm": {
+        "main": [
+          [
+            {
+              "node": "parse_result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_result": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-3a-image-prompts.json": {
+    "name": "JDP Step 3A — Image Prompts (Consolidated)",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_prompts",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "PROMPTS",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "find_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '3A';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'image_prompts'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_vars",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+        }
+      },
+      {
+        "id": "call_llm",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.llm_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": "={{ $json.credential }}"
+        }
+      },
+      {
+        "id": "parse_result",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_prompts": {
+        "main": [
+          [
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_vars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_vars": {
+        "main": [
+          [
+            {
+              "node": "call_llm",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "call_llm": {
+        "main": [
+          [
+            {
+              "node": "parse_result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_result": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-3b-infographic-prompt.json": {
+    "name": "JDP Step 3B — Infographic Image Prompt",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_prompts",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "PROMPTS",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "find_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '3B';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'infographic_prompt'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_vars",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+        }
+      },
+      {
+        "id": "call_llm",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.llm_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": "={{ $json.credential }}"
+        }
+      },
+      {
+        "id": "parse_result",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_prompts": {
+        "main": [
+          [
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_vars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_vars": {
+        "main": [
+          [
+            {
+              "node": "call_llm",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "call_llm": {
+        "main": [
+          [
+            {
+              "node": "parse_result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_result": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-3c-alt-texts.json": {
+    "name": "JDP Step 3C — Alt Text Generation",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_prompts",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "PROMPTS",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "find_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '3C';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'alt_texts'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_vars",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+        }
+      },
+      {
+        "id": "call_llm",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.llm_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": "={{ $json.credential }}"
+        }
+      },
+      {
+        "id": "parse_result",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_prompts": {
+        "main": [
+          [
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_vars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_vars": {
+        "main": [
+          [
+            {
+              "node": "call_llm",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "call_llm": {
+        "main": [
+          [
+            {
+              "node": "parse_result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_result": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-4a-internal-linking.json": {
+    "name": "JDP Step 4A — Internal Linking",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_prompts",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "PROMPTS",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "find_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '4A';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'article'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_vars",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+        }
+      },
+      {
+        "id": "call_llm",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.llm_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": "={{ $json.credential }}"
+        }
+      },
+      {
+        "id": "parse_result",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_prompts": {
+        "main": [
+          [
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_vars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_vars": {
+        "main": [
+          [
+            {
+              "node": "call_llm",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "call_llm": {
+        "main": [
+          [
+            {
+              "node": "parse_result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_result": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-4b-external-linking.json": {
+    "name": "JDP Step 4B — External Linking",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_prompts",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "PROMPTS",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "find_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '4B';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'article'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_vars",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+        }
+      },
+      {
+        "id": "call_llm",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.llm_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        },
+        "credentials": {
+          "httpHeaderAuth": "={{ $json.credential }}"
+        }
+      },
+      {
+        "id": "parse_result",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_prompts",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_prompts": {
+        "main": [
+          [
+            {
+              "node": "find_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_vars",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_vars": {
+        "main": [
+          [
+            {
+              "node": "call_llm",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "call_llm": {
+        "main": [
+          [
+            {
+              "node": "parse_result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_result": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-5a-wordpress.json": {
+    "name": "JDP Step 5A — WordPress Publish",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_config",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "CONFIG",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets"
+        }
+      },
+      {
+        "id": "find_wp_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const rows = $input.first().json.data;\nconst wpUrl = rows.find(r => r[0] === 'wordpress_url')?.[1] || '';\nconst wpUser = rows.find(r => r[0] === 'wordpress_username')?.[1] || '';\nconst wpPass = rows.find(r => r[0] === 'wordpress_app_password')?.[1] || '';\nif (!wpUrl || !wpUser || !wpPass) throw new Error('WordPress credentials not configured in CONFIG tab');\nreturn [{\n  json: {\n    wp_url: wpUrl,\n    wp_user: wpUser,\n    wp_pass: wpPass\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_payload",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const input = $input.first().json;\nconst wp = $input.first().json;\n\n// Parse title_meta JSON if provided as string\nlet titleMeta = input.title_meta || {};\nif (typeof titleMeta === 'string') {\n  try { titleMeta = JSON.parse(titleMeta); } catch (e) {}\n}\n\n// Convert markdown article to HTML if needed (simple conversion)\nlet content = input.article || '';\n\nreturn [{\n  json: {\n    wp_url: wp.wp_url,\n    wp_user: wp.wp_user,\n    wp_pass: wp.wp_pass,\n    title: titleMeta.title || input.keyword || 'Article',\n    content: content,\n    excerpt: titleMeta.meta_description || '',\n    slug: titleMeta.slug || input.keyword?.toLowerCase().replace(/\\s+/g, '-') || 'article',\n    status: 'publish',\n    featured_media: input.featured_image_id || 0,\n    categories: input.category_ids || [1],\n    tags: input.tag_ids || []\n  }\n}];"
+        }
+      },
+      {
+        "id": "publish_post",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.wp_url }}/wp-json/wp/v2/posts",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBasicAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ title: $json.title, content: $json.content, excerpt: $json.excerpt, slug: $json.slug, status: $json.status, featured_media: $json.featured_media, categories: $json.categories, tags: $json.tags }) }}"
+        },
+        "credentials": {
+          "httpBasicAuth": "wordpress-credentials"
+        }
+      },
+      {
+        "id": "parse_response",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst postUrl = resp.link || '';\nconst postId = resp.id || 0;\nif (!postId) throw new Error('WordPress publish failed: ' + JSON.stringify(resp));\nreturn [{\n  json: {\n    post_url: postUrl,\n    post_id: postId,\n    status: 'published',\n    step: '5A'\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: '5A', post_url: $json.post_url, post_id: $json.post_id, status: 'published', timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    post_url: $input.first().json.post_url,\n    post_id: $input.first().json.post_id,\n    status: 'done',\n    step: '5A'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_config": {
+        "main": [
+          [
+            {
+              "node": "find_wp_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_wp_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_payload": {
+        "main": [
+          [
+            {
+              "node": "publish_post",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "publish_post": {
+        "main": [
+          [
+            {
+              "node": "parse_response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_response": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "step-6a-indexing.json": {
+    "name": "JDP Step 6A — Google Search Console Indexing",
+    "nodes": [
+      {
+        "id": "trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "read_config",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "operation": "read",
+          "sheetName": "CONFIG",
+          "range": "A2:Z100",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets"
+        }
+      },
+      {
+        "id": "find_gsc_config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const rows = $input.first().json.data;\nconst siteUrl = rows.find(r => r[0] === 'gsc_site_url')?.[1] || '';\nconst saEmail = rows.find(r => r[0] === 'gsc_service_account_email')?.[1] || '';\nconst saKey = rows.find(r => r[0] === 'gsc_service_account_key')?.[1] || '';\nif (!siteUrl) throw new Error('GSC site URL not configured');\nreturn [{\n  json: {\n    site_url: siteUrl,\n    sa_email: saEmail,\n    sa_key: saKey\n  }\n}];"
+        }
+      },
+      {
+        "id": "prepare_request",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const input = $input.first().json;\nconst cfg = $input.first().json;\nconst postUrl = input.post_url || input.postUrl || '';\nif (!postUrl) throw new Error('No post_url provided for indexing');\nreturn [{\n  json: {\n    url: postUrl,\n    type: 'URL_UPDATED',\n    site_url: cfg.site_url\n  }\n}];"
+        }
+      },
+      {
+        "id": "request_indexing",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://indexing.googleapis.com/v3/urlNotifications:publish",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "googleServiceAccountAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ url: $json.url, type: $json.type }) }}"
+        },
+        "credentials": {
+          "googleServiceAccountAuth": "gsc-service-account"
+        }
+      },
+      {
+        "id": "parse_response",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1100,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nreturn [{\n  json: {\n    notification_url: resp.urlNotificationMetadata?.url || '',\n    status: resp.urlNotificationMetadata?.latestUpdate?.type || 'UNKNOWN',\n    notify_time: resp.urlNotificationMetadata?.latestUpdate?.notifyTime || '',\n    step: '6A',\n    post_url: $input.first().json.url\n  }\n}];"
+        }
+      },
+      {
+        "id": "save_tracking",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          1300,
+          300
+        ],
+        "parameters": {
+          "operation": "append",
+          "sheetName": "TRACKING",
+          "range": "A:Z",
+          "values": {
+            "mappingMode": "autoMapInputData",
+            "value": "={{ JSON.stringify({ step_id: '6A', post_url: $json.post_url, status: $json.status, notify_time: $json.notify_time, timestamp: new Date().toISOString() }) }}"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets"
+        }
+      },
+      {
+        "id": "return",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    index_status: $input.first().json.status,\n    post_url: $input.first().json.post_url,\n    status: 'done',\n    step: '6A'\n  }\n}];"
+        }
+      }
+    ],
+    "connections": {
+      "trigger": {
+        "main": [
+          [
+            {
+              "node": "read_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "read_config": {
+        "main": [
+          [
+            {
+              "node": "find_gsc_config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "find_gsc_config": {
+        "main": [
+          [
+            {
+              "node": "prepare_request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepare_request": {
+        "main": [
+          [
+            {
+              "node": "request_indexing",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "request_indexing": {
+        "main": [
+          [
+            {
+              "node": "parse_response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "parse_response": {
+        "main": [
+          [
+            {
+              "node": "save_tracking",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "save_tracking": {
+        "main": [
+          [
+            {
+              "node": "return",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "orchestrator.json": {
+    "name": "JDP Pipeline Orchestrator v2.1",
+    "active": false,
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "pipeline-orchestrator",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "webhook",
+        "name": "Webhook Trigger",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          200,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "read",
+          "documentId": {
+            "__rl": true,
+            "mode": "list",
+            "value": "1fx422m0zHyOB56KJMEfQZrFNRYPNyETnf0D35ZmwBdQ"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "list",
+            "value": "INPUT"
+          },
+          "filtersUI": {
+            "values": [
+              {
+                "lookupColumn": "keyword",
+                "lookupValue": "={{ $json.body.keyword }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "read_input",
+        "name": "Read INPUT Row",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4,
+        "position": [
+          450,
+          300
+        ],
+        "credentials": {
+          "googleSheetsOAuth2Api": "google-sheets-jdp"
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "name": "keyword",
+                "value": "={{ $('Webhook Trigger').item.json.body.keyword }}",
+                "type": "string"
+              },
+              {
+                "name": "internal_links",
+                "value": "={{ $('Webhook Trigger').item.json.body.internal_links || '' }}",
+                "type": "string"
+              },
+              {
+                "name": "external_links",
+                "value": "={{ $('Webhook Trigger').item.json.body.external_links || '' }}",
+                "type": "string"
+              },
+              {
+                "name": "cta",
+                "value": "={{ $('Webhook Trigger').item.json.body.cta || '' }}",
+                "type": "string"
+              },
+              {
+                "name": "serp_data",
+                "value": "{}",
+                "type": "string"
+              },
+              {
+                "name": "info_gain",
+                "value": "{}",
+                "type": "string"
+              },
+              {
+                "name": "lsi_keywords",
+                "value": "{}",
+                "type": "string"
+              },
+              {
+                "name": "outline",
+                "value": "",
+                "type": "string"
+              },
+              {
+                "name": "article",
+                "value": "",
+                "type": "string"
+              },
+              {
+                "name": "prev_output",
+                "value": "",
+                "type": "string"
+              },
+              {
+                "name": "eeat_hcu_eav_analysis",
+                "value": "{}",
+                "type": "string"
+              },
+              {
+                "name": "quality_fact_check",
+                "value": "{}",
+                "type": "string"
+              },
+              {
+                "name": "seo_geo_evaluator",
+                "value": "{}",
+                "type": "string"
+              },
+              {
+                "name": "image_prompts",
+                "value": "{}",
+                "type": "string"
+              },
+              {
+                "name": "infographic_prompt",
+                "value": "",
+                "type": "string"
+              },
+              {
+                "name": "alt_texts",
+                "value": "{}",
+                "type": "string"
+              },
+              {
+                "name": "title_meta",
+                "value": "{}",
+                "type": "string"
+              },
+              {
+                "name": "faq",
+                "value": "{}",
+                "type": "string"
+              },
+              {
+                "name": "retry_count",
+                "value": 0,
+                "type": "number"
+              },
+              {
+                "name": "current_step",
+                "value": "",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "id": "init_accumulator",
+        "name": "Initialize Accumulator",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          700,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "oMPZqNE77f5JXUcS",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_1a",
+        "name": "Step 1A: SERP Research",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          950,
+          300
+        ],
+        "notes": "Output: serp_data"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "name": "serp_data",
+                "value": "={{ $json.serp_data || $json.output || JSON.stringify($json) }}",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "id": "merge_1a",
+        "name": "Merge 1A",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1150,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "41LpOagR1kMviaNC",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_1b",
+        "name": "Step 1B: Info Gain",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          1350,
+          300
+        ],
+        "notes": "Output: info_gain"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "name": "info_gain",
+                "value": "={{ $json.info_gain || $json.output || JSON.stringify($json) }}",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "id": "merge_1b",
+        "name": "Merge 1B",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1550,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "aApG68y0PQkJi2xc",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_1c",
+        "name": "Step 1C: LSI Keywords",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          1750,
+          300
+        ],
+        "notes": "Output: lsi_keywords"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "name": "lsi_keywords",
+                "value": "={{ $json.lsi_keywords || $json.output || JSON.stringify($json) }}",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "id": "merge_1c",
+        "name": "Merge 1C",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1950,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "9RgAVWyCZsWX74cK",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_1d",
+        "name": "Step 1D: Outline",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          2150,
+          300
+        ],
+        "notes": "Output: outline"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "name": "outline",
+                "value": "={{ $json.outline || $json.output || JSON.stringify($json) }}",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "id": "merge_1d",
+        "name": "Merge 1D",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          2350,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "sIECqV2UWAffFQHT",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_1e",
+        "name": "Step 1E: Generate Article",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          2550,
+          300
+        ],
+        "notes": "Output: article"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "name": "article",
+                "value": "={{ $json.article || $json.output || JSON.stringify($json) }}",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "id": "merge_1e",
+        "name": "Merge 1E",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          2750,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "NDQyNeqPCf4V2N95",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_2a",
+        "name": "Step 2A: Title & Meta",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          2950,
+          300
+        ],
+        "notes": "Output: title_meta"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "name": "title_meta",
+                "value": "={{ $json.title_meta || $json.output || JSON.stringify($json) }}",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "id": "merge_2a",
+        "name": "Merge 2A",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          3150,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "7MRSuUXr33QE06zW",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_2b",
+        "name": "Step 2B: Intro Rewrite",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          3350,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "e1dqkfoyhGPn45m4",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_2c",
+        "name": "Step 2C: Originality",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          3550,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "z3sE5HYZRS7pSgUy",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_2d",
+        "name": "Step 2D: Fluff Check",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          3750,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "BQLIB4fwfR03UFpp",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_2e",
+        "name": "Step 2E: FAQ",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          3950,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "wPMA79cTf6vYBBKk",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_2f",
+        "name": "Step 2F: Conclusion",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          4150,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "C62vT9zsuipQAsDD",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_2g",
+        "name": "Step 2G: Add Table",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          4350,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "zR2SEE0ldcHfeekz",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_2h",
+        "name": "Step 2H: Embed Quotes",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          4550,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "OKibrzITNmSjxaYN",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_2i",
+        "name": "Step 2I: EEAT+HCU+EAV",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          4750,
+          300
+        ],
+        "notes": "Output: eeat_hcu_eav_analysis"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "name": "eeat_hcu_eav_analysis",
+                "value": "={{ $json.eeat_hcu_eav_analysis || $json.output || JSON.stringify($json) }}",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "id": "merge_2i",
+        "name": "Merge 2I",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          4950,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "AHjWfKNMhkaUCsW2",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_2j",
+        "name": "Step 2J: Quality+Fact",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          5150,
+          300
+        ],
+        "notes": "Output: quality_fact_check"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "name": "quality_fact_check",
+                "value": "={{ $json.quality_fact_check || $json.output || JSON.stringify($json) }}",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "id": "merge_2j",
+        "name": "Merge 2J",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          5350,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "yYLliWsyQtTfR7B0",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_2k",
+        "name": "Step 2K: SEO/GEO Evaluator",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          5550,
+          300
+        ],
+        "notes": "FINAL GATE: retry if score < 70"
+      },
+      {
+        "parameters": {
+          "jsCode": "const evaluator = $input.first().json;\nconst score = evaluator.overall_score || evaluator.seo_geo_evaluator?.overall_score || 0;\nconst criticalBlockers = evaluator.critical_blockers || evaluator.seo_geo_evaluator?.critical_blockers || [];\nconst retryCount = $('Initialize Accumulator').item.json.retry_count || 0;\nconst maxRetries = 2;\n\nif (criticalBlockers.length > 0) {\n  return [{ json: { action: 'flag_human_review', score, criticalBlockers } }];\n}\n\nif (score >= 70) {\n  return [{ json: { action: 'proceed', score } }];\n}\n\nif (retryCount < maxRetries) {\n  return [{ json: { action: 'retry', score, retry_count: retryCount + 1, retry_prompt: evaluator.retry_prompt || '' } }];\n}\n\nreturn [{ json: { action: 'flag_human_review', score, reason: 'max retries exceeded' } }];"
+        },
+        "id": "gate_2k",
+        "name": "2K Gate Check",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          5750,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "proceed",
+                "leftValue": "={{ $json.action }}",
+                "rightValue": "proceed",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ]
+          }
+        },
+        "id": "if_proceed",
+        "name": "If Proceed?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          5950,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "vi9MEjsCoTQhthzI",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_3a",
+        "name": "Step 3A: Image Prompts",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          6200,
+          200
+        ],
+        "notes": "Output: image_prompts"
+      },
+      {
+        "parameters": {
+          "workflowId": "PhKuYBqR91uMiINw",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_3b",
+        "name": "Step 3B: Infographic",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          6400,
+          200
+        ],
+        "notes": "Output: infographic_prompt"
+      },
+      {
+        "parameters": {
+          "workflowId": "Pfvr09YHMtsOCZQe",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_3c",
+        "name": "Step 3C: Alt Texts",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          6600,
+          200
+        ],
+        "notes": "Output: alt_texts"
+      },
+      {
+        "parameters": {
+          "workflowId": "3ZGpC6fBbL0OYSpZ",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_4a",
+        "name": "Step 4A: Internal Links",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          6800,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "dhq5sXU6DlGs2SrE",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_4b",
+        "name": "Step 4B: External Links",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          7000,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "EkVd7BOUvvK0DVKc",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_5a",
+        "name": "Step 5A: WordPress Publish",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          7200,
+          200
+        ],
+        "notes": "Output: post_url"
+      },
+      {
+        "parameters": {
+          "workflowId": "EBjbHOJPPzevUvnT",
+          "resolveData": true,
+          "mode": "combine",
+          "mergeByFields": {},
+          "options": {}
+        },
+        "id": "step_6a",
+        "name": "Step 6A: Google Indexing",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          7400,
+          200
+        ],
+        "notes": "Output: index_status"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ status: 'completed', keyword: $('Initialize Accumulator').item.json.keyword, post_url: $json.post_url || '', index_status: $json.index_status || '' }) }}",
+          "options": {}
+        },
+        "id": "respond_success",
+        "name": "Respond Success",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          7600,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ status: 'flagged_for_review', reason: $json.action, score: $json.score || 0, criticalBlockers: $json.criticalBlockers || [] }) }}",
+          "options": {
+            "responseCode": 202
+          }
+        },
+        "id": "respond_review",
+        "name": "Respond - Human Review",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          6200,
+          450
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ status: 'retry', retry_count: $json.retry_count, score: $json.score }) }}",
+          "options": {
+            "responseCode": 202
+          }
+        },
+        "id": "respond_retry",
+        "name": "Respond - Retry Needed",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          5950,
+          450
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook Trigger": {
+        "main": [
+          [
+            {
+              "node": "Read INPUT Row",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read INPUT Row": {
+        "main": [
+          [
+            {
+              "node": "Initialize Accumulator",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Initialize Accumulator": {
+        "main": [
+          [
+            {
+              "node": "Step 1A: SERP Research",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 1A: SERP Research": {
+        "main": [
+          [
+            {
+              "node": "Merge 1A",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge 1A": {
+        "main": [
+          [
+            {
+              "node": "Step 1B: Info Gain",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 1B: Info Gain": {
+        "main": [
+          [
+            {
+              "node": "Merge 1B",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge 1B": {
+        "main": [
+          [
+            {
+              "node": "Step 1C: LSI Keywords",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 1C: LSI Keywords": {
+        "main": [
+          [
+            {
+              "node": "Merge 1C",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge 1C": {
+        "main": [
+          [
+            {
+              "node": "Step 1D: Outline",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 1D: Outline": {
+        "main": [
+          [
+            {
+              "node": "Merge 1D",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge 1D": {
+        "main": [
+          [
+            {
+              "node": "Step 1E: Generate Article",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 1E: Generate Article": {
+        "main": [
+          [
+            {
+              "node": "Merge 1E",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge 1E": {
+        "main": [
+          [
+            {
+              "node": "Step 2A: Title & Meta",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 2A: Title & Meta": {
+        "main": [
+          [
+            {
+              "node": "Merge 2A",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge 2A": {
+        "main": [
+          [
+            {
+              "node": "Step 2B: Intro Rewrite",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 2B: Intro Rewrite": {
+        "main": [
+          [
+            {
+              "node": "Step 2C: Originality",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 2C: Originality": {
+        "main": [
+          [
+            {
+              "node": "Step 2D: Fluff Check",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 2D: Fluff Check": {
+        "main": [
+          [
+            {
+              "node": "Step 2E: FAQ",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 2E: FAQ": {
+        "main": [
+          [
+            {
+              "node": "Step 2F: Conclusion",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 2F: Conclusion": {
+        "main": [
+          [
+            {
+              "node": "Step 2G: Add Table",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 2G: Add Table": {
+        "main": [
+          [
+            {
+              "node": "Step 2H: Embed Quotes",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 2H: Embed Quotes": {
+        "main": [
+          [
+            {
+              "node": "Step 2I: EEAT+HCU+EAV",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 2I: EEAT+HCU+EAV": {
+        "main": [
+          [
+            {
+              "node": "Merge 2I",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge 2I": {
+        "main": [
+          [
+            {
+              "node": "Step 2J: Quality+Fact",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 2J: Quality+Fact": {
+        "main": [
+          [
+            {
+              "node": "Merge 2J",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge 2J": {
+        "main": [
+          [
+            {
+              "node": "Step 2K: SEO/GEO Evaluator",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 2K: SEO/GEO Evaluator": {
+        "main": [
+          [
+            {
+              "node": "2K Gate Check",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "2K Gate Check": {
+        "main": [
+          [
+            {
+              "node": "If Proceed?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If Proceed?": {
+        "main": [
+          [
+            {
+              "node": "Step 3A: Image Prompts",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Respond - Human Review",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 3A: Image Prompts": {
+        "main": [
+          [
+            {
+              "node": "Step 3B: Infographic",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 3B: Infographic": {
+        "main": [
+          [
+            {
+              "node": "Step 3C: Alt Texts",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 3C: Alt Texts": {
+        "main": [
+          [
+            {
+              "node": "Step 4A: Internal Links",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 4A: Internal Links": {
+        "main": [
+          [
+            {
+              "node": "Step 4B: External Links",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 4B: External Links": {
+        "main": [
+          [
+            {
+              "node": "Step 5A: WordPress Publish",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 5A: WordPress Publish": {
+        "main": [
+          [
+            {
+              "node": "Step 6A: Google Indexing",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Step 6A: Google Indexing": {
+        "main": [
+          [
+            {
+              "node": "Respond Success",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "tags": []
+  }
+};
+
+  let ok = 0, fail = 0, skip = 0;
+  const results = [];
+
+  // Check existing workflows first
+  console.log('🔍 Checking existing workflows...');
+  let existing = [];
+  try {
+    const r = await fetch('/rest/workflows', {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (r.ok) {
+      const d = await r.json();
+      existing = d.data || d || [];
+      console.log('  Found', existing.length, 'existing workflows');
+    }
+  } catch (e) {
+    console.log('  Could not list workflows (may need login)');
+  }
+
+  const existingNames = new Set(existing.map(w => w.name));
+
+  // Import each workflow in order
+  const files = ["step-1a-serp.json","step-1b-info-gain.json","step-1c-lsi-keywords.json","step-1d-outline.json","step-1e-article.json","step-2a-title-meta.json","step-2b-intro-rewrite.json","step-2c-originality-rewrite.json","step-2d-fluff-check.json","step-2e-faq-generation.json","step-2f-conclusion-optimizer.json","step-2g-add-table.json","step-2h-find-embed-quotes.json","step-2i-eeat-hcu-eav.json","step-2j-quality-fact-check.json","step-2k-seo-geo-evaluator.json","step-3a-image-prompts.json","step-3b-infographic-prompt.json","step-3c-alt-texts.json","step-4a-internal-linking.json","step-4b-external-linking.json","step-5a-wordpress.json","step-6a-indexing.json","orchestrator.json"];
+  console.log('\n🚀 Starting import of', files.length, 'workflows...\n');
+
+  for (const file of files) {
+    const wf = workflows[file];
+    if (!wf) { skip++; continue; }
+
+    // Skip if already exists
+    if (existingNames.has(wf.name)) {
+      console.log('⏭ ', wf.name, '— already exists, skipping');
+      skip++;
+      continue;
+    }
+
+    // Clean up workflow for import
+    const payload = {
+      name: wf.name,
+      nodes: wf.nodes || [],
+      connections: wf.connections || {},
+      settings: wf.settings || {},
+      staticData: wf.staticData || null,
+      tags: wf.tags || [],
+    };
+
+    try {
+      const resp = await fetch('/rest/workflows', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (resp.ok) {
+        const created = await resp.json();
+        const id = created.id || created.data?.id || '?';
+        console.log('✅', wf.name, '→ ID:', id);
+        results.push({ file, name: wf.name, id, status: 'ok' });
+        ok++;
+      } else {
+        const err = await resp.text();
+        console.log('❌', wf.name, '→ HTTP', resp.status, err.substring(0, 100));
+        results.push({ file, name: wf.name, status: 'error', error: resp.status });
+        fail++;
+      }
+    } catch (e) {
+      console.log('❌', wf.name, '→', e.message);
+      results.push({ file, name: wf.name, status: 'error', error: e.message });
+      fail++;
+    }
+
+    // Small delay between imports
+    await new Promise(r => setTimeout(r, 200));
+  }
+
+  // Summary
+  console.log('\n═══════════════════════════════════════════════════════════════');
+  console.log('📊 IMPORT COMPLETE');
+  console.log('   ✅ Imported:', ok);
+  console.log('   ⏭  Skipped:', skip);
+  console.log('   ❌ Failed:', fail);
+  console.log('═══════════════════════════════════════════════════════════════\n');
+
+  if (ok > 0) {
+    console.log('🔑 IMPORTANT: Copy these workflow IDs to update your orchestrator:');
+    console.log('   (The orchestrator references sub-workflows by ID)\n');
+    for (const r of results) {
+      if (r.status === 'ok' && r.id !== '?') {
+        console.log('   ' + r.name + ' → ' + r.id);
+      }
+    }
+    console.log('\n📋 Also update the PROMPTS tab in Google Sheets (column J) with these IDs.');
+  }
+
+  if (fail > 0) {
+    console.warn('\n⚠️  Some imports failed. Check the errors above.');
+    console.warn('   Common causes:');
+    console.warn('   - Not logged in (open n8n UI first)');
+    console.warn('   - n8n needs setup (create owner account first)');
+    console.warn('   - Network error (n8n instance sleeping)');
+  }
+
+  return { ok, skip, fail, results };
+})();

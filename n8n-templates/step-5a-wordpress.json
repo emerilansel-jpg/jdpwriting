@@ -1,0 +1,94 @@
+{
+  "name": "JDP Step 5A — WordPress Publish",
+  "nodes": [
+    {
+      "id": "trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [100, 300],
+      "parameters": {}
+    },
+    {
+      "id": "read_config",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [300, 300],
+      "parameters": {
+        "operation": "read",
+        "sheetName": "CONFIG",
+        "range": "A2:Z100",
+        "options": {}
+      },
+      "credentials": { "googleSheetsOAuth2Api": "google-sheets" }
+    },
+    {
+      "id": "find_wp_config",
+      "type": "n8n-nodes-base.code",
+      "position": [500, 300],
+      "parameters": {
+        "jsCode": "const rows = $input.first().json.data;\nconst wpUrl = rows.find(r => r[0] === 'wordpress_url')?.[1] || '';\nconst wpUser = rows.find(r => r[0] === 'wordpress_username')?.[1] || '';\nconst wpPass = rows.find(r => r[0] === 'wordpress_app_password')?.[1] || '';\nif (!wpUrl || !wpUser || !wpPass) throw new Error('WordPress credentials not configured in CONFIG tab');\nreturn [{\n  json: {\n    wp_url: wpUrl,\n    wp_user: wpUser,\n    wp_pass: wpPass\n  }\n}];"
+      }
+    },
+    {
+      "id": "prepare_payload",
+      "type": "n8n-nodes-base.code",
+      "position": [700, 300],
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst wp = $input.first().json;\n\n// Parse title_meta JSON if provided as string\nlet titleMeta = input.title_meta || {};\nif (typeof titleMeta === 'string') {\n  try { titleMeta = JSON.parse(titleMeta); } catch (e) {}\n}\n\n// Convert markdown article to HTML if needed (simple conversion)\nlet content = input.article || '';\n\nreturn [{\n  json: {\n    wp_url: wp.wp_url,\n    wp_user: wp.wp_user,\n    wp_pass: wp.wp_pass,\n    title: titleMeta.title || input.keyword || 'Article',\n    content: content,\n    excerpt: titleMeta.meta_description || '',\n    slug: titleMeta.slug || input.keyword?.toLowerCase().replace(/\\s+/g, '-') || 'article',\n    status: 'publish',\n    featured_media: input.featured_image_id || 0,\n    categories: input.category_ids || [1],\n    tags: input.tag_ids || []\n  }\n}];"
+      }
+    },
+    {
+      "id": "publish_post",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [900, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.wp_url }}/wp-json/wp/v2/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: $json.title, content: $json.content, excerpt: $json.excerpt, slug: $json.slug, status: $json.status, featured_media: $json.featured_media, categories: $json.categories, tags: $json.tags }) }}"
+      },
+      "credentials": { "httpBasicAuth": "wordpress-credentials" }
+    },
+    {
+      "id": "parse_response",
+      "type": "n8n-nodes-base.code",
+      "position": [1100, 300],
+      "parameters": {
+        "jsCode": "const resp = $input.first().json;\nconst postUrl = resp.link || '';\nconst postId = resp.id || 0;\nif (!postId) throw new Error('WordPress publish failed: ' + JSON.stringify(resp));\nreturn [{\n  json: {\n    post_url: postUrl,\n    post_id: postId,\n    status: 'published',\n    step: '5A'\n  }\n}];"
+      }
+    },
+    {
+      "id": "save_tracking",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [1300, 300],
+      "parameters": {
+        "operation": "append",
+        "sheetName": "TRACKING",
+        "range": "A:Z",
+        "values": {
+          "mappingMode": "autoMapInputData",
+          "value": "={{ JSON.stringify({ step_id: '5A', post_url: $json.post_url, post_id: $json.post_id, status: 'published', timestamp: new Date().toISOString() }) }}"
+        }
+      },
+      "credentials": { "googleSheetsOAuth2Api": "google-sheets" }
+    },
+    {
+      "id": "return",
+      "type": "n8n-nodes-base.code",
+      "position": [1500, 300],
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    post_url: $input.first().json.post_url,\n    post_id: $input.first().json.post_id,\n    status: 'done',\n    step: '5A'\n  }\n}];"
+      }
+    }
+  ],
+  "connections": {
+    "trigger": { "main": [[{ "node": "read_config", "type": "main", "index": 0 }]] },
+    "read_config": { "main": [[{ "node": "find_wp_config", "type": "main", "index": 0 }]] },
+    "find_wp_config": { "main": [[{ "node": "prepare_payload", "type": "main", "index": 0 }]] },
+    "prepare_payload": { "main": [[{ "node": "publish_post", "type": "main", "index": 0 }]] },
+    "publish_post": { "main": [[{ "node": "parse_response", "type": "main", "index": 0 }]] },
+    "parse_response": { "main": [[{ "node": "save_tracking", "type": "main", "index": 0 }]] },
+    "save_tracking": { "main": [[{ "node": "return", "type": "main", "index": 0 }]] }
+  }
+}

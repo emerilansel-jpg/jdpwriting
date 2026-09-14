@@ -1,0 +1,199 @@
+{
+  "name": "JDP Step 2G — Add Table",
+  "nodes": [
+    {
+      "id": "trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        100,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "read_prompts",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        300,
+        300
+      ],
+      "parameters": {
+        "operation": "read",
+        "sheetName": "PROMPTS",
+        "range": "A2:Z100",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": "google-sheets-jdp"
+      }
+    },
+    {
+      "id": "find_config",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        500,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '2G';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'article'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+      }
+    },
+    {
+      "id": "prepare_vars",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        700,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const cfg = $input.first().json;\nconst input = $input.first().json;\n\nconst flat = {};\nconst configKeys = ['step_id','step_name','model','temperature','max_tokens','output_format','system_prompt','user_prompt','llm_url','credential','output_variable','enabled'];\nfunction flatten(prefix, value) {\n  if (value === undefined || value === null) {\n    flat[prefix] = '';\n  } else if (typeof value === 'object' && !Array.isArray(value)) {\n    flat[prefix] = JSON.stringify(value);\n    for (const [k, v] of Object.entries(value)) {\n      flatten(prefix + '.' + k, v);\n    }\n  } else {\n    flat[prefix] = String(value);\n  }\n}\n\nObject.entries(input).forEach(([k, v]) => {\n  if (!configKeys.includes(k)) {\n    flatten(k, v);\n  }\n});\n\nlet user = cfg.user_prompt;\nconst keys = Object.keys(flat).sort((a, b) => b.length - a.length);\nfor (const k of keys) {\n  const escaped = k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  user = user.replace(new RegExp('{{' + escaped + '}}', 'g'), flat[k]);\n}\n\nreturn [{\n  json: {\n    model: cfg.model,\n    temperature: cfg.temperature,\n    max_tokens: cfg.max_tokens,\n    system_prompt: cfg.system_prompt,\n    user_prompt: user,\n    llm_url: cfg.llm_url,\n    credential: cfg.credential,\n    output_variable: cfg.output_variable,\n    output_format: cfg.output_format,\n    keyword: input.keyword,\n    step_id: cfg.step_id,\n    ...input\n  }\n}];"
+      }
+    },
+    {
+      "id": "call_llm",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        900,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.llm_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": "={{ $json.credential }}"
+      }
+    },
+    {
+      "id": "parse_result",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1100,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const resp = $input.first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.content || '';\nconst outputFormat = resp.output_format || 'json';\nconst outputVariable = resp.output_variable || 'output_json';\nlet parsed = { raw_output: content };\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  const m = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (m) {\n    try { parsed = JSON.parse(m[1]); } catch (e2) {}\n  }\n}\nconst outputValue = (outputFormat === 'json' || outputFormat === 'json_schema') ? JSON.stringify(parsed) : content;\nreturn [{\n  json: {\n    output_json: JSON.stringify(parsed),\n    output_raw: content,\n    [outputVariable]: outputValue,\n    keyword: resp.keyword,\n    step_id: resp.step_id,\n    input_tokens: resp.usage?.prompt_tokens || resp.input_tokens || 0,\n    output_tokens: resp.usage?.completion_tokens || resp.output_tokens || 0,\n    model: resp.model || resp.model_name\n  }\n}];"
+      }
+    },
+    {
+      "id": "save_tracking",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1300,
+        300
+      ],
+      "parameters": {
+        "operation": "append",
+        "sheetName": "TRACKING",
+        "range": "A:Z",
+        "values": {
+          "mappingMode": "autoMapInputData",
+          "value": "={{ JSON.stringify({ step_id: $json.step_id, keyword: $json.keyword, status: 'done', output_json: $json.output_json, input_tokens: $json.input_tokens, output_tokens: $json.output_tokens, model: $json.model, timestamp: new Date().toISOString() }) }}"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": "google-sheets-jdp"
+      }
+    },
+    {
+      "id": "return",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1500,
+        300
+      ],
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    ...$input.first().json,\n    status: 'done'\n  }\n}];"
+      }
+    }
+  ],
+  "connections": {
+    "trigger": {
+      "main": [
+        [
+          {
+            "node": "read_prompts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "find_config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "read_prompts": {
+      "main": [
+        [
+          {
+            "node": "find_config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "find_config": {
+      "main": [
+        [
+          {
+            "node": "prepare_vars",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "prepare_vars": {
+      "main": [
+        [
+          {
+            "node": "call_llm",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "call_llm": {
+      "main": [
+        [
+          {
+            "node": "parse_result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "parse_result": {
+      "main": [
+        [
+          {
+            "node": "save_tracking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "save_tracking": {
+      "main": [
+        [
+          {
+            "node": "return",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
