@@ -1,6 +1,22 @@
 # Coldstart — JDP Writing Pipeline
 > Tracked from coldstart.md (v2.1)
 
+## 2026-09-16 — Evaluation UX, Logic Prompt & SEO/GEO Pipeline Improvement Plan
+- **Status:** COMPLETED & VERIFIED
+- **Files touched:** admin-ui.html, pipeline-prompts-v2.1.md, worker-deploy/worker.js, coldstart.md, coldstart/coldstart.md
+- **Decisions:**
+  - Upstream 2K re-wired: Step 2K kini menerima context lengkap (title, meta, slug dari 2A + fallback article 4B/2H).
+  - Prompt 2K disinkronkan: Input article dan metadata context disematkan kembali sehingga evaluator tidak lagi memberi penalti halusinasi pada On-Page/Technical SEO.
+  - Prompt 1E (Drafting) dioptimasi: Disematkan aturan direct-answer snippet (<=40 kata) di tiap H2, perbandingan tabel Markdown, 2-3 sitasi ahli otoritatif, dan 3-5 FAQ section langsung dari pembuatan draft pertama.
+  - Prompt 2C (Originality) dilonggarkan: Menghapus aturan artifisial ekstrem (fragmen per 100w / konjungsi 30%) yang merusak Flesch-Kincaid grade di Step 2J.
+  - UX Deliverable Card reaktif: Ditambahkan fungsi `updateDeliverableCards()` dan visualisasi rekomendasi audit 2K (`top_3_seo_fixes`, `top_3_geo_fixes`).
+  - Worker bundle disinkronkan: `worker-deploy/worker.js` digenerate ulang dan tervalidasi syntax clean.
+- **Issues:** Resolved.
+- **Next:** Deploy worker via `wrangler deploy` jika ingin sinkronkan live URL jdpwriter.com.
+- **Deploy:** Ready in `worker-deploy/worker.js` for Cloudflare Workers.
+
+---
+
 ## 2026-09-14 — UX Audit & Production Sign-Off (Score: 9.2 / 10)
 - **Status:** COMPLETED & VERIFIED
 - **Files touched:** admin-ui.html, worker-deploy/worker.js, coldstart.md, coldstart/coldstart.md

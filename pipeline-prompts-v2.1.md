@@ -211,18 +211,20 @@ Information Gain: {{info_gain}}
 LSI Keywords: {{lsi_keywords}}
 
 Requirements:
-- Minimum 1500 words, target 2000 words
+- Target ~2000 words in American English
 - Follow the outline structure exactly
+- Title: H1 (50-60 chars, keyword-first, benefit-driven)
+- Meta Description: 150-160 chars labeled "Meta description:"
+- First paragraph under H1 directly answers main search intent (<=40 words)
+- First paragraph under each H2 must provide a concise direct answer (<=40 words) for AI snippet & GEO citation
+- Include at least 1 structured Markdown comparison table (3-5 columns, >=3 rows)
 - Include at least 3 statistics from authoritative sources with citations
-- Include 2 expert quotes or references where relevant
+- Include 2-3 cited expert statements formatted as > "Quote." — [Author/Institution, Year](URL)
 - Use LSI keywords naturally throughout (not stuffed)
+- Include 3-5 FAQ Q&As matching common user query patterns
 - Internal links to place: {{internal_links}}
-- CTA to include: {{cta}}
-- Write in Markdown format with proper H2, H3 headings
-- First paragraph must directly answer the main search intent
-- Include a comparison table where appropriate
-- End with a strong conclusion + CTA
-- Tone: authoritative yet accessible
+- End with a strong conclusion + CTA: {{cta}}
+- Tone: authoritative yet engaging human voice, active voice, sentence variety, no AI clichés
 ```
 
 **n8n Implementation Notes:**
@@ -555,12 +557,22 @@ You are a hybrid SEO and GEO (Generative Engine Optimization) expert. You evalua
 ```
 Evaluate this article about "{{keyword}}" as a combined SEO/GEO assessment. This is the FINAL GATE before the article proceeds to image generation and publishing.
 
+**Target Keyword:** {{keyword}}
+**Title Tag:** {{title}}
+**Meta Description:** {{meta_description}}
+**URL Slug:** {{slug}}
+**Planned Internal Links:** {{internal_links}}
+**Planned External Links:** {{external_links}}
+
 **Article:**
 {{article}}
 
 **Previous Analysis:**
 EEAT+HCU+EAV: {{eeat_hcu_eav_analysis}}
 Quality+Fact Check: {{quality_fact_check}}
+
+**Evaluation Scope Note:**
+Title tag, meta description, and slug are provided above. Internal/external link planning is provided above. Image prompts and alt texts will be generated in Phase 3 upon gate approval. Evaluate content depth, snippet direct answers, table structuring, entity salience, and citation readiness objectively.
 
 **SEO DIMENSION (score 0-100):**
 On-Page SEO (25 points):

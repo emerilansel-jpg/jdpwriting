@@ -956,7 +956,7 @@ const STEPS = [
     userPrompt:'Create outline for \'{{keyword}}\' using: Info Gain: {{info_gain}} | LSI Keywords: {{lsi_keywords}} | Internal links: {{internal_links}} | CTA: {{cta}}\n\nRequirements: match dominant search intent. Cover all identified gaps. Use LSI keywords naturally in H2/H3 headings. Structure for featured snippets (direct answers, lists, tables). Include an FAQ plan (at least 3 Qs) with answers. Target total word count: 1500-2500 words. Each section must include: purpose + suggested word count. Output: Complete outline with H2, H3, bullet points, direct answer suggestions, and format recommendations. Headings rule: 60% of total H2/H3 headings MUST be in question form (end with ?). Sections: 1. Intro - explicit direct answer <=40 words + 1 stat/named entity. <=100 words total. 2. Key takeaway section - heading must NOT be "Key Takeaways" (rename). 3 bullet points summarizing core answers. 3. Main body - minimum 10 H2 sections. Each H2 + content <=200 words. Per H2: direct answer <=40 words, 1 bold statistic, 1 bold named entity. Vary formats. 4. Conclusion - <=100 words, includes {{cta}}, forward-looking takeaway. 5. FAQ section - 3+ Q&A pairs (answers from outline, not pulled from article). Tone: knowledgeable, approachable, semi-formal, active voice, sentences <=20 words. No clickbait. No stacked CTAs. Banned: delve/tapestry/landscape/realm/embark/vital/comprehensive/vibrant/pivotal/moreover/arguably/notably/elevate/captivate/resonate/foster/endeavor. Return only the outline - no commentary, no meta text.', temp:0.4, maxTokens:2000, outputFormat:'markdown' },
   { id:'1E', name:'Generate Article', phase:0, model:'pesat-flash', provider:'pesat', desc:'Phase 1 — Write full article from outline', n8nId:'iC210o6qoXTO8muA', enabled:true,
     systemPrompt:'You are an expert SEO/GEO writer. Generate ~2000-word articles in American English with anti-detection techniques and professional human voice.',
-    userPrompt:'Write a comprehensive, professional, search-optimized ~2000-word article in American English based on the provided topic, outline, and research context.\n\nTarget Keyword: {{keyword}}\nCall to Action (CTA): {{cta}}\nInternal Links: {{internal_links}}\n\nContent Outline:\n{{outline}}\n\nResearch Data & Context:\n{{info_gain}}\n{{lsi_keywords}}\n\nRequirements:\n1. Title: H1 (50-60 chars, keyword-first, benefit-driven).\n2. Meta Description: 150-160 chars labeled "Meta description:".\n3. Introduction (~100 words): First sentence <=40 words directly answers search intent. Include a verified statistic and context.\n4. Key Takeaways: H2 with 3 bullet insights.\n5. Main Body: Follow the H2/H3 outline thoroughly. Each section direct answer <=40 words, at least one bold statistic or entity, and natural paragraph rhythm.\n6. Comparison Table: Include at least one structured Markdown comparison table.\n7. Tone: Grounded, authoritative, engaging human voice. Active voice, sentence variety, no AI clichés.\n8. Conclusion: Actionable next steps ending with CTA [{{cta}}].\n\nWrite the COMPLETE full-length article in Markdown. Begin directly with the H1 title. Do not ask questions or request more input.', temp:0.7, maxTokens:5000, outputFormat:'markdown' },
+    userPrompt:'Write a comprehensive, professional, search-optimized ~2000-word article in American English based on the provided topic, outline, and research context.\n\nTarget Keyword: {{keyword}}\nCall to Action (CTA): {{cta}}\nInternal Links: {{internal_links}}\n\nContent Outline:\n{{outline}}\n\nResearch Data & Context:\n{{info_gain}}\n{{lsi_keywords}}\n\nRequirements:\n1. Title: H1 (50-60 chars, keyword-first, benefit-driven).\n2. Meta Description: 150-160 chars labeled "Meta description:".\n3. Introduction (~100 words): First sentence <=40 words directly answers search intent. Include a verified statistic and context.\n4. Key Takeaways: H2 with 3 bullet insights.\n5. Main Body: Follow the H2/H3 outline thoroughly. First paragraph under each H2 must provide a concise direct answer (<=40 words) for featured snippet and AI citation capture. Bold key statistics and named entities.\n6. Comparison Table: Include at least one structured Markdown comparison table (3-5 columns, >=3 rows).\n7. Expert Citations: Include 2-3 cited expert statements formatted as > "Quote." — [Author/Institution, Year](URL if available) to anchor authority.\n8. FAQ Section: Include 3-5 high-intent Q&A pairs directly addressing related queries.\n9. Tone: Grounded, authoritative, engaging human voice. Active voice, sentence variety, no AI clichés.\n10. Conclusion: Actionable next steps ending with CTA [{{cta}}].\n\nWrite the COMPLETE full-length article in Markdown. Begin directly with the H1 title. Do not ask questions or request more input.', temp:0.7, maxTokens:5000, outputFormat:'markdown' },
   { id:'2A', name:'Title & Meta', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — SEO title, meta, slug', n8nId:'NhssXDWzEktwl6MM', enabled:true,
     systemPrompt:'You are an expert SEO/GEO content generator.',
     userPrompt:'Generate SEO metadata as JSON only. If {{article}} exists: extract title (50-60 chars, keyword-first), meta description (150-160 chars, includes CTA, no "discover"), URL slug (lowercase, hyphens). If {{article}} empty: create based on {{keyword}} and optional {{outline}}. JSON format: {"title":"...", "meta_description":"...", "slug":"..."}', temp:0.5, maxTokens:600, outputFormat:'json' },
@@ -965,7 +965,7 @@ const STEPS = [
     userPrompt:'Rewrite introduction of {{article}} for keyword {{keyword}}. Rules: First sentence <=40 words, directly answers search intent. Total intro <=100 words. Include >=1 named entity or statistic with hyperlinked source (or [GEO NOTE: missing specific URL]). End with soft CTA to keep reading. Apply style rules: sentence variety, active voice, hedging, no banned phrases. Return only rewritten intro as markdown.', temp:0.6, maxTokens:300, outputFormat:'markdown' },
   { id:'2C', name:'Originality Rewrite', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Uniqueness, AI-detection pass', n8nId:'E5F3tfsQ8y8MtA85', enabled:true,
     systemPrompt:'You are a human-style text rewriter. Rewrite to sound 100% natural and pass AI detectors. Keep all facts, headings, structure. Change only wording, flow, rhythm.',
-    userPrompt:'Rewrite article: {{article}}. Return only rewritten article in clean Markdown.\n\nRules: 1) Sentence starters: 30% start with And/But/So/Or/Yet/Yeah/Well/Now. 2) Fragments: one per 100 words. 3) No parallel triples (A, B, and C). 4) One opinion per 200 words. 5) One direct command without \'you\' per 500 words. 6) Contractions in every paragraph. 7) One short paragraph (≤5 words) per 500 words. 8) Vary sentence length: short (5-10), medium (12-18), long (20-30). 9) No AI patterns: no significance inflation, name-dropping without context, superficial -ing words, promotional adjectives, vague attributions, formulaic challenges, AI vocab, copula avoidance, negative parallelism, rule of three, synonym cycling, false ranges, em dash overuse, boldface overuse, inline-header lists, title case headings, emojis, curly quotes, chatbot artifacts, knowledge-cutoff disclaimers, sycophantic tone, filler phrases, excessive hedging, generic positive endings.\n\nBanned phrases: It\'s important to note that, In today\'s fast-paced world, Let\'s dive in, A testament to, In conclusion, Seamlessly integrated, However one must consider, Plays a significant role, Aims to explore, Gain valuable insights, Navigate the complexities, Embark on a journey, A treasure trove of.\n\nBanned words: delve, tapestry, vibrant, landscape, realm, embark, excels, vital, comprehensive, intricate, pivotal, moreover, arguably, notably, elevate, captivate, resonate, foster, endeavor\n\nBanned AI tells: tends to, simply, just, actually, gorgeous, flawless, perfectly, beautifully, Let\'s be honest, Here\'s the thing, The truth is, When it comes to, Here is how, That\'s where, We believe, ensures, intentional, easiest way, works beautifully, second nature, quietly drive, crucial, sustainable lifestyle, naturally lit-from-within, non-negotiable, prevents, Start with, To make the most of, The good news?, Think of your skin like a canvas, That\'s where things usually go wrong, It\'s a simple step, lets your skin breathe, set yourself up for success, your best glow yet, Here is what makes it different, feel effortless, starts to look, For optimal, Here\'s the thing, The good news is, That\'s when, figure out which, perfectly, dramatically, seamless, robust, leverage, Let\'s dive in, make all the difference, Everything fits in one small bag, simple habits, The goal isn\'t to stop the process, it\'s to slow it down, That\'s the reality, tends to stick around\n\nSelf-check: every paragraph has contraction, ≥1 fragment per 100w, one ≤5w paragraph per 500w, no parallel triples, one direct command without \'you\', 30% sentences start with And/But/So/Or/Yet/Yeah/Well/Now, one opinion per 200w, no banned words/phrases, kept all facts/headings/structure.', temp:0.8, maxTokens:5000, outputFormat:'markdown' },
+    userPrompt:'Rewrite article: {{article}}. Return only rewritten article in clean Markdown.\n\nRules: 1) Natural human flow: occasionally start sentences with conversational conjunctions (And, But, So, Yet, Well). 2) Punchy variety: mix short sentences (5-10 words) with medium sentences (12-20 words). 3) Natural contractions (don\'t, it\'s, you\'re, that\'s) in every paragraph. 4) Use 1-2 conversational fragments where natural for human rhythm. 5) Keep all facts, numbers, headings, tables, quotes, and FAQ sections completely intact. 6) Eliminate robotic AI patterns and filler.\n\nBanned phrases: It\'s important to note that, In today\'s fast-paced world, Let\'s dive in, A testament to, In conclusion, Seamlessly integrated, However one must consider, Plays a significant role, Aims to explore, Gain valuable insights, Navigate the complexities, Embark on a journey, A treasure trove of.\n\nBanned words: delve, tapestry, vibrant, landscape, realm, embark, excels, vital, comprehensive, intricate, pivotal, moreover, arguably, notably, elevate, captivate, resonate, foster, endeavor.\n\nBanned AI tells: tends to, simply, just, actually, gorgeous, flawless, perfectly, beautifully, Let\'s be honest, Here\'s the thing, The truth is, When it comes to, Here is how, That\'s where, We believe, ensures, intentional, easiest way, works beautifully, second nature, quietly drive, crucial, robust, leverage, make all the difference.\n\nSelf-check: natural sentence variety, contractions present, no banned words/phrases, kept all facts/headings/tables/structure intact, output full Markdown only.', temp:0.8, maxTokens:5000, outputFormat:'markdown' },
   { id:'2D', name:'Fluff Check', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Remove filler, tighten writing', n8nId:'G44cnMmoMqwW8vW3', enabled:true,
     systemPrompt:'You are a ruthless editor. Remove all filler words and redundant phrases. Keep all facts, numbers, entities, headings, substantive content.',
     userPrompt:'Remove all filler and redundant phrases from {{article}}. Keep facts, numbers, entities, headings. Cut: It is important to note that, In order to - to, Due to the fact that - because, Regardless of the fact that - although, For all intents and purposes (delete), Quite, rather, somewhat, very, really, actually, simply, just, literally, In my opinion, I believe that, It seems that, There is/There are at start (rewrite), The reason why is because - because, Each and every - each/every, Completely eliminate/totally remove - one word, Past history/future plans/end result/free gift. Use contractions. Break up long sentences. Add fragments. Start 30% sentences with And/But/So/Or/Yet. No parallel triples. Return full cleaned article in Markdown.', temp:0.3, maxTokens:4000, outputFormat:'markdown' },
@@ -989,7 +989,7 @@ const STEPS = [
     userPrompt:'Analyze article about \'{{keyword}}\' for quality and fact-check. Context from EEAT analysis: {{eeat_hcu_eav_analysis}}.\n\nPART 1 — Quality: grammar & mechanics, readability (Flesch-Kincaid grade level, sentence length variation, paragraph structure), tone consistency, passive voice percentage, transition quality, redundancy score, formatting consistency.\n\nPART 2 — Fact Check: extract ALL factual claims. For each: quote exact text, categorize (statistic/date/comparison/cause-effect/definition/attribution/prediction), confidence (high/medium/low), flag weasel words without sources, flag outdated stats without dates.\n\nPART 3 — Web Search Verification Needs: for each medium/low confidence claim, provide: suggested_search_query, expected_authoritative_source, verification_priority (critical/important/nice-to-have).\n\nReturn JSON: quality_score (0-100), readability:{grade_level,flesch_score,sentence_avg_length,sentence_variation_score}, tone_assessment:{consistent,issues:[]}, passive_voice_pct, redundancy_score (0-100), claims:[{claim_text,category,confidence,needs_verification,suggested_search_query,expected_authoritative_source,verification_priority}], critical_flags:[], improvement_recommendations:[], overall_verdict:{quality,fact_risk}.', temp:0.2, maxTokens:3000, outputFormat:'json' },
   { id:'2K', name:'SEO/GEO Evaluator', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — FINAL GATE: SEO+GEO scoring with pass/fail', n8nId:'QW8Jq667xvGKj0Yl', enabled:true,
     systemPrompt:'You are a hybrid SEO and GEO expert. Evaluate content for both traditional Google ranking and AI search engine citation-worthiness (ChatGPT, Perplexity, Gemini, Copilot). Provide pass/fail gate.',
-    userPrompt:'FINAL EVALUATION for article about \'{{keyword}}\'. Previous analysis: EEAT={{eeat_hcu_eav_analysis}} | Quality+FactCheck={{quality_fact_check}}.\n\nSEO DIMENSION (score 0-100): On-Page (25%) — title, meta, heading hierarchy, internal links, external links, schema markup. Technical (25%) — URL structure, image alt text, mobile structure, Core Web Vitals recommendations, freshness. Content (25%) — semantic keyword coverage, featured snippet optimization, depth vs competitors, topic clusters, entity coverage, FAQ readiness. UX (25%) — dwell time hooks, bounce rate reduction, scroll depth encouragement, CTA clarity.\n\nGEO DIMENSION (score 0-100): Citation-Worthiness (40%) — direct answer potential, source-worthiness, citation phrase optimization, information density, unique insight, statistical anchoring. ChatGPT (15%) — conversational query match, step-by-step clarity, comparison framing. Perplexity (15%) — source diversity, inline citation format, recency bias. Gemini (15%) — multimodal readiness, KG alignment, contextual depth. Copilot (15%) — action-oriented content, technical accuracy, integration potential.\n\nReturn JSON: seo_score, seo_breakdown:{on_page,technical,content,user_experience}, geo_score, geo_breakdown:{citation_worthiness,chatgpt,perplexity,gemini,copilot}, overall_score, pass (boolean, threshold 70), geo_citation_phrases:[], ai_engine_readiness:{chatgpt:{score,note},perplexity:{score,note},gemini:{score,note},copilot:{score,note}}, top_3_seo_fixes:[], top_3_geo_fixes:[], retry_prompt (string if <70), critical_blockers:[].', temp:0.2, maxTokens:2500, outputFormat:'json' },
+    userPrompt:'FINAL EVALUATION for article about \'{{keyword}}\'.\n\nTarget Keyword: {{keyword}}\nTitle Tag: {{title}}\nMeta Description: {{meta_description}}\nURL Slug: {{slug}}\nPlanned Internal Links: {{internal_links}}\nPlanned External Links: {{external_links}}\n\nArticle:\n{{article}}\n\nPrevious Analysis Context:\nEEAT: {{eeat_hcu_eav_analysis}}\nQuality+FactCheck: {{quality_fact_check}}\n\nEvaluation Scope Note: Title, meta description, and slug are provided above. Internal/external link planning is provided above. Image prompts and alt texts will be generated in Phase 3 upon gate approval. Evaluate content depth, snippet direct answers, table structuring, entity salience, and citation readiness objectively.\n\nSEO DIMENSION (score 0-100): On-Page (25%) — title, meta, heading hierarchy, link readiness, schema markup. Technical (25%) — URL structure, mobile readability, scannability, freshness. Content (25%) — semantic keyword coverage, featured snippet direct answers, comparison tables, entity depth, FAQ coverage. UX (25%) — dwell time hooks, bounce rate reduction, scannability, CTA clarity.\n\nGEO DIMENSION (score 0-100): Citation-Worthiness (40%) — direct answer density (<=40w under H2s), source-worthiness, citation phrases, statistical anchoring, unique insight. ChatGPT (15%) — conversational query match, step-by-step clarity, comparison framing. Perplexity (15%) — source diversity, inline citation format, recency. Gemini (15%) — multimodal readiness (tables, lists), KG alignment, contextual depth. Copilot (15%) — actionable guidance, technical precision.\n\nReturn JSON: seo_score, seo_breakdown:{on_page,technical,content,user_experience}, geo_score, geo_breakdown:{citation_worthiness,chatgpt,perplexity,gemini,copilot}, overall_score, pass (boolean, threshold 70), geo_citation_phrases:[], ai_engine_readiness:{chatgpt:{score,note},perplexity:{score,note},gemini:{score,note},copilot:{score,note}}, top_3_seo_fixes:[], top_3_geo_fixes:[], retry_prompt (string if <70), critical_blockers:[].', temp:0.2, maxTokens:2500, outputFormat:'json' },
   { id:'3A', name:'Image Prompts (Consolidated)', phase:2, model:'pesat-lite', provider:'pesat', desc:'Phase 3 — Featured + 3 supporting image prompts (1 step)', n8nId:'5w6XjbUVJMsM2qVn', enabled:true,
     systemPrompt:'You are an expert visual content strategist who creates detailed, consistent, high-quality image generation prompts for articles. All prompts share a unified visual style.',
     userPrompt:'Create 4 image prompts (1 Featured + 3 Supporting) based on {{article}}. Extract 1 Big Theme + 3 Sub-themes. Decide style: Photorealistic or Vector/2D Flat Illustration (justify, all consistent). 16:9, harmonious colors, clean composition, relevant elements only, friendly/professional tone, rich descriptions. Output: Style Decision, Prompt 1 (Featured with core concept), Prompts 2-4 (Supporting with referenced sections). Return JSON with all prompts.', temp:0.7, maxTokens:1500, outputFormat:'json' },
@@ -1043,7 +1043,7 @@ const upstreamMap = {
   '2H': { article: '2G' },
   '2I': { article: '2H', serp_data: '1A' },
   '2J': { article: '2H', eeat_hcu_eav_analysis: '2I' },
-  '2K': { article: '2H', eeat_hcu_eav_analysis: '2I', quality_fact_check: '2J' },
+  '2K': { article: '2H', title: '2A', meta_description: '2A', slug: '2A', eeat_hcu_eav_analysis: '2I', quality_fact_check: '2J' },
   '3A': { article: '2H' },
   '3B': { article: '2H', image_prompts: '3A' },
   '3C': { image_prompts: '3A', infographic_prompt: '3B' },
@@ -1179,6 +1179,84 @@ function syncInputsToWriter() {
   if (tiKw && document.getElementById('wv-keyword')) document.getElementById('wv-keyword').value = tiKw.value;
   if (tiLinks && document.getElementById('wv-internal-links')) document.getElementById('wv-internal-links').value = tiLinks.value;
   if (tiCta && document.getElementById('wv-cta')) document.getElementById('wv-cta').value = tiCta.value;
+}
+
+function updateDeliverableCards() {
+  const card = document.getElementById('wv-deliverable-card');
+  if (!card) return;
+
+  const articleCandidates = ['4B', '4A', '2H', '2G', '2D', '2C', '1E'];
+  let bestArticle = '';
+  for (const stepId of articleCandidates) {
+    const candidate = stepOutputs[stepId];
+    if (candidate && typeof candidate === 'string' && candidate.trim().length > 300 && !candidate.toLowerCase().includes('missing article text')) {
+      bestArticle = candidate.trim();
+      break;
+    }
+  }
+
+  const keyword = document.getElementById('ti-keyword') ? document.getElementById('ti-keyword').value.trim() : '';
+  let title = keyword ? (keyword.charAt(0).toUpperCase() + keyword.slice(1)) : 'Optimized Article';
+  let slug = keyword ? '/' + keyword.toLowerCase().replace(/\s+/g, '-') : '/article';
+
+  if (stepOutputs['2A']) {
+    try {
+      const parsed = JSON.parse(stepOutputs['2A'].replace(/```json\n?/g,'').replace(/```/g,'').trim());
+      if (parsed.title) title = parsed.title;
+      if (parsed.slug) slug = '/' + parsed.slug.replace(/^\//, '');
+    } catch {}
+  }
+
+  let seoScore = '--';
+  let geoScore = '--';
+  let passed = false;
+  let hasEval = false;
+
+  if (stepOutputs['2K']) {
+    try {
+      const evalData = JSON.parse(stepOutputs['2K'].replace(/```json\n?/g,'').replace(/```/g,'').trim());
+      seoScore = evalData.seo_score !== undefined ? `${evalData.seo_score} / 100` : '--';
+      geoScore = evalData.geo_score !== undefined ? `${evalData.geo_score} / 100` : '--';
+      passed = !!evalData.pass;
+      hasEval = true;
+    } catch {}
+  }
+
+  const titleEl = document.getElementById('wv-article-title');
+  if (titleEl) titleEl.textContent = title;
+  const metaEl = document.getElementById('wv-article-meta');
+  if (metaEl) metaEl.textContent = slug;
+
+  const wordCountEl = document.getElementById('wv-word-count');
+  if (wordCountEl) {
+    if (bestArticle) {
+      const words = bestArticle.trim().split(/\s+/).filter(Boolean).length;
+      wordCountEl.textContent = words.toLocaleString() + ' kata';
+    } else {
+      wordCountEl.textContent = '0 kata';
+    }
+  }
+
+  const seoEl = document.getElementById('wv-seo-score');
+  if (seoEl) seoEl.textContent = seoScore;
+  const geoEl = document.getElementById('wv-geo-score');
+  if (geoEl) geoEl.textContent = geoScore;
+
+  const evalStatusEl = document.getElementById('wv-eval-status');
+  if (evalStatusEl) {
+    if (hasEval) {
+      if (passed) {
+        evalStatusEl.className = 'px-2 py-0.5 rounded bg-emerald-900/60 text-emerald-300 text-xs font-bold border border-emerald-700/50';
+        evalStatusEl.textContent = 'PASSED GATE (>=70)';
+      } else {
+        evalStatusEl.className = 'px-2 py-0.5 rounded bg-amber-900/60 text-amber-300 text-xs font-bold border border-amber-700/50';
+        evalStatusEl.textContent = 'REVISION NEEDED (<70)';
+      }
+    } else {
+      evalStatusEl.className = 'px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700';
+      evalStatusEl.textContent = bestArticle ? 'DRAFT READY' : 'NOT STARTED';
+    }
+  }
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
@@ -1322,12 +1400,30 @@ function autoFillTestInputs(stepId, silent, force) {
   let filled = 0;
   for (const [variable, sourceId] of Object.entries(map)) {
     const fieldId = inputFieldMap[variable];
-    if (!fieldId || !stepOutputs[sourceId]) continue;
+    let resolvedSourceId = sourceId;
+    if (variable === 'article' && stepId === '2K') {
+      if (stepOutputs['4B']) resolvedSourceId = '4B';
+      else if (stepOutputs['4A']) resolvedSourceId = '4A';
+      else if (stepOutputs['2H']) resolvedSourceId = '2H';
+    }
+    if (!fieldId || !stepOutputs[resolvedSourceId]) continue;
     const el = document.getElementById(fieldId);
     if (!el) continue;
     if (!force && el.value.trim()) continue;
     const prevVal = el.value;
-    el.value = stepOutputs[sourceId];
+
+    let val = stepOutputs[resolvedSourceId];
+    if (typeof val === 'string' && (val.trim().startsWith('{') || val.includes('```json'))) {
+      try {
+        const cleaned = val.replace(/```json\n?/g, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+        if (parsed && parsed[variable] !== undefined) {
+          val = typeof parsed[variable] === 'object' ? JSON.stringify(parsed[variable]) : String(parsed[variable]);
+        }
+      } catch {}
+    }
+
+    el.value = val;
     if (el.value !== prevVal) filled++;
   }
   if (!silent) {
@@ -2129,8 +2225,11 @@ function viewFullArticleBundle() {
         </div>
         <div class="bg-slate-900 border border-surface-border rounded-xl p-5 space-y-3">
           <h4 class="font-bold text-white text-sm">Evaluator Gate Verdict</h4>
-          <p class="text-xs text-slate-300">Status: <span class="font-bold ${evalData.pass ? 'text-emerald-400' : 'text-amber-400'}">${evalData.pass ? '✅ PASSED QUALITY GATE (Threshold: 70)' : '⚠️ REVIEW NEEDED'}</span></p>
-          ${evalData.geo_citation_phrases ? `<div class="mt-2"><span class="text-xs font-semibold text-slate-400">GEO Citation Phrases:</span><ul class="list-disc ml-5 text-xs text-slate-300 mt-1 space-y-1">${evalData.geo_citation_phrases.map(p => `<li>${p}</li>`).join('')}</ul></div>` : ''}
+          <p class="text-xs text-slate-300">Status: <span class="font-bold ${evalData.pass ? 'text-emerald-400' : 'text-amber-400'}">${evalData.pass ? '✅ PASSED QUALITY GATE (Threshold: 70)' : '⚠️ REVIEW NEEDED (<70)'}</span></p>
+          ${evalData.geo_citation_phrases && evalData.geo_citation_phrases.length ? `<div class="mt-2"><span class="text-xs font-semibold text-slate-400">GEO Citation Phrases:</span><ul class="list-disc ml-5 text-xs text-slate-300 mt-1 space-y-1">${evalData.geo_citation_phrases.map(p => `<li>${p}</li>`).join('')}</ul></div>` : ''}
+          ${evalData.top_3_seo_fixes && evalData.top_3_seo_fixes.length ? `<div class="mt-3 pt-3 border-t border-slate-800"><span class="text-xs font-semibold text-emerald-400">Top SEO Recommendations:</span><ul class="list-disc ml-5 text-xs text-slate-300 mt-1 space-y-1">${evalData.top_3_seo_fixes.map(f => `<li>${f}</li>`).join('')}</ul></div>` : ''}
+          ${evalData.top_3_geo_fixes && evalData.top_3_geo_fixes.length ? `<div class="mt-3 pt-3 border-t border-slate-800"><span class="text-xs font-semibold text-blue-400">Top GEO Recommendations:</span><ul class="list-disc ml-5 text-xs text-slate-300 mt-1 space-y-1">${evalData.top_3_geo_fixes.map(f => `<li>${f}</li>`).join('')}</ul></div>` : ''}
+          ${evalData.critical_blockers && evalData.critical_blockers.length ? `<div class="mt-3 pt-3 border-t border-slate-800"><span class="text-xs font-semibold text-rose-400">Critical Blockers:</span><ul class="list-disc ml-5 text-xs text-rose-300 mt-1 space-y-1">${evalData.critical_blockers.map(b => `<li>${b}</li>`).join('')}</ul></div>` : ''}
         </div>
       `;
     } else {

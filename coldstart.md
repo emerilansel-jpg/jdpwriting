@@ -112,6 +112,6 @@ n8n Orchestrator (cQiEML8ZSa1UcmqH)
 
 - **Panjang Artikel**: ~2.800 kata (Target SOP: >2.000 kata)
 - **Skor SEO**: 85/100 · **Skor GEO**: 82/100 · **Overall**: 84/100
-- **Threshold Evaluator (2K)**: Lolos minimal 70
+- **Threshold Evaluator (2K)**: Lolos minimal 70 (Evaluator Gate dioptimasi dengan full metadata context + direct snippet answers di 1E)
 - **Status Otomatisasi**: 100% tersimpan ke Google Sheets tab `HISTORY`
-- **UX Usability Score**: 9.2 / 10 (Target >8.0 terpenuhi)
+- **UX Usability Score**: 9.2 / 10 (Target >8.0 terpenuhi; deliverable card reactive + audit recommendations display terpasang)
