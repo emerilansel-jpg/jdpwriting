@@ -1,6 +1,25 @@
 # Coldstart — JDP Writing Pipeline
 > Tracked from coldstart.md (v2.1)
 
+## 2026-09-21 — Logic Audit & Bug Fixes (PM Mode + GSD Audit Fix)
+- **Status:** COMPLETED & VERIFIED
+- **Files touched:** admin-ui.html, worker-deploy/worker.js, current-orchestrator.json, scripts/verify-fixes.js, coldstart.md, coldstart/coldstart.md
+- **Decisions & Fixes:**
+  - Decoupled `tokenLimit` in `runTestInternal`: Pipeline execution mode (`runAllSteps` / `runToHere`) honors full `s.maxTokens` (up to 5000 tokens), preventing article truncation at 500 tokens. `loadStep()` dynamically syncs the test slider to `s.maxTokens`.
+  - Fixed image prompt object rendering: Added `extractPromptText()` and `extractAltText()` helpers so structured JSON objects (`featured_image: { prompt, dimensions }`) render prompt text instead of `[object Object]`.
+  - De-duplicated `key-pesat` element in `#tab-quality` and fixed `loadKeys()` to properly populate `key-pesat` from localStorage.
+  - Added reactive deliverable updates: `showResults()`, `runToHere()`, and `runAllSteps()` invoke `updateDeliverableCards()`, updating card scores and header `#badge-word-count`.
+  - Added fallback in `autoFillTestInputs()` for `article` variable across waterfall `['4B', '4A', '2H', '2G', '2D', '2C', '1E']` to prevent empty inputs when testing downstream steps directly.
+  - Enforced Step 2K evaluator gate in `runAllSteps()` when score < 70 with user confirmation dialog.
+  - Synchronized `current-orchestrator.json` with live production n8n server (updated from 39 nodes to full 47 nodes with Code Merges and Bridges).
+  - Regenerated `worker-deploy/worker.js` with updated admin UI and clean ES module validation.
+  - Added runnable verification self-check `scripts/verify-fixes.js`.
+- **Issues:** Resolved.
+- **Next:** Deploy worker via `wrangler deploy` in `worker-deploy/` if updating live site.
+- **Deploy:** Ready in `worker-deploy/worker.js`.
+
+---
+
 ## 2026-09-16 — Evaluation UX, Logic Prompt & SEO/GEO Pipeline Improvement Plan
 - **Status:** COMPLETED & VERIFIED
 - **Files touched:** admin-ui.html, pipeline-prompts-v2.1.md, worker-deploy/worker.js, coldstart.md, coldstart/coldstart.md

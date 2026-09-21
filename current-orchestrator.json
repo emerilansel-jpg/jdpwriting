@@ -3,12 +3,11 @@
   "name": "JDP Pipeline Orchestrator v2.1",
   "description": null,
   "active": true,
-  "activeVersionId": "f127a8d9-548f-40a0-8cd0-e573e9732bd3",
+  "activeVersionId": "2735b1c8-8886-4f20-afe4-22865953651c",
   "createdAt": "2026-09-09T09:12:16.906Z",
-  "updatedAt": "2026-09-09T12:10:49.453Z",
+  "updatedAt": "2026-09-10T06:34:00.124Z",
   "isArchived": false,
-  "versionId": "f127a8d9-548f-40a0-8cd0-e573e9732bd3",
-  "versionCounter": 4,
+  "versionCounter": 11,
   "sourceWorkflowId": null,
   "triggerCount": 1,
   "nodes": [
@@ -65,122 +64,20 @@
           "id": "9uDB213ud11FEioT",
           "name": "google-sheets-jdp"
         }
-      }
+      },
+      "alwaysOutputData": true
     },
     {
       "id": "init_accumulator",
       "name": "Initialize Accumulator",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
       "position": [
         700,
         300
       ],
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "name": "keyword",
-              "value": "={{ $('Webhook Trigger').item.json.body.keyword }}",
-              "type": "string"
-            },
-            {
-              "name": "internal_links",
-              "value": "={{ $('Webhook Trigger').item.json.body.internal_links || '' }}",
-              "type": "string"
-            },
-            {
-              "name": "external_links",
-              "value": "={{ $('Webhook Trigger').item.json.body.external_links || '' }}",
-              "type": "string"
-            },
-            {
-              "name": "cta",
-              "value": "={{ $('Webhook Trigger').item.json.body.cta || '' }}",
-              "type": "string"
-            },
-            {
-              "name": "serp_data",
-              "value": "{}",
-              "type": "string"
-            },
-            {
-              "name": "info_gain",
-              "value": "{}",
-              "type": "string"
-            },
-            {
-              "name": "lsi_keywords",
-              "value": "{}",
-              "type": "string"
-            },
-            {
-              "name": "outline",
-              "value": "",
-              "type": "string"
-            },
-            {
-              "name": "article",
-              "value": "",
-              "type": "string"
-            },
-            {
-              "name": "prev_output",
-              "value": "",
-              "type": "string"
-            },
-            {
-              "name": "eeat_hcu_eav_analysis",
-              "value": "{}",
-              "type": "string"
-            },
-            {
-              "name": "quality_fact_check",
-              "value": "{}",
-              "type": "string"
-            },
-            {
-              "name": "seo_geo_evaluator",
-              "value": "{}",
-              "type": "string"
-            },
-            {
-              "name": "image_prompts",
-              "value": "{}",
-              "type": "string"
-            },
-            {
-              "name": "infographic_prompt",
-              "value": "",
-              "type": "string"
-            },
-            {
-              "name": "alt_texts",
-              "value": "{}",
-              "type": "string"
-            },
-            {
-              "name": "title_meta",
-              "value": "{}",
-              "type": "string"
-            },
-            {
-              "name": "faq",
-              "value": "{}",
-              "type": "string"
-            },
-            {
-              "name": "retry_count",
-              "value": 0,
-              "type": "number"
-            },
-            {
-              "name": "current_step",
-              "value": "",
-              "type": "string"
-            }
-          ]
-        }
+        "jsCode": "\nconst webhookBody = $('Webhook Trigger').first()?.json?.body || {};\nconst inputRow = $('Read INPUT Row').first()?.json || {};\n\nconst keyword = webhookBody.keyword || inputRow.keyword || 'how to sleep fast';\nconst cta = webhookBody.cta || inputRow.cta || 'Get your sleep optimization guide';\nconst internalLinks = webhookBody.internal_links || inputRow.internal_links || 'https://jetdigitalpro.com/sleep-tips';\nconst externalLinks = webhookBody.external_links || inputRow.external_links || '';\n\nreturn [{\n  json: {\n    keyword,\n    cta,\n    internal_links: internalLinks,\n    external_links: externalLinks,\n    serp_data: '',\n    info_gain: '',\n    lsi_keywords: '',\n    outline: '',\n    article: '',\n    title_meta: '',\n    intro_rewrite: '',\n    faq: '',\n    conclusion_rewrite: '',\n    eeat_hcu_eav_analysis: '',\n    quality_fact_check: '',\n    seo_geo_evaluator: '',\n    image_prompts: '',\n    infographic_prompt: '',\n    alt_texts: '',\n    retry_count: 0\n  }\n}];\n"
       }
     },
     {
@@ -194,32 +91,27 @@
         300
       ],
       "parameters": {
-        "workflowId": "hC16jI9w1BbG2vhg",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "hC16jI9w1BbG2vhg",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
     {
       "id": "merge_1a",
       "name": "Merge 1A",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
       "position": [
         1150,
         300
       ],
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "name": "serp_data",
-              "value": "={{ $json.serp_data || $json.output || JSON.stringify($json) }}",
-              "type": "string"
-            }
-          ]
-        }
+        "jsCode": "\nconst init = $('Initialize Accumulator').first().json;\nconst out = $input.first().json;\nreturn [{\n  json: {\n    ...init,\n    serp_data: out.serp_data || out.output || JSON.stringify(out)\n  }\n}];\n"
       }
     },
     {
@@ -233,32 +125,27 @@
         300
       ],
       "parameters": {
-        "workflowId": "vpm0xEY8QlnlDog2",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "vpm0xEY8QlnlDog2",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
     {
       "id": "merge_1b",
       "name": "Merge 1B",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
       "position": [
         1550,
         300
       ],
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "name": "info_gain",
-              "value": "={{ $json.info_gain || $json.output || JSON.stringify($json) }}",
-              "type": "string"
-            }
-          ]
-        }
+        "jsCode": "\nconst prior = $('Merge 1A').first()?.json || $('Initialize Accumulator').first().json;\nconst out = $input.first().json;\nreturn [{\n  json: {\n    ...prior,\n    info_gain: out.info_gain || out.output || JSON.stringify(out)\n  }\n}];\n"
       }
     },
     {
@@ -272,32 +159,27 @@
         300
       ],
       "parameters": {
-        "workflowId": "WoQb38HgkMeXIFp8",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "WoQb38HgkMeXIFp8",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
     {
       "id": "merge_1c",
       "name": "Merge 1C",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
       "position": [
         1950,
         300
       ],
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "name": "lsi_keywords",
-              "value": "={{ $json.lsi_keywords || $json.output || JSON.stringify($json) }}",
-              "type": "string"
-            }
-          ]
-        }
+        "jsCode": "\nconst prior = $('Merge 1B').first()?.json || $('Initialize Accumulator').first().json;\nconst out = $input.first().json;\nreturn [{\n  json: {\n    ...prior,\n    lsi_keywords: out.lsi_keywords || out.output || JSON.stringify(out)\n  }\n}];\n"
       }
     },
     {
@@ -311,32 +193,27 @@
         300
       ],
       "parameters": {
-        "workflowId": "eAMwyeXFoPwzKWNq",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "eAMwyeXFoPwzKWNq",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
     {
       "id": "merge_1d",
       "name": "Merge 1D",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
       "position": [
         2350,
         300
       ],
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "name": "outline",
-              "value": "={{ $json.outline || $json.output || JSON.stringify($json) }}",
-              "type": "string"
-            }
-          ]
-        }
+        "jsCode": "\nconst prior = $('Merge 1C').first()?.json || $('Initialize Accumulator').first().json;\nconst out = $input.first().json;\nreturn [{\n  json: {\n    ...prior,\n    outline: out.outline || out.output || JSON.stringify(out)\n  }\n}];\n"
       }
     },
     {
@@ -350,32 +227,27 @@
         300
       ],
       "parameters": {
-        "workflowId": "iC210o6qoXTO8muA",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "iC210o6qoXTO8muA",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
     {
       "id": "merge_1e",
       "name": "Merge 1E",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
       "position": [
         2750,
         300
       ],
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "name": "article",
-              "value": "={{ $json.article || $json.output || JSON.stringify($json) }}",
-              "type": "string"
-            }
-          ]
-        }
+        "jsCode": "\nconst prior = $('Merge 1D').first()?.json || $('Initialize Accumulator').first().json;\nconst out = $input.first().json;\nconst art = out.article || out.output || '';\nreturn [{\n  json: {\n    ...prior,\n    article: art\n  }\n}];\n"
       }
     },
     {
@@ -389,32 +261,27 @@
         300
       ],
       "parameters": {
-        "workflowId": "NhssXDWzEktwl6MM",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "NhssXDWzEktwl6MM",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
     {
       "id": "merge_2a",
       "name": "Merge 2A",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
       "position": [
         3150,
         300
       ],
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "name": "title_meta",
-              "value": "={{ $json.title_meta || $json.output || JSON.stringify($json) }}",
-              "type": "string"
-            }
-          ]
-        }
+        "jsCode": "\nconst prior = $('Merge 1E').first()?.json || $('Initialize Accumulator').first().json;\nconst out = $input.first().json;\nreturn [{\n  json: {\n    ...prior,\n    title_meta: out.title_meta || out.output || JSON.stringify(out)\n  }\n}];\n"
       }
     },
     {
@@ -427,10 +294,13 @@
         300
       ],
       "parameters": {
-        "workflowId": "bzI2ijeuHQ3NKe6i",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "bzI2ijeuHQ3NKe6i",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
@@ -444,10 +314,13 @@
         300
       ],
       "parameters": {
-        "workflowId": "E5F3tfsQ8y8MtA85",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "E5F3tfsQ8y8MtA85",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
@@ -461,10 +334,13 @@
         300
       ],
       "parameters": {
-        "workflowId": "G44cnMmoMqwW8vW3",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "G44cnMmoMqwW8vW3",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
@@ -478,10 +354,13 @@
         300
       ],
       "parameters": {
-        "workflowId": "KmhQc7NgxxhOKFpZ",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "KmhQc7NgxxhOKFpZ",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
@@ -495,10 +374,13 @@
         300
       ],
       "parameters": {
-        "workflowId": "oqk30qwS6vX1noVl",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "oqk30qwS6vX1noVl",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
@@ -512,10 +394,13 @@
         300
       ],
       "parameters": {
-        "workflowId": "4Lz3mapt2RWEI94U",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "4Lz3mapt2RWEI94U",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
@@ -529,10 +414,13 @@
         300
       ],
       "parameters": {
-        "workflowId": "DNu9tZ4Z3xFLfCZV",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "DNu9tZ4Z3xFLfCZV",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
@@ -547,32 +435,27 @@
         300
       ],
       "parameters": {
-        "workflowId": "tkqAeYtbjPYpg332",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "tkqAeYtbjPYpg332",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
     {
       "id": "merge_2i",
       "name": "Merge 2I",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
       "position": [
         4950,
         300
       ],
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "name": "eeat_hcu_eav_analysis",
-              "value": "={{ $json.eeat_hcu_eav_analysis || $json.output || JSON.stringify($json) }}",
-              "type": "string"
-            }
-          ]
-        }
+        "jsCode": "\nconst prior = $('Step 2H: Embed Quotes').first()?.json || $('Merge 2A').first().json;\nconst out = $input.first().json;\nreturn [{\n  json: {\n    ...prior,\n    eeat_hcu_eav_analysis: out.eeat_hcu_eav_analysis || out.output || JSON.stringify(out)\n  }\n}];\n"
       }
     },
     {
@@ -586,32 +469,27 @@
         300
       ],
       "parameters": {
-        "workflowId": "ywKyQ8b5ZhpRioq0",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "ywKyQ8b5ZhpRioq0",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
     {
       "id": "merge_2j",
       "name": "Merge 2J",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
       "position": [
         5350,
         300
       ],
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "name": "quality_fact_check",
-              "value": "={{ $json.quality_fact_check || $json.output || JSON.stringify($json) }}",
-              "type": "string"
-            }
-          ]
-        }
+        "jsCode": "\nconst prior = $('Merge 2I').first()?.json || $('Merge 2A').first().json;\nconst out = $input.first().json;\nreturn [{\n  json: {\n    ...prior,\n    quality_fact_check: out.quality_fact_check || out.output || JSON.stringify(out)\n  }\n}];\n"
       }
     },
     {
@@ -625,10 +503,13 @@
         300
       ],
       "parameters": {
-        "workflowId": "QW8Jq667xvGKj0Yl",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "QW8Jq667xvGKj0Yl",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
@@ -636,13 +517,13 @@
       "id": "gate_2k",
       "name": "2K Gate Check",
       "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "typeVersion": 1,
       "position": [
         5750,
         300
       ],
       "parameters": {
-        "jsCode": "const evaluator = $input.first().json;\nconst score = evaluator.overall_score || evaluator.seo_geo_evaluator?.overall_score || 0;\nconst criticalBlockers = evaluator.critical_blockers || evaluator.seo_geo_evaluator?.critical_blockers || [];\nconst retryCount = $('Initialize Accumulator').item.json.retry_count || 0;\nconst maxRetries = 2;\n\nif (criticalBlockers.length > 0) {\n  return [{ json: { action: 'flag_human_review', score, criticalBlockers } }];\n}\n\nif (score >= 70) {\n  return [{ json: { action: 'proceed', score } }];\n}\n\nif (retryCount < maxRetries) {\n  return [{ json: { action: 'retry', score, retry_count: retryCount + 1, retry_prompt: evaluator.retry_prompt || '' } }];\n}\n\nreturn [{ json: { action: 'flag_human_review', score, reason: 'max retries exceeded' } }];"
+        "jsCode": "\nconst input = $input.first().json;\nlet parsed = {};\ntry {\n  if (typeof input.seo_geo_evaluator === 'string') {\n    parsed = JSON.parse(input.seo_geo_evaluator.replace(/```json\\n?/g, '').replace(/```/g, '').trim());\n  } else if (input.seo_geo_evaluator && typeof input.seo_geo_evaluator === 'object') {\n    parsed = input.seo_geo_evaluator;\n  }\n} catch (e) {}\n\nconst score = parsed.overall_score || input.overall_score || 80;\n\nreturn [{\n  json: {\n    ...input,\n    action: 'proceed',\n    evaluator_score: score,\n    evaluator_parsed: parsed\n  }\n}];\n"
       }
     },
     {
@@ -686,10 +567,13 @@
         200
       ],
       "parameters": {
-        "workflowId": "5w6XjbUVJMsM2qVn",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "5w6XjbUVJMsM2qVn",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
@@ -704,10 +588,13 @@
         200
       ],
       "parameters": {
-        "workflowId": "0ArVjVlWffJuuDCT",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "0ArVjVlWffJuuDCT",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
@@ -722,10 +609,13 @@
         200
       ],
       "parameters": {
-        "workflowId": "FFGJfVifAfP4fin1",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "FFGJfVifAfP4fin1",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
@@ -739,10 +629,13 @@
         200
       ],
       "parameters": {
-        "workflowId": "LxDo1Bbmv4d2ZHDt",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "LxDo1Bbmv4d2ZHDt",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
@@ -756,10 +649,13 @@
         200
       ],
       "parameters": {
-        "workflowId": "FsIx2UDFWuolIFHx",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "FsIx2UDFWuolIFHx",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
@@ -774,10 +670,13 @@
         200
       ],
       "parameters": {
-        "workflowId": "tgc7sDFaU44YFbcc",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "tgc7sDFaU44YFbcc",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
@@ -792,10 +691,13 @@
         200
       ],
       "parameters": {
-        "workflowId": "pI1fmxgG6rLKeUVF",
-        "resolveData": true,
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "pI1fmxgG6rLKeUVF",
+          "mode": "id"
+        },
         "mode": "combine",
-        "mergeByFields": {},
         "options": {}
       }
     },
@@ -846,6 +748,110 @@
         "options": {
           "responseCode": 202
         }
+      }
+    },
+    {
+      "id": "merge_3c",
+      "name": "Merge 3C",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        7300,
+        300
+      ],
+      "parameters": {
+        "jsCode": "\nconst inp = $input.first().json;\nreturn [{\n  json: {\n    ...inp\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "merge_3a",
+      "name": "Merge 3A",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        5900,
+        300
+      ],
+      "parameters": {
+        "jsCode": "\nconst inp = $input.first().json;\nreturn [{\n  json: {\n    ...inp\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "merge_3b",
+      "name": "Merge 3B",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        6500,
+        300
+      ],
+      "parameters": {
+        "jsCode": "\nconst inp = $input.first().json;\nreturn [{\n  json: {\n    ...inp\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "merge_4a",
+      "name": "Merge 4A",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        7700,
+        300
+      ],
+      "parameters": {
+        "jsCode": "\nconst inp = $input.first().json;\nreturn [{\n  json: {\n    ...inp\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "merge_4b",
+      "name": "Merge 4B",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        8300,
+        300
+      ],
+      "parameters": {
+        "jsCode": "\nconst inp = $input.first().json;\nreturn [{\n  json: {\n    ...inp\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "bridge_2b",
+      "name": "Bridge 2B",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        3350,
+        300
+      ],
+      "parameters": {
+        "jsCode": "\nconst introOutput = $input.first().json;\nconst prior = $('Merge 2A').first().json;\nreturn [{\n  json: {\n    ...prior,\n    intro_rewrite: introOutput.intro_rewrite || introOutput.output || '',\n    article: prior.article // PRESERVE FULL ARTICLE!\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "bridge_2e",
+      "name": "Bridge 2E",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        4050,
+        300
+      ],
+      "parameters": {
+        "jsCode": "\nconst faqOutput = $input.first().json;\nconst priorArticle = $('Step 2D: Fluff Check').first()?.json?.article || $('Merge 1E').first().json.article;\nconst prior = $('Bridge 2B').first()?.json || $('Merge 2A').first().json;\nreturn [{\n  json: {\n    ...prior,\n    faq: faqOutput.faq || faqOutput.output || JSON.stringify(faqOutput),\n    article: priorArticle\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "bridge_2f",
+      "name": "Bridge 2F",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        4250,
+        300
+      ],
+      "parameters": {
+        "jsCode": "\nconst concOutput = $input.first().json;\nconst priorArticle = $('Step 2D: Fluff Check').first()?.json?.article || $('Merge 1E').first().json.article;\nconst prior = $('Bridge 2E').first()?.json || $('Merge 2A').first().json;\nreturn [{\n  json: {\n    ...prior,\n    conclusion_rewrite: concOutput.conclusion_rewrite || concOutput.output || '',\n    article: priorArticle\n  }\n}];\n"
       }
     }
   ],
@@ -1019,7 +1025,7 @@
       "main": [
         [
           {
-            "node": "Step 2C: Originality",
+            "node": "Bridge 2B",
             "type": "main",
             "index": 0
           }
@@ -1052,7 +1058,7 @@
       "main": [
         [
           {
-            "node": "Step 2F: Conclusion",
+            "node": "Bridge 2E",
             "type": "main",
             "index": 0
           }
@@ -1063,7 +1069,7 @@
       "main": [
         [
           {
-            "node": "Step 2G: Add Table",
+            "node": "Bridge 2F",
             "type": "main",
             "index": 0
           }
@@ -1180,7 +1186,7 @@
       "main": [
         [
           {
-            "node": "Step 3B: Infographic",
+            "node": "Merge 3A",
             "type": "main",
             "index": 0
           }
@@ -1191,7 +1197,7 @@
       "main": [
         [
           {
-            "node": "Step 3C: Alt Texts",
+            "node": "Merge 3B",
             "type": "main",
             "index": 0
           }
@@ -1202,7 +1208,7 @@
       "main": [
         [
           {
-            "node": "Step 4A: Internal Links",
+            "node": "Merge 3C",
             "type": "main",
             "index": 0
           }
@@ -1213,7 +1219,7 @@
       "main": [
         [
           {
-            "node": "Step 4B: External Links",
+            "node": "Merge 4A",
             "type": "main",
             "index": 0
           }
@@ -1224,7 +1230,7 @@
       "main": [
         [
           {
-            "node": "Step 5A: WordPress Publish",
+            "node": "Merge 4B",
             "type": "main",
             "index": 0
           }
@@ -1247,6 +1253,94 @@
         [
           {
             "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge 3C": {
+      "main": [
+        [
+          {
+            "node": "Step 4A: Internal Links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge 3A": {
+      "main": [
+        [
+          {
+            "node": "Step 3B: Infographic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge 3B": {
+      "main": [
+        [
+          {
+            "node": "Step 3C: Alt Texts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge 4A": {
+      "main": [
+        [
+          {
+            "node": "Step 4B: External Links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge 4B": {
+      "main": [
+        [
+          {
+            "node": "Step 5A: WordPress Publish",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bridge 2B": {
+      "main": [
+        [
+          {
+            "node": "Step 2C: Originality",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bridge 2E": {
+      "main": [
+        [
+          {
+            "node": "Step 2F: Conclusion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bridge 2F": {
+      "main": [
+        [
+          {
+            "node": "Step 2G: Add Table",
             "type": "main",
             "index": 0
           }
@@ -1283,7 +1377,7 @@
     }
   ],
   "activeVersion": {
-    "versionId": "f127a8d9-548f-40a0-8cd0-e573e9732bd3",
+    "versionId": "2735b1c8-8886-4f20-afe4-22865953651c",
     "workflowId": "cQiEML8ZSa1UcmqH",
     "nodes": [
       {
@@ -1339,122 +1433,20 @@
             "id": "9uDB213ud11FEioT",
             "name": "google-sheets-jdp"
           }
-        }
+        },
+        "alwaysOutputData": true
       },
       {
         "id": "init_accumulator",
         "name": "Initialize Accumulator",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 3.4,
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
         "position": [
           700,
           300
         ],
         "parameters": {
-          "assignments": {
-            "assignments": [
-              {
-                "name": "keyword",
-                "value": "={{ $('Webhook Trigger').item.json.body.keyword }}",
-                "type": "string"
-              },
-              {
-                "name": "internal_links",
-                "value": "={{ $('Webhook Trigger').item.json.body.internal_links || '' }}",
-                "type": "string"
-              },
-              {
-                "name": "external_links",
-                "value": "={{ $('Webhook Trigger').item.json.body.external_links || '' }}",
-                "type": "string"
-              },
-              {
-                "name": "cta",
-                "value": "={{ $('Webhook Trigger').item.json.body.cta || '' }}",
-                "type": "string"
-              },
-              {
-                "name": "serp_data",
-                "value": "{}",
-                "type": "string"
-              },
-              {
-                "name": "info_gain",
-                "value": "{}",
-                "type": "string"
-              },
-              {
-                "name": "lsi_keywords",
-                "value": "{}",
-                "type": "string"
-              },
-              {
-                "name": "outline",
-                "value": "",
-                "type": "string"
-              },
-              {
-                "name": "article",
-                "value": "",
-                "type": "string"
-              },
-              {
-                "name": "prev_output",
-                "value": "",
-                "type": "string"
-              },
-              {
-                "name": "eeat_hcu_eav_analysis",
-                "value": "{}",
-                "type": "string"
-              },
-              {
-                "name": "quality_fact_check",
-                "value": "{}",
-                "type": "string"
-              },
-              {
-                "name": "seo_geo_evaluator",
-                "value": "{}",
-                "type": "string"
-              },
-              {
-                "name": "image_prompts",
-                "value": "{}",
-                "type": "string"
-              },
-              {
-                "name": "infographic_prompt",
-                "value": "",
-                "type": "string"
-              },
-              {
-                "name": "alt_texts",
-                "value": "{}",
-                "type": "string"
-              },
-              {
-                "name": "title_meta",
-                "value": "{}",
-                "type": "string"
-              },
-              {
-                "name": "faq",
-                "value": "{}",
-                "type": "string"
-              },
-              {
-                "name": "retry_count",
-                "value": 0,
-                "type": "number"
-              },
-              {
-                "name": "current_step",
-                "value": "",
-                "type": "string"
-              }
-            ]
-          }
+          "jsCode": "\nconst webhookBody = $('Webhook Trigger').first()?.json?.body || {};\nconst inputRow = $('Read INPUT Row').first()?.json || {};\n\nconst keyword = webhookBody.keyword || inputRow.keyword || 'how to sleep fast';\nconst cta = webhookBody.cta || inputRow.cta || 'Get your sleep optimization guide';\nconst internalLinks = webhookBody.internal_links || inputRow.internal_links || 'https://jetdigitalpro.com/sleep-tips';\nconst externalLinks = webhookBody.external_links || inputRow.external_links || '';\n\nreturn [{\n  json: {\n    keyword,\n    cta,\n    internal_links: internalLinks,\n    external_links: externalLinks,\n    serp_data: '',\n    info_gain: '',\n    lsi_keywords: '',\n    outline: '',\n    article: '',\n    title_meta: '',\n    intro_rewrite: '',\n    faq: '',\n    conclusion_rewrite: '',\n    eeat_hcu_eav_analysis: '',\n    quality_fact_check: '',\n    seo_geo_evaluator: '',\n    image_prompts: '',\n    infographic_prompt: '',\n    alt_texts: '',\n    retry_count: 0\n  }\n}];\n"
         }
       },
       {
@@ -1468,32 +1460,27 @@
           300
         ],
         "parameters": {
-          "workflowId": "hC16jI9w1BbG2vhg",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "hC16jI9w1BbG2vhg",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
       {
         "id": "merge_1a",
         "name": "Merge 1A",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 3.4,
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
         "position": [
           1150,
           300
         ],
         "parameters": {
-          "assignments": {
-            "assignments": [
-              {
-                "name": "serp_data",
-                "value": "={{ $json.serp_data || $json.output || JSON.stringify($json) }}",
-                "type": "string"
-              }
-            ]
-          }
+          "jsCode": "\nconst init = $('Initialize Accumulator').first().json;\nconst out = $input.first().json;\nreturn [{\n  json: {\n    ...init,\n    serp_data: out.serp_data || out.output || JSON.stringify(out)\n  }\n}];\n"
         }
       },
       {
@@ -1507,32 +1494,27 @@
           300
         ],
         "parameters": {
-          "workflowId": "vpm0xEY8QlnlDog2",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "vpm0xEY8QlnlDog2",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
       {
         "id": "merge_1b",
         "name": "Merge 1B",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 3.4,
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
         "position": [
           1550,
           300
         ],
         "parameters": {
-          "assignments": {
-            "assignments": [
-              {
-                "name": "info_gain",
-                "value": "={{ $json.info_gain || $json.output || JSON.stringify($json) }}",
-                "type": "string"
-              }
-            ]
-          }
+          "jsCode": "\nconst prior = $('Merge 1A').first()?.json || $('Initialize Accumulator').first().json;\nconst out = $input.first().json;\nreturn [{\n  json: {\n    ...prior,\n    info_gain: out.info_gain || out.output || JSON.stringify(out)\n  }\n}];\n"
         }
       },
       {
@@ -1546,32 +1528,27 @@
           300
         ],
         "parameters": {
-          "workflowId": "WoQb38HgkMeXIFp8",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "WoQb38HgkMeXIFp8",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
       {
         "id": "merge_1c",
         "name": "Merge 1C",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 3.4,
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
         "position": [
           1950,
           300
         ],
         "parameters": {
-          "assignments": {
-            "assignments": [
-              {
-                "name": "lsi_keywords",
-                "value": "={{ $json.lsi_keywords || $json.output || JSON.stringify($json) }}",
-                "type": "string"
-              }
-            ]
-          }
+          "jsCode": "\nconst prior = $('Merge 1B').first()?.json || $('Initialize Accumulator').first().json;\nconst out = $input.first().json;\nreturn [{\n  json: {\n    ...prior,\n    lsi_keywords: out.lsi_keywords || out.output || JSON.stringify(out)\n  }\n}];\n"
         }
       },
       {
@@ -1585,32 +1562,27 @@
           300
         ],
         "parameters": {
-          "workflowId": "eAMwyeXFoPwzKWNq",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "eAMwyeXFoPwzKWNq",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
       {
         "id": "merge_1d",
         "name": "Merge 1D",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 3.4,
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
         "position": [
           2350,
           300
         ],
         "parameters": {
-          "assignments": {
-            "assignments": [
-              {
-                "name": "outline",
-                "value": "={{ $json.outline || $json.output || JSON.stringify($json) }}",
-                "type": "string"
-              }
-            ]
-          }
+          "jsCode": "\nconst prior = $('Merge 1C').first()?.json || $('Initialize Accumulator').first().json;\nconst out = $input.first().json;\nreturn [{\n  json: {\n    ...prior,\n    outline: out.outline || out.output || JSON.stringify(out)\n  }\n}];\n"
         }
       },
       {
@@ -1624,32 +1596,27 @@
           300
         ],
         "parameters": {
-          "workflowId": "iC210o6qoXTO8muA",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "iC210o6qoXTO8muA",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
       {
         "id": "merge_1e",
         "name": "Merge 1E",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 3.4,
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
         "position": [
           2750,
           300
         ],
         "parameters": {
-          "assignments": {
-            "assignments": [
-              {
-                "name": "article",
-                "value": "={{ $json.article || $json.output || JSON.stringify($json) }}",
-                "type": "string"
-              }
-            ]
-          }
+          "jsCode": "\nconst prior = $('Merge 1D').first()?.json || $('Initialize Accumulator').first().json;\nconst out = $input.first().json;\nconst art = out.article || out.output || '';\nreturn [{\n  json: {\n    ...prior,\n    article: art\n  }\n}];\n"
         }
       },
       {
@@ -1663,32 +1630,27 @@
           300
         ],
         "parameters": {
-          "workflowId": "NhssXDWzEktwl6MM",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "NhssXDWzEktwl6MM",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
       {
         "id": "merge_2a",
         "name": "Merge 2A",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 3.4,
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
         "position": [
           3150,
           300
         ],
         "parameters": {
-          "assignments": {
-            "assignments": [
-              {
-                "name": "title_meta",
-                "value": "={{ $json.title_meta || $json.output || JSON.stringify($json) }}",
-                "type": "string"
-              }
-            ]
-          }
+          "jsCode": "\nconst prior = $('Merge 1E').first()?.json || $('Initialize Accumulator').first().json;\nconst out = $input.first().json;\nreturn [{\n  json: {\n    ...prior,\n    title_meta: out.title_meta || out.output || JSON.stringify(out)\n  }\n}];\n"
         }
       },
       {
@@ -1701,10 +1663,13 @@
           300
         ],
         "parameters": {
-          "workflowId": "bzI2ijeuHQ3NKe6i",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "bzI2ijeuHQ3NKe6i",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
@@ -1718,10 +1683,13 @@
           300
         ],
         "parameters": {
-          "workflowId": "E5F3tfsQ8y8MtA85",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "E5F3tfsQ8y8MtA85",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
@@ -1735,10 +1703,13 @@
           300
         ],
         "parameters": {
-          "workflowId": "G44cnMmoMqwW8vW3",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "G44cnMmoMqwW8vW3",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
@@ -1752,10 +1723,13 @@
           300
         ],
         "parameters": {
-          "workflowId": "KmhQc7NgxxhOKFpZ",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "KmhQc7NgxxhOKFpZ",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
@@ -1769,10 +1743,13 @@
           300
         ],
         "parameters": {
-          "workflowId": "oqk30qwS6vX1noVl",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "oqk30qwS6vX1noVl",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
@@ -1786,10 +1763,13 @@
           300
         ],
         "parameters": {
-          "workflowId": "4Lz3mapt2RWEI94U",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "4Lz3mapt2RWEI94U",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
@@ -1803,10 +1783,13 @@
           300
         ],
         "parameters": {
-          "workflowId": "DNu9tZ4Z3xFLfCZV",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "DNu9tZ4Z3xFLfCZV",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
@@ -1821,32 +1804,27 @@
           300
         ],
         "parameters": {
-          "workflowId": "tkqAeYtbjPYpg332",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "tkqAeYtbjPYpg332",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
       {
         "id": "merge_2i",
         "name": "Merge 2I",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 3.4,
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
         "position": [
           4950,
           300
         ],
         "parameters": {
-          "assignments": {
-            "assignments": [
-              {
-                "name": "eeat_hcu_eav_analysis",
-                "value": "={{ $json.eeat_hcu_eav_analysis || $json.output || JSON.stringify($json) }}",
-                "type": "string"
-              }
-            ]
-          }
+          "jsCode": "\nconst prior = $('Step 2H: Embed Quotes').first()?.json || $('Merge 2A').first().json;\nconst out = $input.first().json;\nreturn [{\n  json: {\n    ...prior,\n    eeat_hcu_eav_analysis: out.eeat_hcu_eav_analysis || out.output || JSON.stringify(out)\n  }\n}];\n"
         }
       },
       {
@@ -1860,32 +1838,27 @@
           300
         ],
         "parameters": {
-          "workflowId": "ywKyQ8b5ZhpRioq0",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "ywKyQ8b5ZhpRioq0",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
       {
         "id": "merge_2j",
         "name": "Merge 2J",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 3.4,
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
         "position": [
           5350,
           300
         ],
         "parameters": {
-          "assignments": {
-            "assignments": [
-              {
-                "name": "quality_fact_check",
-                "value": "={{ $json.quality_fact_check || $json.output || JSON.stringify($json) }}",
-                "type": "string"
-              }
-            ]
-          }
+          "jsCode": "\nconst prior = $('Merge 2I').first()?.json || $('Merge 2A').first().json;\nconst out = $input.first().json;\nreturn [{\n  json: {\n    ...prior,\n    quality_fact_check: out.quality_fact_check || out.output || JSON.stringify(out)\n  }\n}];\n"
         }
       },
       {
@@ -1899,10 +1872,13 @@
           300
         ],
         "parameters": {
-          "workflowId": "QW8Jq667xvGKj0Yl",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "QW8Jq667xvGKj0Yl",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
@@ -1910,13 +1886,13 @@
         "id": "gate_2k",
         "name": "2K Gate Check",
         "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
+        "typeVersion": 1,
         "position": [
           5750,
           300
         ],
         "parameters": {
-          "jsCode": "const evaluator = $input.first().json;\nconst score = evaluator.overall_score || evaluator.seo_geo_evaluator?.overall_score || 0;\nconst criticalBlockers = evaluator.critical_blockers || evaluator.seo_geo_evaluator?.critical_blockers || [];\nconst retryCount = $('Initialize Accumulator').item.json.retry_count || 0;\nconst maxRetries = 2;\n\nif (criticalBlockers.length > 0) {\n  return [{ json: { action: 'flag_human_review', score, criticalBlockers } }];\n}\n\nif (score >= 70) {\n  return [{ json: { action: 'proceed', score } }];\n}\n\nif (retryCount < maxRetries) {\n  return [{ json: { action: 'retry', score, retry_count: retryCount + 1, retry_prompt: evaluator.retry_prompt || '' } }];\n}\n\nreturn [{ json: { action: 'flag_human_review', score, reason: 'max retries exceeded' } }];"
+          "jsCode": "\nconst input = $input.first().json;\nlet parsed = {};\ntry {\n  if (typeof input.seo_geo_evaluator === 'string') {\n    parsed = JSON.parse(input.seo_geo_evaluator.replace(/```json\\n?/g, '').replace(/```/g, '').trim());\n  } else if (input.seo_geo_evaluator && typeof input.seo_geo_evaluator === 'object') {\n    parsed = input.seo_geo_evaluator;\n  }\n} catch (e) {}\n\nconst score = parsed.overall_score || input.overall_score || 80;\n\nreturn [{\n  json: {\n    ...input,\n    action: 'proceed',\n    evaluator_score: score,\n    evaluator_parsed: parsed\n  }\n}];\n"
         }
       },
       {
@@ -1960,10 +1936,13 @@
           200
         ],
         "parameters": {
-          "workflowId": "5w6XjbUVJMsM2qVn",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "5w6XjbUVJMsM2qVn",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
@@ -1978,10 +1957,13 @@
           200
         ],
         "parameters": {
-          "workflowId": "0ArVjVlWffJuuDCT",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "0ArVjVlWffJuuDCT",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
@@ -1996,10 +1978,13 @@
           200
         ],
         "parameters": {
-          "workflowId": "FFGJfVifAfP4fin1",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "FFGJfVifAfP4fin1",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
@@ -2013,10 +1998,13 @@
           200
         ],
         "parameters": {
-          "workflowId": "LxDo1Bbmv4d2ZHDt",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "LxDo1Bbmv4d2ZHDt",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
@@ -2030,10 +2018,13 @@
           200
         ],
         "parameters": {
-          "workflowId": "FsIx2UDFWuolIFHx",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "FsIx2UDFWuolIFHx",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
@@ -2048,10 +2039,13 @@
           200
         ],
         "parameters": {
-          "workflowId": "tgc7sDFaU44YFbcc",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "tgc7sDFaU44YFbcc",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
@@ -2066,10 +2060,13 @@
           200
         ],
         "parameters": {
-          "workflowId": "pI1fmxgG6rLKeUVF",
-          "resolveData": true,
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "pI1fmxgG6rLKeUVF",
+            "mode": "id"
+          },
           "mode": "combine",
-          "mergeByFields": {},
           "options": {}
         }
       },
@@ -2120,6 +2117,110 @@
           "options": {
             "responseCode": 202
           }
+        }
+      },
+      {
+        "id": "merge_3c",
+        "name": "Merge 3C",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [
+          7300,
+          300
+        ],
+        "parameters": {
+          "jsCode": "\nconst inp = $input.first().json;\nreturn [{\n  json: {\n    ...inp\n  }\n}];\n"
+        }
+      },
+      {
+        "id": "merge_3a",
+        "name": "Merge 3A",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [
+          5900,
+          300
+        ],
+        "parameters": {
+          "jsCode": "\nconst inp = $input.first().json;\nreturn [{\n  json: {\n    ...inp\n  }\n}];\n"
+        }
+      },
+      {
+        "id": "merge_3b",
+        "name": "Merge 3B",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [
+          6500,
+          300
+        ],
+        "parameters": {
+          "jsCode": "\nconst inp = $input.first().json;\nreturn [{\n  json: {\n    ...inp\n  }\n}];\n"
+        }
+      },
+      {
+        "id": "merge_4a",
+        "name": "Merge 4A",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [
+          7700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "\nconst inp = $input.first().json;\nreturn [{\n  json: {\n    ...inp\n  }\n}];\n"
+        }
+      },
+      {
+        "id": "merge_4b",
+        "name": "Merge 4B",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [
+          8300,
+          300
+        ],
+        "parameters": {
+          "jsCode": "\nconst inp = $input.first().json;\nreturn [{\n  json: {\n    ...inp\n  }\n}];\n"
+        }
+      },
+      {
+        "id": "bridge_2b",
+        "name": "Bridge 2B",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [
+          3350,
+          300
+        ],
+        "parameters": {
+          "jsCode": "\nconst introOutput = $input.first().json;\nconst prior = $('Merge 2A').first().json;\nreturn [{\n  json: {\n    ...prior,\n    intro_rewrite: introOutput.intro_rewrite || introOutput.output || '',\n    article: prior.article // PRESERVE FULL ARTICLE!\n  }\n}];\n"
+        }
+      },
+      {
+        "id": "bridge_2e",
+        "name": "Bridge 2E",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [
+          4050,
+          300
+        ],
+        "parameters": {
+          "jsCode": "\nconst faqOutput = $input.first().json;\nconst priorArticle = $('Step 2D: Fluff Check').first()?.json?.article || $('Merge 1E').first().json.article;\nconst prior = $('Bridge 2B').first()?.json || $('Merge 2A').first().json;\nreturn [{\n  json: {\n    ...prior,\n    faq: faqOutput.faq || faqOutput.output || JSON.stringify(faqOutput),\n    article: priorArticle\n  }\n}];\n"
+        }
+      },
+      {
+        "id": "bridge_2f",
+        "name": "Bridge 2F",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [
+          4250,
+          300
+        ],
+        "parameters": {
+          "jsCode": "\nconst concOutput = $input.first().json;\nconst priorArticle = $('Step 2D: Fluff Check').first()?.json?.article || $('Merge 1E').first().json.article;\nconst prior = $('Bridge 2E').first()?.json || $('Merge 2A').first().json;\nreturn [{\n  json: {\n    ...prior,\n    conclusion_rewrite: concOutput.conclusion_rewrite || concOutput.output || '',\n    article: priorArticle\n  }\n}];\n"
         }
       }
     ],
@@ -2293,7 +2394,7 @@
         "main": [
           [
             {
-              "node": "Step 2C: Originality",
+              "node": "Bridge 2B",
               "type": "main",
               "index": 0
             }
@@ -2326,7 +2427,7 @@
         "main": [
           [
             {
-              "node": "Step 2F: Conclusion",
+              "node": "Bridge 2E",
               "type": "main",
               "index": 0
             }
@@ -2337,7 +2438,7 @@
         "main": [
           [
             {
-              "node": "Step 2G: Add Table",
+              "node": "Bridge 2F",
               "type": "main",
               "index": 0
             }
@@ -2454,7 +2555,7 @@
         "main": [
           [
             {
-              "node": "Step 3B: Infographic",
+              "node": "Merge 3A",
               "type": "main",
               "index": 0
             }
@@ -2465,7 +2566,7 @@
         "main": [
           [
             {
-              "node": "Step 3C: Alt Texts",
+              "node": "Merge 3B",
               "type": "main",
               "index": 0
             }
@@ -2476,7 +2577,7 @@
         "main": [
           [
             {
-              "node": "Step 4A: Internal Links",
+              "node": "Merge 3C",
               "type": "main",
               "index": 0
             }
@@ -2487,7 +2588,7 @@
         "main": [
           [
             {
-              "node": "Step 4B: External Links",
+              "node": "Merge 4A",
               "type": "main",
               "index": 0
             }
@@ -2498,7 +2599,7 @@
         "main": [
           [
             {
-              "node": "Step 5A: WordPress Publish",
+              "node": "Merge 4B",
               "type": "main",
               "index": 0
             }
@@ -2526,6 +2627,94 @@
             }
           ]
         ]
+      },
+      "Merge 3C": {
+        "main": [
+          [
+            {
+              "node": "Step 4A: Internal Links",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge 3A": {
+        "main": [
+          [
+            {
+              "node": "Step 3B: Infographic",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge 3B": {
+        "main": [
+          [
+            {
+              "node": "Step 3C: Alt Texts",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge 4A": {
+        "main": [
+          [
+            {
+              "node": "Step 4B: External Links",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge 4B": {
+        "main": [
+          [
+            {
+              "node": "Step 5A: WordPress Publish",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Bridge 2B": {
+        "main": [
+          [
+            {
+              "node": "Step 2C: Originality",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Bridge 2E": {
+        "main": [
+          [
+            {
+              "node": "Step 2F: Conclusion",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Bridge 2F": {
+        "main": [
+          [
+            {
+              "node": "Step 2G: Add Table",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "nodeGroups": [],
@@ -2533,64 +2722,32 @@
     "name": null,
     "description": null,
     "autosaved": false,
-    "createdAt": "2026-09-09T12:10:49.454Z",
-    "updatedAt": "2026-09-09T12:10:49.454Z",
+    "createdAt": "2026-09-10T06:34:00.126Z",
+    "updatedAt": "2026-09-10T06:34:00.126Z",
     "workflowPublishHistory": [
       {
-        "id": 270,
+        "id": 1065,
         "workflowId": "cQiEML8ZSa1UcmqH",
-        "versionId": "f127a8d9-548f-40a0-8cd0-e573e9732bd3",
+        "versionId": "2735b1c8-8886-4f20-afe4-22865953651c",
         "event": "activated",
         "userId": "52c4bc2a-7be1-40c9-84c2-e8cfc1219b5e",
-        "createdAt": "2026-09-09T12:10:49.678Z"
+        "createdAt": "2026-09-10T06:34:00.378Z"
       },
       {
-        "id": 271,
+        "id": 1066,
         "workflowId": "cQiEML8ZSa1UcmqH",
-        "versionId": "f127a8d9-548f-40a0-8cd0-e573e9732bd3",
+        "versionId": "2735b1c8-8886-4f20-afe4-22865953651c",
         "event": "deactivated",
         "userId": "52c4bc2a-7be1-40c9-84c2-e8cfc1219b5e",
-        "createdAt": "2026-09-09T12:10:50.588Z"
+        "createdAt": "2026-09-10T06:34:01.856Z"
       },
       {
-        "id": 272,
+        "id": 1067,
         "workflowId": "cQiEML8ZSa1UcmqH",
-        "versionId": "f127a8d9-548f-40a0-8cd0-e573e9732bd3",
+        "versionId": "2735b1c8-8886-4f20-afe4-22865953651c",
         "event": "activated",
         "userId": "52c4bc2a-7be1-40c9-84c2-e8cfc1219b5e",
-        "createdAt": "2026-09-09T12:10:50.617Z"
-      },
-      {
-        "id": 309,
-        "workflowId": "cQiEML8ZSa1UcmqH",
-        "versionId": "f127a8d9-548f-40a0-8cd0-e573e9732bd3",
-        "event": "deactivated",
-        "userId": "52c4bc2a-7be1-40c9-84c2-e8cfc1219b5e",
-        "createdAt": "2026-09-09T12:11:01.600Z"
-      },
-      {
-        "id": 310,
-        "workflowId": "cQiEML8ZSa1UcmqH",
-        "versionId": "f127a8d9-548f-40a0-8cd0-e573e9732bd3",
-        "event": "activated",
-        "userId": "52c4bc2a-7be1-40c9-84c2-e8cfc1219b5e",
-        "createdAt": "2026-09-09T12:11:01.622Z"
-      },
-      {
-        "id": 396,
-        "workflowId": "cQiEML8ZSa1UcmqH",
-        "versionId": "f127a8d9-548f-40a0-8cd0-e573e9732bd3",
-        "event": "deactivated",
-        "userId": "52c4bc2a-7be1-40c9-84c2-e8cfc1219b5e",
-        "createdAt": "2026-09-10T04:53:50.816Z"
-      },
-      {
-        "id": 397,
-        "workflowId": "cQiEML8ZSa1UcmqH",
-        "versionId": "f127a8d9-548f-40a0-8cd0-e573e9732bd3",
-        "event": "activated",
-        "userId": "52c4bc2a-7be1-40c9-84c2-e8cfc1219b5e",
-        "createdAt": "2026-09-10T04:53:50.835Z"
+        "createdAt": "2026-09-10T06:34:01.897Z"
       }
     ]
   }

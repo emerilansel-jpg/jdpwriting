@@ -1,7 +1,7 @@
 # JDP Writing Pipeline — Cold Start Guide (v2.1)
 
 > Panduan orientasi cepat (onboarding) untuk developer & AI agent.  
-> Status: **Production Ready** · Last Updated: **2026-09-10**
+> Status: **Production Ready** · Last Updated: **2026-09-21**
 
 ---
 

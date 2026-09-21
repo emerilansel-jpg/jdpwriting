@@ -525,10 +525,6 @@ tailwind.config = {
         <div>
           <h3 class="text-sm font-semibold text-slate-200 mb-3">Quality Thresholds</h3>
           <div class="space-y-3">
-      <div>
-        <label class="block text-xs text-blue-400 font-semibold mb-1">PesatRouter API Key (Active Engine)</label>
-        <input type="password" id="key-pesat" class="w-full bg-surface-input border border-blue-500/50 rounded px-3 py-2 text-sm text-white font-mono" placeholder="sk-pesat-...">
-      </div>
             <div><label class="block text-xs text-slate-400 mb-1">Min EEAT: <span id="eeat-val">7</span>/10</label><input type="range" id="q-eeat" min="0" max="10" step="0.5" value="7" oninput="document.getElementById('eeat-val').textContent=this.value;markDirty()" class="w-full accent-blue-500"></div>
             <div><label class="block text-xs text-slate-400 mb-1">Min HCU: <span id="hcu-val">7</span>/10</label><input type="range" id="q-hcu" min="0" max="10" step="0.5" value="7" oninput="document.getElementById('hcu-val').textContent=this.value;markDirty()" class="w-full accent-blue-500"></div>
             <div><label class="block text-xs text-slate-400 mb-1">Min EAV: <span id="eav-val">8</span>/10</label><input type="range" id="q-eav" min="0" max="10" step="0.5" value="8" oninput="document.getElementById('eav-val').textContent=this.value;markDirty()" class="w-full accent-blue-500"></div>
@@ -1181,19 +1177,42 @@ function syncInputsToWriter() {
   if (tiCta && document.getElementById('wv-cta')) document.getElementById('wv-cta').value = tiCta.value;
 }
 
+// ponytail: Article candidate waterfall fallback order; 4B is final linked, 1E is raw draft.
+function getBestArticle() {
+  const articleCandidates = ['4B', '4A', '2H', '2G', '2D', '2C', '1E'];
+  for (const stepId of articleCandidates) {
+    const candidate = stepOutputs[stepId];
+    if (candidate && typeof candidate === 'string' && candidate.trim().length > 300 && !candidate.toLowerCase().includes('missing article text') && !candidate.toLowerCase().includes('only image metadata')) {
+      return candidate.trim();
+    }
+  }
+  const tiArticle = document.getElementById('ti-article');
+  if (tiArticle && typeof tiArticle.value === 'string' && tiArticle.value.trim().length > 300) {
+    return tiArticle.value.trim();
+  }
+  return '';
+}
+
+// ponytail: Image prompts can be string or structured JSON object from LLM.
+function extractPromptText(val) {
+  if (!val) return '';
+  if (typeof val === 'string') return val;
+  if (typeof val === 'object') return val.prompt || val.description || val.text || JSON.stringify(val);
+  return String(val);
+}
+
+function extractAltText(val) {
+  if (!val) return '';
+  if (typeof val === 'string') return val;
+  if (typeof val === 'object') return val.alt || val.alt_text || val.description || JSON.stringify(val);
+  return String(val);
+}
+
 function updateDeliverableCards() {
   const card = document.getElementById('wv-deliverable-card');
   if (!card) return;
 
-  const articleCandidates = ['4B', '4A', '2H', '2G', '2D', '2C', '1E'];
-  let bestArticle = '';
-  for (const stepId of articleCandidates) {
-    const candidate = stepOutputs[stepId];
-    if (candidate && typeof candidate === 'string' && candidate.trim().length > 300 && !candidate.toLowerCase().includes('missing article text')) {
-      bestArticle = candidate.trim();
-      break;
-    }
-  }
+  const bestArticle = getBestArticle();
 
   const keyword = document.getElementById('ti-keyword') ? document.getElementById('ti-keyword').value.trim() : '';
   let title = keyword ? (keyword.charAt(0).toUpperCase() + keyword.slice(1)) : 'Optimized Article';
@@ -1228,13 +1247,17 @@ function updateDeliverableCards() {
   if (metaEl) metaEl.textContent = slug;
 
   const wordCountEl = document.getElementById('wv-word-count');
-  if (wordCountEl) {
-    if (bestArticle) {
-      const words = bestArticle.trim().split(/\s+/).filter(Boolean).length;
-      wordCountEl.textContent = words.toLocaleString() + ' kata';
-    } else {
-      wordCountEl.textContent = '0 kata';
+  const badgeWordEl = document.getElementById('badge-word-count');
+  if (bestArticle) {
+    const words = bestArticle.trim().split(/\s+/).filter(Boolean).length;
+    if (wordCountEl) wordCountEl.textContent = words.toLocaleString() + ' kata';
+    if (badgeWordEl) {
+      badgeWordEl.textContent = words.toLocaleString() + 'w';
+      badgeWordEl.classList.remove('hidden');
     }
+  } else {
+    if (wordCountEl) wordCountEl.textContent = '0 kata';
+    if (badgeWordEl) badgeWordEl.classList.add('hidden');
   }
 
   const seoEl = document.getElementById('wv-seo-score');
@@ -1365,6 +1388,15 @@ function loadStep(idx) {
   // Update test panel label
   document.getElementById('test-step-label').textContent = `Step ${s.id} — ${s.name}`;
 
+  // ponytail: Sync test slider cap to step's target token ceiling.
+  const budgetEl = document.getElementById('ti-token-budget');
+  if (budgetEl && s.maxTokens > 0) {
+    budgetEl.max = Math.max(5000, s.maxTokens);
+    budgetEl.value = s.maxTokens;
+    const bLabel = document.getElementById('budget-label');
+    if (bLabel) bLabel.textContent = budgetEl.value + ' tokens';
+  }
+
   isDirty = false;
   document.getElementById('dirty-bar').classList.add('hidden');
   clearResults();
@@ -1405,6 +1437,16 @@ function autoFillTestInputs(stepId, silent, force) {
       if (stepOutputs['4B']) resolvedSourceId = '4B';
       else if (stepOutputs['4A']) resolvedSourceId = '4A';
       else if (stepOutputs['2H']) resolvedSourceId = '2H';
+    }
+    // ponytail: Fallback to best available upstream article if direct source hasn't run yet.
+    if (variable === 'article' && !stepOutputs[resolvedSourceId]) {
+      const candidates = ['4B', '4A', '2H', '2G', '2D', '2C', '1E'];
+      for (const cid of candidates) {
+        if (stepOutputs[cid]) {
+          resolvedSourceId = cid;
+          break;
+        }
+      }
     }
     if (!fieldId || !stepOutputs[resolvedSourceId]) continue;
     const el = document.getElementById(fieldId);
@@ -1583,6 +1625,7 @@ function getNextEnabledStep(fromIdx) {
 
 async function runAllSteps() {
   if (pipelineRunning) return;
+  syncInputsFromWriter();
   if (!confirm('Run ALL enabled steps from 1A to finish? This will call LLM APIs for each step sequentially.')) return;
 
   pipelineRunning = true;
@@ -1596,13 +1639,14 @@ async function runAllSteps() {
   document.getElementById('test-toggle-btn').textContent = '✕ Test Panel';
 
   const enabledSteps = stepData.filter(s => s.enabled);
+  let currentProgress = 0;
 
   for (let i = 0; i < stepData.length; i++) {
     if (!stepData[i].enabled || pipelineCancelled) continue;
 
     // Load this step
     loadStep(i);
-    updatePipelineProgress(i, enabledSteps.length, `${stepData[i].id} — ${stepData[i].name}`);
+    updatePipelineProgress(currentProgress, enabledSteps.length, `${stepData[i].id} — ${stepData[i].name}`);
 
     // Force-fill test inputs from cached step outputs (pipeline chaining)
     autoFillTestInputs(stepData[i].id, true, true);
@@ -1613,60 +1657,75 @@ async function runAllSteps() {
     await new Promise(r => setTimeout(r, 100));
 
     // Run this step with pipeline mode
-	    try {
-	      await runTestInternal(true);
-	      if (pipelineCancelled) break;
-	    } catch (err) {
-	      showToast(`✗ Step ${stepData[i].id} failed: ${err.message}`);
-	      if (!confirm(`Step ${stepData[i].id} failed. Continue with next step?`)) break;
-	    }
-	  }
+    try {
+      await runTestInternal(true);
+      if (pipelineCancelled) break;
 
-	  if (!pipelineCancelled) {
-	    await syncPipelineRunToSheets();
-	  }
+      // ponytail: 2K gate threshold 70 check with user override option.
+      if (stepData[i].id === '2K' && stepOutputs['2K']) {
+        try {
+          const evalData = JSON.parse(stepOutputs['2K'].replace(/```json\n?/g, '').replace(/```/g, '').trim());
+          if (evalData && (evalData.pass === false || (evalData.overall_score !== undefined && evalData.overall_score < 70))) {
+            if (!confirm(`⚠️ Step 2K Evaluator Gate: Skor ${evalData.overall_score || 0}/100 (< 70). Tetap lanjutkan ke pembuatan prompt gambar (Phase 3)?`)) {
+              showToast(`Pipeline dihentikan pada Gate 2K (Skor: ${evalData.overall_score || 0}/100)`, 'warning');
+              break;
+            }
+          }
+        } catch {}
+      }
+      currentProgress++;
+    } catch (err) {
+      showToast(`✗ Step ${stepData[i].id} failed: ${err.message}`);
+      if (!confirm(`Step ${stepData[i].id} failed. Continue with next step?`)) break;
+      currentProgress++;
+    }
+  }
 
-		  pipelineRunning = false;
-		  showPipelineBar(false);
-		  renderStepList();
-		  updateDeliverableCards();
-		  showToast('✓ Pipeline complete! Artikel & prompt siap direview.', 'success');
-		  const wvStatus = document.getElementById('wv-global-status');
-		  if (wvStatus) wvStatus.textContent = 'Selesai! Seluruh 23 step berhasil.';
-	}
+  if (!pipelineCancelled) {
+    await syncPipelineRunToSheets();
+  }
 
-	async function syncPipelineRunToSheets() {
-	  const keyword = document.getElementById('ti-keyword') ? document.getElementById('ti-keyword').value.trim() : '';
-	  let title = keyword;
-	  let slug = '';
-	  let metaDesc = '';
-	  if (stepOutputs['2A']) {
-	    try {
-	      const parsed = JSON.parse(stepOutputs['2A'].replace(/```json\n?/g,'').replace(/```/g,'').trim());
-	      if (parsed.title) title = parsed.title;
-	      if (parsed.slug) slug = parsed.slug;
-	      if (parsed.meta_description) metaDesc = parsed.meta_description;
-	    } catch {}
-	  }
+  pipelineRunning = false;
+  showPipelineBar(false);
+  renderStepList();
+  updateDeliverableCards();
+  showToast('✓ Pipeline complete! Artikel & prompt siap direview.', 'success');
+  const wvStatus = document.getElementById('wv-global-status');
+  if (wvStatus) wvStatus.textContent = 'Selesai! Seluruh 23 step berhasil.';
+}
 
-	  let seoScore = 0, geoScore = 0, overallScore = 0, qualityScore = 0;
-	  if (stepOutputs['2K']) {
-	    try {
-	      const parsed = JSON.parse(stepOutputs['2K'].replace(/```json\n?/g,'').replace(/```/g,'').trim());
-	      seoScore = parsed.seo_score || 0;
-	      geoScore = parsed.geo_score || 0;
-	      overallScore = parsed.overall_score || 0;
-	    } catch {}
-	  }
-	  if (stepOutputs['2J']) {
-	    try {
-	      const parsed = JSON.parse(stepOutputs['2J'].replace(/```json\n?/g,'').replace(/```/g,'').trim());
-	      qualityScore = parsed.quality_score || 0;
-	    } catch {}
-	  }
+async function syncPipelineRunToSheets() {
+  const keyword = document.getElementById('ti-keyword') ? document.getElementById('ti-keyword').value.trim() : '';
+  let title = keyword;
+  let slug = '';
+  let metaDesc = '';
+  if (stepOutputs['2A']) {
+    try {
+      const parsed = JSON.parse(stepOutputs['2A'].replace(/```json\n?/g,'').replace(/```/g,'').trim());
+      if (parsed.title) title = parsed.title;
+      if (parsed.slug) slug = parsed.slug;
+      if (parsed.meta_description) metaDesc = parsed.meta_description;
+    } catch {}
+  }
 
-	  const article = stepOutputs['4B'] || stepOutputs['4A'] || stepOutputs['2H'] || stepOutputs['1E'] || '';
-	  const wordCount = article ? article.split(/\s+/).filter(Boolean).length : 0;
+  let seoScore = 0, geoScore = 0, overallScore = 0, qualityScore = 0;
+  if (stepOutputs['2K']) {
+    try {
+      const parsed = JSON.parse(stepOutputs['2K'].replace(/```json\n?/g,'').replace(/```/g,'').trim());
+      seoScore = parsed.seo_score || 0;
+      geoScore = parsed.geo_score || 0;
+      overallScore = parsed.overall_score || 0;
+    } catch {}
+  }
+  if (stepOutputs['2J']) {
+    try {
+      const parsed = JSON.parse(stepOutputs['2J'].replace(/```json\n?/g,'').replace(/```/g,'').trim());
+      qualityScore = parsed.quality_score || 0;
+    } catch {}
+  }
+
+  const article = getBestArticle();
+  const wordCount = article ? article.split(/\s+/).filter(Boolean).length : 0;
 
 	  const historyPayload = {
 	    action: 'write',
@@ -1699,6 +1758,7 @@ async function runAllSteps() {
 
 async function runToHere() {
   if (pipelineRunning) return;
+  syncInputsFromWriter();
   const stepName = stepData[currentStepIdx].id;
   if (!confirm(`Run all steps from 1A to ${stepName} in sequence?`)) return;
 
@@ -1711,13 +1771,14 @@ async function runToHere() {
   panel.classList.remove('hidden');
   document.getElementById('test-toggle-btn').textContent = '✕ Test Panel';
 
-  const enabledSteps = stepData.filter(s => s.enabled);
+  const stepsToRun = stepData.slice(0, currentStepIdx + 1).filter(s => s.enabled);
+  let currentProgress = 0;
 
   for (let i = 0; i <= currentStepIdx; i++) {
     if (!stepData[i].enabled || pipelineCancelled) continue;
 
     loadStep(i);
-    updatePipelineProgress(i, enabledSteps.length, `${stepData[i].id} — ${stepData[i].name}`);
+    updatePipelineProgress(currentProgress, stepsToRun.length, `${stepData[i].id} — ${stepData[i].name}`);
     autoFillTestInputs(stepData[i].id, true, true);
     document.getElementById('test-results').classList.add('hidden');
     document.getElementById('test-error').classList.add('hidden');
@@ -1726,14 +1787,18 @@ async function runToHere() {
     try {
       await runTestInternal(true);
       if (pipelineCancelled) break;
+      currentProgress++;
     } catch (err) {
       showToast(`✗ Step ${stepData[i].id} failed: ${err.message}`);
       if (!confirm(`Step ${stepData[i].id} failed. Continue?`)) break;
+      currentProgress++;
     }
   }
 
   pipelineRunning = false;
   showPipelineBar(false);
+  renderStepList();
+  updateDeliverableCards();
   showToast('✓ Pipeline run complete up to ' + stepName);
 }
 // ─── END PIPELINE RUN ────────────────────────────────────────────────────────
@@ -1763,6 +1828,8 @@ async function runTestInternal(isPipelineMode) {
   const userPromptTpl = document.getElementById('cfg-user-prompt').value;
   const temp = parseFloat(document.getElementById('cfg-temp').value);
   const budgetTokens = parseInt(document.getElementById('ti-token-budget').value);
+  // ponytail: Pipeline mode unlocks full generation ceiling (s.maxTokens); manual test respects budget slider.
+  const tokenLimit = isPipelineMode ? (s.maxTokens || 5000) : (budgetTokens || s.maxTokens || 2000);
 
   // Substitute variables
   const vars = {
@@ -1809,7 +1876,7 @@ async function runTestInternal(isPipelineMode) {
   const t0 = Date.now();
 
   try {
-    const result = await callLLM(model, sysPrompt, userPrompt, temp, budgetTokens);
+    const result = await callLLM(model, sysPrompt, userPrompt, temp, tokenLimit);
     const elapsed = Date.now() - t0;
     showResults(result, model, elapsed, s.outputFormat);
 
@@ -1896,6 +1963,7 @@ function showResults(result, model, elapsed, outputFormat) {
   // Cache output for test-panel chaining
   stepOutputs[stepData[currentStepIdx].id] = output;
   saveStepOutputs();
+  updateDeliverableCards();
 
   document.getElementById('stat-input-tokens').textContent = inputTokens.toLocaleString();
   document.getElementById('stat-output-tokens').textContent = outputTokens.toLocaleString();
@@ -1960,18 +2028,7 @@ function buildFullArticleBundle() {
   if (!title) title = keyword ? (keyword.charAt(0).toUpperCase() + keyword.slice(1)) : 'Optimized Article';
   if (!slug) slug = keyword ? keyword.toLowerCase().replace(/\s+/g, '-') : 'article';
 
-  const articleCandidates = ['4B', '4A', '2H', '2G', '2D', '2C', '1E'];
-  let bestArticle = '';
-  for (const stepId of articleCandidates) {
-    const candidate = stepOutputs[stepId];
-    if (candidate && typeof candidate === 'string' && candidate.trim().length > 300 && !candidate.toLowerCase().includes('missing article text') && !candidate.toLowerCase().includes('only image metadata')) {
-      bestArticle = candidate.trim();
-      break;
-    }
-  }
-  if (!bestArticle && document.getElementById('ti-article')) {
-    bestArticle = document.getElementById('ti-article').value.trim();
-  }
+  const bestArticle = getBestArticle();
 
   let imagePrompts = {};
   if (stepOutputs['3A']) {
@@ -2004,23 +2061,23 @@ function buildFullArticleBundle() {
   bundle += '---\n\n';
   bundle += '## 🎨 Image Production Assets (SF Academy SOP Ver. 3.8)\n\n';
 
-  const featPrompt = imagePrompts.prompt_1_featured?.prompt || imagePrompts.featured_prompt || imagePrompts.featured_image || imagePrompts['1'] || (typeof imagePrompts.prompt_1 === 'string' ? imagePrompts.prompt_1 : '');
-  const featAlt = altTexts.featured_image_alt || altTexts.featured || '';
+  const featPrompt = extractPromptText(imagePrompts.featured_image?.prompt || imagePrompts.prompt_1_featured?.prompt || imagePrompts.featured_prompt || imagePrompts.featured_image || imagePrompts['1'] || imagePrompts.prompt_1);
+  const featAlt = extractAltText(altTexts.featured_image_alt || altTexts.featured || altTexts['1']);
   bundle += '### 1. Featured Image (16:9 Banner)\n';
   bundle += '- **Prompt:** ' + (featPrompt || '[Run Step 3A to generate]') + '\n';
   bundle += '- **Alt Text:** ' + (featAlt || '[Run Step 3C to generate]') + '\n\n';
 
   for (let i = 1; i <= 3; i++) {
-    const supPrompt = imagePrompts['prompt_' + (i+1) + '_supporting']?.prompt || imagePrompts['supporting_image_' + i] || imagePrompts['prompt_' + (i+1)] || (imagePrompts.supporting_prompts && imagePrompts.supporting_prompts[i-1]?.prompt);
-    const supAlt = altTexts['supporting_image_' + i + '_alt'] || altTexts['supporting_' + i] || '';
+    const supPrompt = extractPromptText(imagePrompts['supporting_image_' + i]?.prompt || imagePrompts['prompt_' + (i+1) + '_supporting']?.prompt || imagePrompts['supporting_image_' + i] || imagePrompts['prompt_' + (i+1)] || (imagePrompts.supporting_prompts && imagePrompts.supporting_prompts[i-1]));
+    const supAlt = extractAltText(altTexts['supporting_image_' + i + '_alt'] || altTexts['supporting_' + i] || altTexts['supporting_image_' + i]);
     bundle += '### ' + (i+1) + '. Supporting Image ' + i + '\n';
     bundle += '- **Prompt:** ' + (supPrompt || '[Run Step 3A to generate]') + '\n';
     bundle += '- **Alt Text:** ' + (supAlt || '[Run Step 3C to generate]') + '\n\n';
   }
 
-  const infoAlt = altTexts.infographic_alt || altTexts.infographic || '';
+  const infoAlt = extractAltText(altTexts.infographic_alt || altTexts.infographic);
   bundle += '### 5. Infographic Data Visualization\n';
-  bundle += '- **Prompt:** ' + (infographicPrompt.trim() || '[Run Step 3B to generate]') + '\n';
+  bundle += '- **Prompt:** ' + (extractPromptText(infographicPrompt).trim() || '[Run Step 3B to generate]') + '\n';
   bundle += '- **Alt Text:** ' + (infoAlt || '[Run Step 3C to generate]') + '\n\n';
 
   if (stepOutputs['2K']) {
@@ -2107,21 +2164,21 @@ function renderMarkdownHTML(md) {
 }
 
 function renderVisualDeck(imagePrompts, infographicPrompt, altTexts) {
-  const featPrompt = imagePrompts.prompt_1_featured?.prompt || imagePrompts.featured_prompt || imagePrompts.featured_image || imagePrompts['1'] || (typeof imagePrompts.prompt_1 === 'string' ? imagePrompts.prompt_1 : '');
-  const featAlt = altTexts.featured_image_alt || altTexts.featured || '';
+  const featPrompt = extractPromptText(imagePrompts.featured_image?.prompt || imagePrompts.prompt_1_featured?.prompt || imagePrompts.featured_prompt || imagePrompts.featured_image || imagePrompts['1'] || imagePrompts.prompt_1);
+  const featAlt = extractAltText(altTexts.featured_image_alt || altTexts.featured || altTexts['1']);
 
   const cards = [
     { title: 'Featured Hero Image (16:9 Banner)', type: 'Hero Banner', prompt: featPrompt, alt: featAlt, ratio: '16:9' }
   ];
 
   for (let i = 1; i <= 3; i++) {
-    const supPrompt = imagePrompts['prompt_' + (i+1) + '_supporting']?.prompt || imagePrompts['supporting_image_' + i] || imagePrompts['prompt_' + (i+1)] || (imagePrompts.supporting_prompts && imagePrompts.supporting_prompts[i-1]?.prompt) || '';
-    const supAlt = altTexts['supporting_image_' + i + '_alt'] || altTexts['supporting_' + i] || '';
+    const supPrompt = extractPromptText(imagePrompts['supporting_image_' + i]?.prompt || imagePrompts['prompt_' + (i+1) + '_supporting']?.prompt || imagePrompts['supporting_image_' + i] || imagePrompts['prompt_' + (i+1)] || (imagePrompts.supporting_prompts && imagePrompts.supporting_prompts[i-1]));
+    const supAlt = extractAltText(altTexts['supporting_image_' + i + '_alt'] || altTexts['supporting_' + i] || altTexts['supporting_image_' + i]);
     cards.push({ title: `Supporting Image ${i}`, type: `Section Visual #${i}`, prompt: supPrompt, alt: supAlt, ratio: '16:9' });
   }
 
-  const infoAlt = altTexts.infographic_alt || altTexts.infographic || '';
-  cards.push({ title: 'Infographic Data Visualization', type: 'Infographic Spec', prompt: (infographicPrompt||'').trim(), alt: infoAlt, ratio: '1200×1600' });
+  const infoAlt = extractAltText(altTexts.infographic_alt || altTexts.infographic);
+  cards.push({ title: 'Infographic Data Visualization', type: 'Infographic Spec', prompt: extractPromptText(infographicPrompt).trim(), alt: infoAlt, ratio: '1200×1600' });
 
   let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
   cards.forEach((c, idx) => {
@@ -2172,7 +2229,7 @@ function viewFullArticleBundle() {
   if (el) el.textContent = content;
 
   // Extract best article for rendered view
-  const bestArticle = stepOutputs['4B'] || stepOutputs['4A'] || stepOutputs['2H'] || stepOutputs['1E'] || '';
+  const bestArticle = getBestArticle();
   const renderedEl = document.getElementById('bundle-rendered-content');
   if (renderedEl) {
     renderedEl.innerHTML = renderMarkdownHTML(bestArticle || content);
@@ -2292,6 +2349,7 @@ function getKeys() {
 }
 function loadKeys() {
   const k = getKeys();
+  if (document.getElementById('key-pesat')) document.getElementById('key-pesat').value = k.pesat;
   document.getElementById('key-openai').value = k.openai;
   document.getElementById('key-anthropic').value = k.anthropic;
   document.getElementById('key-deepseek').value = k.deepseek;
