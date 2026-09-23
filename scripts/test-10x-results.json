@@ -1,0 +1,128 @@
+{
+  "timestamp": "2026-09-23T06:22:53.907Z",
+  "winRate": "100.0%",
+  "passedCount": 10,
+  "totalTests": 10,
+  "results": [
+    {
+      "testNum": 1,
+      "keyword": "how to sleep fast",
+      "wordCount": 2200,
+      "hasTable": true,
+      "hasList": true,
+      "formatViolations": 0,
+      "seoScore": 90,
+      "geoScore": 90,
+      "overallScore": 90,
+      "passed": true
+    },
+    {
+      "testNum": 2,
+      "keyword": "best project management software for startups",
+      "wordCount": 1918,
+      "hasTable": true,
+      "hasList": true,
+      "formatViolations": 0,
+      "seoScore": 84,
+      "geoScore": 86,
+      "overallScore": 85,
+      "passed": true
+    },
+    {
+      "testNum": 3,
+      "keyword": "how to lower blood pressure naturally",
+      "wordCount": 2586,
+      "hasTable": true,
+      "hasList": true,
+      "formatViolations": 0,
+      "seoScore": 91,
+      "geoScore": 93,
+      "overallScore": 92,
+      "passed": true
+    },
+    {
+      "testNum": 4,
+      "keyword": "b2b content marketing strategy",
+      "wordCount": 1881,
+      "hasTable": true,
+      "hasList": true,
+      "formatViolations": 0,
+      "seoScore": 89,
+      "geoScore": 91,
+      "overallScore": 90,
+      "passed": true
+    },
+    {
+      "testNum": 5,
+      "keyword": "intermittent fasting for beginners",
+      "wordCount": 2478,
+      "hasTable": true,
+      "hasList": true,
+      "formatViolations": 0,
+      "seoScore": 93,
+      "geoScore": 94,
+      "overallScore": 94,
+      "passed": true
+    },
+    {
+      "testNum": 6,
+      "keyword": "how to start a podcast on a budget",
+      "wordCount": 2178,
+      "hasTable": true,
+      "hasList": true,
+      "formatViolations": 0,
+      "seoScore": 88,
+      "geoScore": 90,
+      "overallScore": 89,
+      "passed": true
+    },
+    {
+      "testNum": 7,
+      "keyword": "personal injury lawyer settlement timeline",
+      "wordCount": 1708,
+      "hasTable": true,
+      "hasList": true,
+      "formatViolations": 0,
+      "seoScore": 88,
+      "geoScore": 90,
+      "overallScore": 89,
+      "passed": true
+    },
+    {
+      "testNum": 8,
+      "keyword": "cloud migration checklist for enterprise",
+      "wordCount": 2512,
+      "hasTable": true,
+      "hasList": true,
+      "formatViolations": 0,
+      "seoScore": 88,
+      "geoScore": 89,
+      "overallScore": 88.5,
+      "passed": true
+    },
+    {
+      "testNum": 9,
+      "keyword": "how to improve domain authority",
+      "wordCount": 2007,
+      "hasTable": true,
+      "hasList": true,
+      "formatViolations": 0,
+      "seoScore": 88,
+      "geoScore": 89,
+      "overallScore": 88.5,
+      "passed": true
+    },
+    {
+      "testNum": 10,
+      "keyword": "solar panel installation cost breakdown",
+      "wordCount": 2404,
+      "hasTable": true,
+      "hasList": true,
+      "formatViolations": 0,
+      "seoScore": 88,
+      "geoScore": 89,
+      "overallScore": 88.5,
+      "passed": true
+    }
+  ]
+}

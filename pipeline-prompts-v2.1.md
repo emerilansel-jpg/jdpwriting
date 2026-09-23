@@ -178,6 +178,7 @@ Requirements:
 - Plan for CTA placement: {{cta}}
 - Target 1500-2500 words total
 - Each section should have a clear purpose and estimated word count
+- Strict format rule: Outline and article must strictly use ONLY standard prose paragraphs, structured Markdown tables, and Markdown lists (ordered/bulleted). STRICTLY FORBIDDEN: ASCII art, text flowcharts, arrow diagrams, box flows ([ A ] ↓ [ B ]), or code blocks (```) used for formatting. Any process or workflow must be outlined strictly as numbered steps or comparison tables.
 
 Return a complete outline with H2, H3, and bullet points describing each section.
 ```
@@ -225,6 +226,12 @@ Requirements:
 - Internal links to place: {{internal_links}}
 - End with a strong conclusion + CTA: {{cta}}
 - Tone: authoritative yet engaging human voice, active voice, sentence variety, no AI clichés
+- STRICT CONTENT FORMATTING RULE: The article must consist ONLY of: 1) Standard prose paragraphs with H1, H2, H3 headings, bold text, and blockquotes (>); 2) Structured Markdown comparison tables (| Col 1 | Col 2 |); 3) Numbered or bulleted Markdown lists.
+  STRICTLY FORBIDDEN:
+  - NO ASCII art, text boxes, flowcharts, or process maps.
+  - NO bracketed box chains or arrows (NEVER write [ Step 1 ] ↓ [ Step 2 ] or [ Action ] → [ Outcome ]).
+  - NO code blocks (```) used for formatting, diagrams, or workflows.
+  Any multi-step protocol, transition, mechanism, or routine MUST be presented exclusively as a standard numbered list (1., 2., 3.) or a Markdown table.
 ```
 
 **n8n Implementation Notes:**
@@ -293,6 +300,7 @@ You are a content originality expert. Rephrase content to be unique, natural, an
 **User Prompt Template:**
 ```
 Rephrase this article to be highly unique, natural-sounding, and pass AI detection tools. Keep all facts, headings, and structure intact. Vary sentence length between 8-25 words. Use natural transitions. Avoid repetitive phrasing patterns.
+FORMAT ENFORCEMENT: Content must strictly consist ONLY of standard paragraphs, markdown tables, blockquotes, and lists. If any ASCII diagrams, bracketed box flows ([ A ] ↓ [ B ]), or arrow chains exist, convert them immediately into clean numbered lists or prose text. Never output code blocks for diagrams or arrows.
 
 Article:
 {{article}}
@@ -312,6 +320,7 @@ You are a ruthless editor who eliminates all filler words, redundant phrases, an
 **User Prompt Template:**
 ```
 Remove all filler words, redundant phrases, and empty sentences from this article. Keep all facts, statistics, and substantive content. Tighten every sentence. Remove phrases like "it is important to note," "in conclusion," "as mentioned earlier," etc. unless they serve a structural purpose.
+FORMAT ENFORCEMENT: Ensure content consists exclusively of clean prose, markdown tables, blockquotes, and lists. Completely remove or convert any ASCII diagrams, box chains, arrows (↓, →), or faux diagram code blocks into clean numbered lists or standard paragraphs.
 
 Article:
 {{article}}
@@ -371,6 +380,7 @@ You are an information design expert who creates scannable, SEO-friendly data ta
 **User Prompt Template:**
 ```
 Create a comparison or data table for "{{keyword}}" (3-5 columns, Markdown format). Insert it after the first H2 where it fits naturally. Return the FULL article with the table integrated.
+Strict format rule: Standard Markdown table only (| Col 1 | Col 2 |). Never use ASCII box art, unicode arrows, or code block diagrams.
 
 Article:
 {{article}}
@@ -390,6 +400,7 @@ You are a researcher who adds authoritative expert quotes and verifiable citatio
 **User Prompt Template:**
 ```
 Add 2-3 expert quotes or citations from real, verifiable sources to this article about "{{keyword}}". Format as Markdown blockquotes with attribution. Insert where they strengthen claims. Return the FULL article.
+Format rule: Markdown blockquotes (> "Quote" — [Name, Title](URL)) and prose only. No ASCII diagrams or flowcharts.
 
 Article:
 {{article}}
@@ -572,7 +583,7 @@ EEAT+HCU+EAV: {{eeat_hcu_eav_analysis}}
 Quality+Fact Check: {{quality_fact_check}}
 
 **Evaluation Scope Note:**
-Title tag, meta description, and slug are provided above. Internal/external link planning is provided above. Image prompts and alt texts will be generated in Phase 3 upon gate approval. Evaluate content depth, snippet direct answers, table structuring, entity salience, and citation readiness objectively.
+Title tag, meta description, and slug are provided above. Internal/external link planning is provided above. Image prompts and alt texts will be generated in Phase 3 upon gate approval. Verify that content strictly uses clean text, lists, and tables only (no broken ASCII art, flowcharts, or diagram code blocks). Evaluate content depth, snippet direct answers, table structuring, entity salience, and citation readiness objectively. Pass threshold is overall_score >= 70.
 
 **SEO DIMENSION (score 0-100):**
 On-Page SEO (25 points):
@@ -863,7 +874,7 @@ You are an internal linking strategist who places links contextually and natural
 **User Prompt Template:**
 ```
 Add internal links using these URLs: {{internal_links}}
-Max 5 links, contextually relevant, natural anchor text. Do not force links where they do not fit. Return the FULL article.
+Max 3-5 links, contextually relevant, natural anchor text. Return ONLY the full revised article in Markdown starting directly with H1 title. No commentary, no Before/After preamble. Maintain strict formatting: text, tables, and lists only.
 
 Article:
 {{article}}
@@ -882,7 +893,7 @@ You are an SEO expert in strategic external link placement to authoritative sour
 
 **User Prompt Template:**
 ```
-Add 2-3 external links to authoritative sources supporting factual claims in the article. Use real, verifiable URLs. Prefer .edu, .gov, and established publications. Return the FULL article in Markdown.
+Add 2-3 external links to authoritative sources supporting factual claims in the article. Use real, verifiable URLs. Prefer .edu, .gov, and established publications. Return ONLY the full revised article in Markdown starting directly with H1 title. No commentary, no Before/After preamble. Maintain strict formatting: text, tables, and lists only.
 
 Article:
 {{article}}
