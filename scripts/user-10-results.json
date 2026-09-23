@@ -1,0 +1,128 @@
+{
+  "timestamp": "2026-09-23T07:26:37.449Z",
+  "winRate": "100.0%",
+  "passCount": 10,
+  "total": 10,
+  "results": [
+    {
+      "num": 1,
+      "keyword": "how to sleep fast",
+      "words": 2519,
+      "hasTable": true,
+      "hasList": true,
+      "formatErrors": 0,
+      "seoScore": 90,
+      "geoScore": 92,
+      "overallScore": 91,
+      "passed": true
+    },
+    {
+      "num": 2,
+      "keyword": "what is generative engine optimization",
+      "words": 2069,
+      "hasTable": true,
+      "hasList": true,
+      "formatErrors": 0,
+      "seoScore": 91,
+      "geoScore": 91,
+      "overallScore": 91,
+      "passed": true
+    },
+    {
+      "num": 3,
+      "keyword": "how to fertilize jade plant",
+      "words": 2846,
+      "hasTable": true,
+      "hasList": true,
+      "formatErrors": 0,
+      "seoScore": 88,
+      "geoScore": 91,
+      "overallScore": 90,
+      "passed": true
+    },
+    {
+      "num": 4,
+      "keyword": "best trello alternatives",
+      "words": 2181,
+      "hasTable": true,
+      "hasList": true,
+      "formatErrors": 0,
+      "seoScore": 84,
+      "geoScore": 87,
+      "overallScore": 85.5,
+      "passed": true
+    },
+    {
+      "num": 5,
+      "keyword": "should you sleep early or late",
+      "words": 2426,
+      "hasTable": true,
+      "hasList": true,
+      "formatErrors": 0,
+      "seoScore": 88,
+      "geoScore": 92,
+      "overallScore": 90,
+      "passed": true
+    },
+    {
+      "num": 6,
+      "keyword": "how to setup automation workflow for AI writing",
+      "words": 2889,
+      "hasTable": true,
+      "hasList": true,
+      "formatErrors": 0,
+      "seoScore": 84,
+      "geoScore": 86,
+      "overallScore": 85,
+      "passed": true
+    },
+    {
+      "num": 7,
+      "keyword": "how to humanize writings",
+      "words": 2128,
+      "hasTable": true,
+      "hasList": true,
+      "formatErrors": 0,
+      "seoScore": 86,
+      "geoScore": 88,
+      "overallScore": 87,
+      "passed": true
+    },
+    {
+      "num": 8,
+      "keyword": "how to utilize chatgpt",
+      "words": 2318,
+      "hasTable": true,
+      "hasList": true,
+      "formatErrors": 0,
+      "seoScore": 88,
+      "geoScore": 91,
+      "overallScore": 89.5,
+      "passed": true
+    },
+    {
+      "num": 9,
+      "keyword": "comparison between chatgpt and claude",
+      "words": 2133,
+      "hasTable": true,
+      "hasList": true,
+      "formatErrors": 0,
+      "seoScore": 85,
+      "geoScore": 90,
+      "overallScore": 88,
+      "passed": true
+    },
+    {
+      "num": 10,
+      "keyword": "best free extensions for SEO purposes",
+      "words": 2314,
+      "hasTable": true,
+      "hasList": true,
+      "formatErrors": 0,
+      "seoScore": 78,
+      "geoScore": 81,
+      "overallScore": 79.5,
+      "passed": true
+    }
+  ]
+}

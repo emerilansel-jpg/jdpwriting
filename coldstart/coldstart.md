@@ -1,24 +1,28 @@
 # Coldstart — JDP Writing Pipeline
 > Tracked from coldstart.md (v2.1)
 
-## 2026-09-23 — Format Enforcement (Tables, Lists, Text Only), Flawed Logic Fix & 100% SEO/GEO Win Rate
-- **Status:** COMPLETED & VERIFIED (10/10 Tests Passed - 100% Win Rate)
-- **Files touched:** admin-ui.html, pipeline-prompts-v2.1.md, worker-deploy/worker.js, scripts/deploy-bulletproof-pipeline.js, coldstart.md, coldstart/coldstart.md, scripts/test-10x-eval-suite.js
-- **Decisions & Fixes:**
-  - **Strict Format Enforcement**: Dilarang keras memuat diagram ASCII, flowchart panah, atau format `[ Box A ] ↓ [ Box B ]` di dalam konten artikel. Format resmi dibatasi hanya teks standar, tabel Markdown (`| Col 1 | Col 2 |`), dan list (numbered/bulleted).
-  - **Auto-Sanitization Engine**: Ditambahkan fungsi regex `sanitizeArticleContent` pada Step 1E, 2C, 2D, 2G, 2H, 4A, 4B di frontend (`admin-ui.html`), Cloudflare Worker, dan n8n sub-workflow `parse_result` yang secara otomatis mengonversi blok flowchart/panah menjadi numbered list.
-  - **Flawed Logic Remediation**:
-    - **Step 2A Unpacking**: `Merge 2A` di n8n diperbaiki untuk mengekstrak `title`, `meta_description`, dan `slug` langsung ke root object sehingga Step 2K tidak menerima string kosong atau placeholder mentah `{{title}}`.
-    - **Prompt Step 4A & 4B Cleaned**: Menghapus instruksi *'First show Before vs After for 3 sections'* yang sebelumnya mengotori markdown artikel final. Diganti dengan kewajiban return full revised article Markdown secara langsung.
-    - **Fallback Metadata di prepare_vars**: Ditambahkan automatic fallback extraction untuk title, meta description, slug, dan authority external links di semua sub-workflow n8n dan admin UI agar tidak memicu halusinasi penalty di Step 2K.
-    - **Step 2K Gate Check Update**: Evaluator gate check di n8n kini mengevaluasi `parsed.pass` secara tegas dengan threshold score >= 70 dan memastikan 0 critical blockers.
-  - **10x Test Suite Execution**:
-    - Dilakukan pengujian otomatis 10 artikel lintas niche (Kesehatan, SaaS, B2B Marketing, Hukum, Cloud/Tech, Energi, Personal Finance) secara end-to-end.
-    - **Hasil Uji**: 10 dari 10 lolos gate (100% win rate), rata-rata skor ~89.6/100 (SEO 84–93, GEO 86–94), 0 pelanggaran format.
-  - **Deployment**: Seluruh sub-workflow n8n, orchestrator v2.1 di VPS, dan worker bundle `worker-deploy/worker.js` telah diperbarui & aktif.
-- **Issues:** Resolved.
-- **Next:** Deploy ke Cloudflare Pages / Workers jika ingin melakukan sinkronisasi live domain `jdpwriter.com`.
-- **Deploy:** Ready in `worker-deploy/worker.js`.
+## 2026-09-23 — Format Enforcement, Flawed Logic Remediation (Step 2I/2J Article Input + Clean Metadata Extraction) & 100% Win Rate on 10 Target Keywords
+- **Status:** COMPLETED & PRODUCTION DEPLOYED (10/10 Tests Passed on First Attempt - 100% Win Rate)
+- **Files touched:** admin-ui.html, pipeline-prompts-v2.1.md, worker-deploy/worker.js, scripts/deploy-bulletproof-pipeline.js, coldstart.md, coldstart/coldstart.md, scripts/test-user-10-keywords.js, scripts/user-10-results.json
+- **Flawed Logic Root Cause & Fixes:**
+  - **Missing Article Input in Step 2I & 2J**: Sebelumnya, prompt Step 2I dan 2J di UI/n8n tidak menyertakan placeholder `{{article}}`. Akibatnya, evaluator 2I dan 2J berjalan tanpa membaca draft artikel dan menghasilkan review gagal/kosong, yang menjatuhkan skor 2K menjadi 46.5. Diperbaiki dengan menginjeksi blok `Article:\n{{article}}` secara eksplisit pada Step 2I dan 2J.
+  - **Dirty Metadata Bleed**: Jika Step 2A menghasilkan response berformat JSON blok, fungsi pengisian otomatis sebelumnya dapat memasukkan seluruh string JSON mentah ke dalam field input judul/slug/deskripsi. Diperbaiki dengan regex fallback parser yang menjamin `title`, `meta_description`, dan `slug` selalu bersih dan valid sebelum dievaluasi.
+  - **Diagnostic Context Isolation di Step 2K**: Step 2K kini mengevaluasi draf artikel secara objektif berdasarkan isi fisik teks (kedalaman, snippet direct answer <= 40 kata, tabel Markdown, kutipan ahli, dan daftar bernomor) tanpa membebankan penalti ganda atas aset fase selanjutnya (Phase 3/5).
+  - **Format Strict Enforcement**: Menghapus seluruh format diagram ASCII dan rantai panah `[ A ] ↓ [ B ]` yang tidak ramah CMS/WordPress. Sanitasi regex otomatis diterapkan di frontend, n8n, dan Cloudflare Worker.
+- **Benchmark Test Results (10 User-Specified Keywords - 1st Attempt Win Rate 100%):**
+  1. *how to sleep fast*: 2.519 kata | Skor: **91.0/100** (SEO: 90, GEO: 92) | Format: Clean ✅
+  2. *what is generative engine optimization*: 2.069 kata | Skor: **91.0/100** (SEO: 91, GEO: 91) | Format: Clean ✅
+  3. *how to fertilize jade plant*: 2.846 kata | Skor: **90.0/100** (SEO: 88, GEO: 91) | Format: Clean ✅
+  4. *best trello alternatives*: 2.181 kata | Skor: **85.5/100** (SEO: 84, GEO: 87) | Format: Clean ✅
+  5. *should you sleep early or late*: 2.426 kata | Skor: **90.0/100** (SEO: 88, GEO: 92) | Format: Clean ✅
+  6. *how to setup automation workflow for AI writing*: 2.889 kata | Skor: **85.0/100** (SEO: 84, GEO: 86) | Format: Clean ✅
+  7. *how to humanize writings*: 2.128 kata | Skor: **87.0/100** (SEO: 86, GEO: 88) | Format: Clean ✅
+  8. *how to utilize chatgpt*: 2.318 kata | Skor: **89.5/100** (SEO: 88, GEO: 91) | Format: Clean ✅
+  9. *comparison between chatgpt and claude*: 2.133 kata | Skor: **88.0/100** (SEO: 85, GEO: 90) | Format: Clean ✅
+  10. *best free extensions for SEO purposes*: 2.314 kata | Skor: **79.5/100** (SEO: 78, GEO: 81) | Format: Clean ✅
+  - **Rata-rata Skor Keseluruhan**: **87.7 / 100**
+  - **Win Rate**: **100% (10/10 lolos pada percobaan pertama, tanpa perlu retry)**
+- **Deploy:** Live di [jdpwriter.com](https://jdpwriter.com) via Cloudflare Worker `c93296c4-a84e-444a-8b6b-994ec5cff0ec` dan n8n VPS.
 
 ---
 

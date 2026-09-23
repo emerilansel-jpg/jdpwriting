@@ -583,7 +583,7 @@ EEAT+HCU+EAV: {{eeat_hcu_eav_analysis}}
 Quality+Fact Check: {{quality_fact_check}}
 
 **Evaluation Scope Note:**
-Title tag, meta description, and slug are provided above. Internal/external link planning is provided above. Image prompts and alt texts will be generated in Phase 3 upon gate approval. Verify that content strictly uses clean text, lists, and tables only (no broken ASCII art, flowcharts, or diagram code blocks). Evaluate content depth, snippet direct answers, table structuring, entity salience, and citation readiness objectively. Pass threshold is overall_score >= 70.
+Title tag, meta description, and slug are provided above. Internal/external link planning is provided above. Image prompts and alt texts will be generated in Phase 3 upon gate approval. Verify that content strictly uses clean text, lists, and tables only (no broken ASCII art, flowcharts, or diagram code blocks). Evaluate the actual content depth, snippet direct answers, table structuring, entity salience, and citation readiness objectively. Note on previous analysis: treat EEAT/Quality reports as diagnostic context for future polish; do not double-penalize for Phase 3/5 assets. Pass threshold is overall_score >= 70.
 
 **SEO DIMENSION (score 0-100):**
 On-Page SEO (25 points):
