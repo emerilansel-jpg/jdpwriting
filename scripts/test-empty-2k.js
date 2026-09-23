@@ -1,0 +1,80 @@
+const https = require('https');
+
+const PESAT_API_KEY = 'sk-pesat-3c2f89bd9a72302375f8e10ef9eba726891a81513f907dfb';
+
+function testCall(userPrompt) {
+  return new Promise((resolve, reject) => {
+    const data = JSON.stringify({
+      model: 'pesat-flash',
+      temperature: 0.2,
+      max_tokens: 2500,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a hybrid SEO and GEO expert. Evaluate content for both traditional Google ranking and AI search engine citation-worthiness (ChatGPT, Perplexity, Gemini, Copilot). Provide pass/fail gate.'
+        },
+        {
+          role: 'user',
+          content: userPrompt
+        }
+      ]
+    });
+
+    const req = https.request({
+      hostname: 'api.pesatrouter.com',
+      path: '/v1/chat/completions',
+      method: 'POST',
+      family: 4,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${PESAT_API_KEY}`
+      }
+    }, res => {
+      let b = '';
+      res.on('data', chunk => b += chunk);
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(b);
+          resolve(json.choices[0].message.content);
+        } catch (e) {
+          reject(new Error(b));
+        }
+      });
+    });
+    req.on('error', reject);
+    req.write(data);
+    req.end();
+  });
+}
+
+async function run() {
+  const promptWithMissingArticleIn2K = `FINAL EVALUATION for article about 'how to sleep fast'.
+
+Target Keyword: how to sleep fast
+Title Tag: how to sleep fast
+Meta Description: 
+URL Slug: 
+Planned Internal Links: 
+Planned External Links: 
+
+Article:
+
+
+Previous Analysis Context:
+EEAT: 
+Quality+FactCheck: 
+
+Evaluation Scope Note: Title, meta description, and slug are provided above. Internal/external link planning is provided above. Image prompts and alt texts will be generated in Phase 3 upon gate approval. Verify that content strictly uses clean text, lists, and tables only (no broken ASCII art or diagram code blocks). Evaluate content depth, snippet direct answers, table structuring, entity salience, and citation readiness objectively. Pass threshold is overall_score >= 70.
+
+SEO DIMENSION (score 0-100): On-Page (25%) — title, meta, heading hierarchy, link readiness, schema markup. Technical (25%) — URL structure, mobile readability, scannability, freshness. Content (25%) — semantic keyword coverage, featured snippet direct answers, comparison tables, entity depth, FAQ coverage. UX (25%) — dwell time hooks, bounce rate reduction, scannability, CTA clarity.
+
+GEO DIMENSION (score 0-100): Citation-Worthiness (40%) — direct answer density (<=40w under H2s), source-worthiness, citation phrases, statistical anchoring, unique insight. ChatGPT (15%) — conversational query match, step-by-step clarity, comparison framing. Perplexity (15%) — source diversity, inline citation format, recency. Gemini (15%) — multimodal readiness (tables, lists), KG alignment, contextual depth. Copilot (15%) — actionable guidance, technical precision.
+
+Return JSON: seo_score, seo_breakdown:{on_page,technical,content,user_experience}, geo_score, geo_breakdown:{citation_worthiness,chatgpt,perplexity,gemini,copilot}, overall_score, pass (boolean, threshold 70), geo_citation_phrases:[], ai_engine_readiness:{chatgpt:{score,note},perplexity:{score,note},gemini:{score,note},copilot:{score,note}}, top_3_seo_fixes:[], top_3_geo_fixes:[], retry_prompt (string if <70), critical_blockers:[].`;
+
+  console.log('Testing 2K with missing article / context...');
+  const out = await testCall(promptWithMissingArticleIn2K);
+  console.log('Output:\n', out);
+}
+
+run().catch(console.error);
