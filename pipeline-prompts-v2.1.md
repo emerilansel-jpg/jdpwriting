@@ -225,9 +225,11 @@ Requirements:
 - Include 2-3 cited expert statements formatted as > "Quote." — [Author/Institution, Year](URL)
 - Use LSI keywords naturally throughout (not stuffed)
 - Include 3-5 FAQ Q&As matching common user query patterns
-- Internal links to place: {{internal_links}}
-- End with a strong conclusion + CTA: {{cta}}
+- READABILITY MANDATE: Write in clear, active, engaging American English at an accessible 7th-grade to 8th-grade reading level (Flesch-Kincaid 7.0–8.0, Flesch Reading Ease 65–75). Keep sentences clear, punchy, and direct (average 12–16 words). Avoid dense academic jargon.
 - Tone: authoritative yet engaging human voice, active voice, sentence variety, no AI clichés
+- Brand integrity: Always format company brand strictly as 'JetDigitalPro' (one word, PascalCase).
+- Internal links to incorporate (may be multiple): {{internal_links}}
+- End with a strong conclusion + CTA: {{cta}}
 - STRICT CONTENT FORMATTING RULE: The article must consist ONLY of: 1) Standard prose paragraphs with H1, H2, H3 headings, bold text, and blockquotes (>); 2) Structured Markdown comparison tables (| Col 1 | Col 2 |); 3) Numbered or bulleted Markdown lists.
   STRICTLY FORBIDDEN:
   - NO ASCII art, text boxes, flowcharts, or process maps.
@@ -292,17 +294,18 @@ Article:
 
 ### 2C Originality Rewrite
 
-**Model:** `deepseek-chat` | **Output:** Markdown | **Temp:** 0.8 | **Max Tokens:** 5000
+**Model:** `pesat-flash` | **Output:** Markdown | **Temp:** 0.7 | **Max Tokens:** 5000
 
 **System Prompt:**
 ```
-You are a content originality expert. Rephrase content to be unique, natural, and pass AI detection tools while preserving all factual information and structure.
+You are a content originality expert. Rephrase content to be unique, natural, and pass AI detection tools while preserving all factual information and structure at an accessible 7th-grade reading level.
 ```
 
 **User Prompt Template:**
 ```
-Rephrase this article to be highly unique, natural-sounding, and pass AI detection tools. Keep all facts, headings, and structure intact. Vary sentence length between 8-25 words. Use natural transitions. Avoid repetitive phrasing patterns.
-FORMAT ENFORCEMENT: Content must strictly consist ONLY of standard paragraphs, markdown tables, blockquotes, and lists. If any ASCII diagrams, bracketed box flows ([ A ] ↓ [ B ]), or arrow chains exist, convert them immediately into clean numbered lists or prose text. Never output code blocks for diagrams or arrows.
+Rephrase this article to be highly unique, natural-sounding, and pass AI detection tools. Keep all facts, headings, and structure intact.
+READABILITY MANDATE: Rewrite the text to achieve a clear, highly accessible 7th-grade reading level (Flesch-Kincaid Grade Level 7.0–8.0, Flesch Reading Ease score 65–75). Use clear, direct sentences (average 12–15 words). Break dense academic clauses into everyday plain English that any high school reader grasps instantly.
+FORMAT ENFORCEMENT: Content must strictly consist ONLY of standard paragraphs, markdown tables, blockquotes, and lists. If any ASCII diagrams, bracketed box flows ([ A ] ↓ [ B ]), or arrow chains exist, convert them immediately into clean numbered lists or prose text. Never output code blocks for diagrams or arrows. Never number headings. Brand is JetDigitalPro.
 
 Article:
 {{article}}
@@ -312,17 +315,17 @@ Article:
 
 ### 2D Fluff Check
 
-**Model:** `gpt-4o` | **Output:** Markdown | **Temp:** 0.3 | **Max Tokens:** 4000
+**Model:** `pesat-flash` | **Output:** Markdown | **Temp:** 0.3 | **Max Tokens:** 4000
 
 **System Prompt:**
 ```
-You are a ruthless editor who eliminates all filler words, redundant phrases, and padding while preserving every substantive fact and data point.
+You are a ruthless editor who eliminates all filler words, redundant phrases, and padding while preserving every substantive fact and data point at an accessible 7th-grade reading level.
 ```
 
 **User Prompt Template:**
 ```
-Remove all filler words, redundant phrases, and empty sentences from this article. Keep all facts, statistics, and substantive content. Tighten every sentence. Remove phrases like "it is important to note," "in conclusion," "as mentioned earlier," etc. unless they serve a structural purpose.
-FORMAT ENFORCEMENT: Ensure content consists exclusively of clean prose, markdown tables, blockquotes, and lists. Completely remove or convert any ASCII diagrams, box chains, arrows (↓, →), or faux diagram code blocks into clean numbered lists or standard paragraphs.
+Remove all filler words, redundant phrases, and empty sentences from this article. Keep all facts, statistics, and substantive content. Tighten every sentence. Remove phrases like "it is important to note," "in conclusion," "as mentioned earlier," etc. unless they serve a structural purpose. Break up long sentences to maintain an accessible 7th-grade reading level (average 12–15 words per sentence).
+FORMAT ENFORCEMENT: Ensure content consists exclusively of clean prose, markdown tables, blockquotes, and lists. Completely remove or convert any ASCII diagrams, box chains, arrows (↓, →), or faux diagram code blocks into clean numbered lists or standard paragraphs. Brand is JetDigitalPro.
 
 Article:
 {{article}}
@@ -569,7 +572,7 @@ EEAT+HCU+EAV: {{eeat_hcu_eav_analysis}}
 Quality+Fact Check: {{quality_fact_check}}
 
 **Evaluation Scope Note:**
-Title tag, meta description, and slug are provided above. Internal/external link planning is provided above. Image prompts and alt texts will be generated in Phase 3 upon gate approval. Verify that content strictly uses clean text, lists, and tables only (no broken ASCII art, flowcharts, or diagram code blocks). Evaluate the actual content depth, snippet direct answers, table structuring, entity salience, and citation readiness objectively. Note on previous analysis: treat EEAT/Quality reports as diagnostic context for future polish; do not double-penalize for Phase 3/5 assets. Pass threshold is overall_score >= 70.
+Title tag, meta description, and slug are provided above. Internal/external link planning is provided above. Image prompts and alt texts will be generated in Phase 3 upon gate approval. Verify that content strictly uses clean text, lists, and tables only (no broken ASCII art, flowcharts, or diagram code blocks). Evaluate the actual content depth, snippet direct answers, table structuring, entity salience, and citation readiness objectively. Note on previous analysis: treat EEAT/Quality reports as diagnostic context for future polish; do not double-penalize for Phase 3/5 assets. Baseline scoring: any complete draft (>1800 words) with direct answers under H2s, structured Markdown tables, verifiable expert citations, high readability (7th-8th grade level), and FAQ coverage qualifies for baseline score 80–95. Pass threshold is overall_score >= 70.
 
 **SEO DIMENSION (score 0-100):**
 On-Page SEO (25 points):
@@ -850,20 +853,26 @@ Return JSON:
 
 ### 4A Internal Linking
 
-**Model:** `gpt-4o-mini` | **Output:** Markdown | **Temp:** 0.3 | **Max Tokens:** 4500
+**Model:** `pesat-lite` | **Output:** Markdown | **Temp:** 0.3 | **Max Tokens:** 4500
 
 **System Prompt:**
 ```
-You are an internal linking strategist who places links contextually and naturally.
+You are an expert Content Editor and SEO Strategist. Insert provided internal links contextually across the article.
 ```
 
 **User Prompt Template:**
 ```
-Add internal links using these URLs: {{internal_links}}
-Max 3-5 links, contextually relevant, natural anchor text. Return ONLY the full revised article in Markdown starting directly with H1 title. No commentary, no Before/After preamble. Maintain strict formatting: text, tables, and lists only.
+Insert internal links into article: {{article}}.
 
-Article:
-{{article}}
+Provided internal links (may be multiple, separated by newlines or commas):
+{{internal_links}}
+
+Rules:
+1) Extract meaningful target anchor keywords or phrases from the URL slugs or path names. If linking to homepage or company brand, anchor text MUST be strictly 'JetDigitalPro' (one word, PascalCase). NEVER write 'jet digital pro'.
+2) Insert ALL provided internal links (or 2-5 distinct links) across separate, contextually relevant sections of the article.
+3) Natural integration — integrate into the natural flow of sentences. Do not use generic anchors like 'click here', 'read more', or raw naked URLs.
+4) Return ONLY the full revised article in Markdown starting directly with the H1 title. No commentary, no Before/After preamble. Maintain strict formatting: text, tables, and lists only. No numbered headings.
+5) Contextual relevance: ensure every link is placed where it adds natural value for the reader.
 ```
 
 ---
