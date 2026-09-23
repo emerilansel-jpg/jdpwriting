@@ -392,16 +392,16 @@ Article:
 
 ### 2H Find & Embed Quotes
 
-**Model:** `pesat-pro` | **Output:** Markdown | **Temp:** 0.3 | **Max Tokens:** 4500
+**Model:** `pesat-flash` | **Output:** Markdown | **Temp:** 0.3 | **Max Tokens:** 4500
 
 **System Prompt:**
 ```
-You are a senior research editor and citation verifier. You add genuine, verifiable expert statements and real authoritative quotes to strengthen E-E-A-T without hallucinating quotes or dead links.
+You are an expert editorial researcher and citation specialist. You add genuine, verifiable excerpts and authoritative quotes to strengthen E-E-A-T without hallucinating quotes or dead links.
 ```
 
 **User Prompt Template:**
 ```
-Add 2-3 genuine, verifiable expert quotes or citations to this article about '{{keyword}}'.
+Add 2-3 genuine, verbatim excerpts or authoritative quotes to this article about '{{keyword}}'.
 
 Article:
 {{article}}
@@ -410,14 +410,15 @@ Research Context (Verified Sources & Data):
 {{info_gain}}
 {{serp_data}}
 
-STRICT ANTI-HALLUCINATION & CITATION RULES:
-1. Every quote MUST be a 100% REAL, VERIFIABLE statement from an actual expert, research institution, academic journal, or official body (.gov, .edu, DOI, PubMed, established industry standard). DO NOT paraphrase inside quotes.
-2. Every linked URL MUST be a real, permanent, publicly accessible open web link: DOIs (https://doi.org/10....), arXiv (https://arxiv.org/abs/...), PubMed (https://pubmed.ncbi.nlm.nih.gov/...), official .gov/.edu portals, or official Wikipedia topic pages. NEVER invent newsroom or commercial PR wire slugs (e.g. gartner.com/newsroom/..., forbes.com/...) that result in dead links or bot-blocks (403/404).
-3. BRAND INTEGRITY: Always format company brand as 'JetDigitalPro' (one word, PascalCase). Never write 'jet digital pro'.
-4. Format quotes strictly as Markdown blockquotes:
-   > "Verbatim or accurate landmark quote." — [Author / Expert Name, Institution or Journal, Year](Verified URL)
-5. Integrate naturally after relevant claims throughout the article.
-6. Return the FULL revised article in Markdown. Standard text, blockquotes, tables, and lists only. No ASCII diagrams, flowchart arrows, or numbered headings.
+STRICT VERBATIM QUOTE & PERMANENT CANONICAL URL RULES:
+1. You may take an exact verbatim excerpt from ANY authoritative content: official documentation (Google Search Central, Microsoft, Atlassian, OpenAI, Anthropic), recognized industry standards/publications, university extensions, government portals (.gov), or canonical Wikipedia topic articles. It does NOT have to be strictly an academic study.
+2. The excerpt inside quotation marks MUST be the exact, verbatim phrasing from that source.
+3. The URL MUST be a real, permanent canonical URL on the open web (e.g. canonical Wikipedia topic pages https://en.wikipedia.org/wiki/..., official documentation https://developers.google.com/..., .gov, .edu, arXiv). NEVER invent newsroom or commercial PR wire slugs (e.g. gartner.com/newsroom/..., forbes.com/...) that result in dead links or bot-blocks (403/404).
+4. BRAND INTEGRITY: Always format company brand as 'JetDigitalPro' (one word, PascalCase). Never write 'jet digital pro'.
+5. Format quotes strictly as Markdown blockquotes:
+   > "Verbatim or accurate landmark quote." — [Author / Organization, Source Name, Year](Verified Canonical URL)
+6. Integrate naturally after relevant claims throughout the article.
+7. Return the FULL revised article in Markdown. Standard text, blockquotes, tables, and lists only. No ASCII diagrams, flowchart arrows, or numbered headings.
 ```
 
 ---
@@ -488,7 +489,7 @@ Return JSON with:
 
 ### 2J Quality + Fact Check Analysis
 
-**Model:** `pesat-pro` | **Output:** JSON | **Temp:** 0.2 | **Max Tokens:** 3000
+**Model:** `pesat-flash` | **Output:** JSON | **Temp:** 0.2 | **Max Tokens:** 3000
 
 **System Prompt:**
 ```
@@ -869,7 +870,7 @@ Article:
 
 ### 4B External Linking
 
-**Model:** `pesat-pro` | **Output:** Markdown | **Temp:** 0.3 | **Max Tokens:** 4500
+**Model:** `pesat-flash` | **Output:** Markdown | **Temp:** 0.3 | **Max Tokens:** 4500
 
 **System Prompt:**
 ```

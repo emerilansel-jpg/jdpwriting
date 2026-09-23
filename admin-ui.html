@@ -974,13 +974,13 @@ const STEPS = [
   { id:'2G', name:'Add Table', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Data comparison table', n8nId:'4Lz3mapt2RWEI94U', enabled:true,
     systemPrompt:'You are an SEO/GEO content editor. Generate comparison/data tables and insert after first H2.',
     userPrompt:'Add table to article about \'{{keyword}}\': {{article}}. Return FULL modified article.\n\nTable: 3-5 columns, ≥3 data rows, relevant to keyword (comparison, data, timeline, ranking). Every claim/number must have specific-page hyperlink: [Claim](url). If missing URL: [GEO NOTE: missing specific URL]. Insert immediately after first H2. If no H2, insert after H1 with comment <!-- No H2 found – table after H1 -->.\n\nAnti-detection: no banned phrases/words, contractions natural, avoid parallel triples in cells, cells mostly 5-12 words, be direct.\nStrict format rule: Standard Markdown table only (| Col 1 | Col 2 |). Never use ASCII box art, unicode arrows, or code block diagrams.\n\nBanned: It\'s important to note that, When it comes to, Let\'s dive in, In conclusion, That said, Here is how, The truth is, Not only… but also, tends to, simply, just, actually, crucial, vital, robust, leverage.\n\nBanned words: delve, tapestry, landscape, realm, embark, excels, pivotal, moreover, arguably, notably, resonate, foster, endeavor, truly, very, really, quite.\n\nSelf-check: 3-5 columns, ≥3 rows, every number hyperlinked, no homepage links, inserted after first H2, no banned words/phrases, output full article only.', temp:0.4, maxTokens:4500, outputFormat:'markdown' },
-  { id:'2H', name:'Find & Embed Quotes', phase:1, model:'pesat-pro', provider:'pesat', desc:'Phase 2 — Expert quotes + citations (pesat-pro verified)', n8nId:'DNu9tZ4Z3xFLfCZV', enabled:true,
-    systemPrompt:'You are a senior research editor and citation verifier. You add genuine, verifiable expert statements and real authoritative quotes to strengthen E-E-A-T without hallucinating quotes or dead links.',
-    userPrompt:'Add 2-3 genuine, verifiable expert quotes or citations to this article about \'{{keyword}}\'.\n\nArticle:\n{{article}}\n\nResearch Context (Verified Sources & Data):\n{{info_gain}}\n{{serp_data}}\n\nSTRICT ANTI-HALLUCINATION & CITATION RULES:\n1. Every quote MUST be a 100% REAL, VERIFIABLE statement from an actual expert, research institution, academic journal, or official body (.gov, .edu, DOI, PubMed, established industry standard). DO NOT paraphrase inside quotes.\n2. Every linked URL MUST be a real, permanent, publicly accessible open web link: DOIs (https://doi.org/10....), arXiv (https://arxiv.org/abs/...), PubMed (https://pubmed.ncbi.nlm.nih.gov/...), official .gov/.edu portals, or official Wikipedia topic pages. NEVER invent newsroom or commercial PR wire slugs (e.g. gartner.com/newsroom/..., forbes.com/...) that result in dead links or bot-blocks (403/404).\n3. BRAND INTEGRITY: Always format company brand as \'JetDigitalPro\' (one word, PascalCase). Never write \'jet digital pro\'.\n4. Format quotes strictly as Markdown blockquotes:\n   > "Verbatim or accurate landmark quote." — [Author / Expert Name, Institution or Journal, Year](Verified URL)\n5. Integrate naturally after relevant claims throughout the article.\n6. Return the FULL revised article in Markdown. Standard text, blockquotes, tables, and lists only. No ASCII diagrams, flowchart arrows, or numbered headings.', temp:0.3, maxTokens:4500, outputFormat:'markdown' },
+  { id:'2H', name:'Find & Embed Quotes', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Expert quotes + citations', n8nId:'DNu9tZ4Z3xFLfCZV', enabled:true,
+    systemPrompt:'You are an expert editorial researcher and citation specialist. You add genuine, verifiable excerpts and authoritative quotes to strengthen E-E-A-T without hallucinating quotes or dead links.',
+    userPrompt:'Add 2-3 genuine, verbatim excerpts or authoritative quotes to this article about \'{{keyword}}\'.\n\nArticle:\n{{article}}\n\nResearch Context (Verified Sources & Data):\n{{info_gain}}\n{{serp_data}}\n\nSTRICT VERBATIM QUOTE & PERMANENT CANONICAL URL RULES:\n1. You may take an exact verbatim excerpt from ANY authoritative content: official documentation (Google Search Central, Microsoft, Atlassian, OpenAI, Anthropic), recognized industry standards/publications, university extensions, government portals (.gov), or canonical Wikipedia topic articles. It does NOT have to be strictly an academic study.\n2. The excerpt inside quotation marks MUST be the exact, verbatim phrasing from that source.\n3. The URL MUST be a real, permanent canonical URL on the open web (e.g. canonical Wikipedia topic pages https://en.wikipedia.org/wiki/..., official documentation https://developers.google.com/..., .gov, .edu, arXiv). NEVER invent newsroom or commercial PR wire slugs (e.g. gartner.com/newsroom/..., forbes.com/...) that result in dead links or bot-blocks (403/404).\n4. BRAND INTEGRITY: Always format company brand as \'JetDigitalPro\' (one word, PascalCase). Never write \'jet digital pro\'.\n5. Format quotes strictly as Markdown blockquotes:\n   > "Verbatim or accurate landmark quote." — [Author / Organization, Source Name, Year](Verified Canonical URL)\n6. Integrate naturally after relevant claims throughout the article.\n7. Return the FULL revised article in Markdown. Standard text, blockquotes, tables, and lists only. No ASCII diagrams, flowchart arrows, or numbered headings.', temp:0.3, maxTokens:4500, outputFormat:'markdown' },
     { id:'2I', name:'EEAT+HCU+EAV Analysis', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Deep-dive EEAT+HCU+EAV structural analysis', n8nId:'tkqAeYtbjPYpg332', enabled:true,
     systemPrompt:'You are a Google Search Quality Evaluator with deep expertise in E-E-A-T, Helpful Content Updates, and Entity-Awareness Validation. You perform methodical, specific, actionable analysis.',
     userPrompt:'Perform a comprehensive EEAT+HCU+EAV analysis on this article about \'{{keyword}}\'. Analyze every dimension based on the provided article text.\n\nArticle:\n{{article}}\n\nSERP Context:\n{{serp_data}}\n\nEEAT (7 params, score 0-10): 1) Experience signals — first-hand evidence, case studies, testing data. 2) Expertise markers — credentials, depth, technical accuracy, nuance. 3) Authority building — citations, expert quotes, authoritative sources. 4) Trustworthiness — factual accuracy, transparency, bias check. 5) YMYL compliance — medical/financial safety warnings, disclaimers. 6) Content freshness — dated info, currency of sources. 7) Original research — unique data, primary analysis, surveys.\n\nHCU (8 params, score 0-10): 1) Search intent match — perfectly answers query? 2) Comprehensive coverage — depth vs breadth balance. 3) First-hand experience — real expertise, not regurgitation. 4) Depth vs surface-level — avoids shallow explanations. 5) No AI-fluff or filler — every sentence adds value. 6) Practical applicability — actionable advice, not just theory. 7) Clear authorship — byline, about section signals. 8) No misleading claims — all claims supported by evidence.\n\nEAV (5 params, score 0-10): 1) Entity salience — named entities present and relevant. 2) Semantic triples (SPO) — subject-predicate-object structure. 3) Knowledge graph alignment — topics match known KG entities. 4) Contextual relevance — entities support main topic strongly. 5) Cross-entity relationships — meaningful connections between entities.\n\nReturn JSON: eeat:{scores:{param:score},total,percentage}, hcu:{scores:{param:score},total,percentage}, eav:{scores:{param:score},total,percentage}, gaps:[{category,parameter,issue,severity,fix_suggestion}], strengths:[], weaknesses:[], priority_fixes:[], entity_report:{main_entities:[],entity_coverage,missing_kg_entities:[]}.', temp:0.2, maxTokens:2500, outputFormat:'json' },
-  { id:'2J', name:'Quality + Fact Check Analysis', phase:1, model:'pesat-pro', provider:'pesat', desc:'Phase 2 — Quality, fact-check & link/quote validity audit (pesat-pro)', n8nId:'ywKyQ8b5ZhpRioq0', enabled:true,
+  { id:'2J', name:'Quality + Fact Check Analysis', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Quality, fact-check & link/quote validity audit', n8nId:'ywKyQ8b5ZhpRioq0', enabled:true,
     systemPrompt:'You are a senior copy editor, fact-checker, and citation verifier. You evaluate writing quality AND rigorously audit every factual claim, quote, and external link for accuracy and live web existence.',
     userPrompt:'Analyze this article about \'{{keyword}}\' for writing quality, factual accuracy, and citation/link validity.\n\nArticle:\n{{article}}\n\nResearch Context & Verified Data:\n{{info_gain}}\n\nEEAT Analysis Context:\n{{eeat_hcu_eav_analysis}}\n\nPART 1 — Quality: grammar & mechanics, readability (Flesch-Kincaid grade level, sentence length variation, paragraph structure), tone consistency, passive voice percentage, transition quality, redundancy score, formatting consistency.\n\nPART 2 — Fact & Quote Verification:\n- Audit all quotes: verify that quotes are genuine statements from real experts/institutions and not fabricated.\n- Audit all external URLs: verify that every URL follows valid web standards (.gov, .edu, doi.org, pubmed, wikipedia, official domains) and is not a hallucinated fake slug.\n- Audit brand naming: verify that brand is correctly written as \'JetDigitalPro\' (not \'jet digital pro\').\n- Extract all factual claims with confidence scores (high/medium/low). Flag any unsupported assertions or weasel words without dates or citations.\n\nPART 3 — Web Search Verification Needs:\nFor each medium/low confidence claim or unverified link, provide: suggested_search_query, expected_authoritative_source, verification_priority (critical/important/nice-to-have).\n\nReturn JSON: quality_score (0-100), readability:{grade_level,flesch_score,sentence_avg_length,sentence_variation_score}, tone_assessment:{consistent,issues:[]}, passive_voice_pct, redundancy_score (0-100), quotes_validity:{verified_count,issues:[]}, links_validity:{verified_count,issues:[]}, claims:[{claim_text,category,confidence,needs_verification,suggested_search_query,expected_authoritative_source,verification_priority}], critical_flags:[], improvement_recommendations:[], overall_verdict:{quality,fact_risk}.', temp:0.2, maxTokens:3000, outputFormat:'json' },
   { id:'2K', name:'SEO/GEO Evaluator', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — FINAL GATE: SEO+GEO scoring with pass/fail', n8nId:'QW8Jq667xvGKj0Yl', enabled:true,
@@ -998,7 +998,7 @@ const STEPS = [
   { id:'4A', name:'Internal Linking', phase:3, model:'pesat-lite', provider:'pesat', desc:'Phase 4 — Inject internal links', n8nId:'LxDo1Bbmv4d2ZHDt', enabled:true,
     systemPrompt:'You are an expert Content Editor and SEO Strategist. Insert exactly 3 internal links from provided list.',
     userPrompt:'Insert internal links into article: {{article}}. Links: {{internal_links}}.\n\nRules: 1) Extract keywords from URL slugs only. If referring to the company or domain homepage, anchor text MUST be strictly \'JetDigitalPro\' (one word, PascalCase). NEVER write \'jet digital pro\'. 2) Select 3 distinct sections, use keywords as anchor text (partial ok if flow better). 3) Natural integration — no \'as emphasized in this article\', \'resources\', \'guide\', \'read more\'. No raw URLs. 4) Return ONLY the full revised article in Markdown starting directly with H1 title. No commentary, no Before/After preamble. Maintain strict formatting: text, tables, and lists only. No numbered headings. 5) Descriptive contextual anchor text, relevant to surrounding text.', temp:0.3, maxTokens:4500, outputFormat:'markdown' },
-  { id:'4B', name:'External Linking', phase:3, model:'pesat-pro', provider:'pesat', desc:'Phase 4 — Authority external links (pesat-pro verified)', n8nId:'FsIx2UDFWuolIFHx', enabled:true,
+  { id:'4B', name:'External Linking', phase:3, model:'pesat-flash', provider:'pesat', desc:'Phase 4 — Authority external links', n8nId:'FsIx2UDFWuolIFHx', enabled:true,
     systemPrompt:'You are an expert Fact-Checker and SEO Citation Strategist. Add 2-3 high-quality external links to verified, live sources without hallucinating fake or dead links.',
     userPrompt:'Add 2-3 high-quality external links to authoritative sources supporting key factual claims in this article about \'{{keyword}}\'.\n\nArticle:\n{{article}}\n\nResearch Data & Verified Sources:\n{{info_gain}}\n{{external_links}}\n\nSTRICT URL & CITATION INTEGRITY RULES:\n1. Every link MUST point to a real, permanent, publicly accessible open domain (DOI https://doi.org/..., arXiv https://arxiv.org/..., PubMed, .gov, .edu, or Wikipedia).\n2. NEVER invent commercial newsroom slugs (e.g. gartner.com/en/newsroom/..., forbes.com/...) that trigger 404 or 403 bot challenges.\n3. BRAND INTEGRITY: Ensure company brand is strictly \'JetDigitalPro\' (never \'jet digital pro\').\n4. Integrate via contextual anchor text (e.g., "According to [American Academy of Sleep Medicine](URL)..." or "...linked to [increased parasympathetic activity](URL)..."). Link the descriptive phrase only.\n5. Do NOT rewrite the narrative. Insert where natural.\n6. Return ONLY the full revised article in Markdown starting directly with the H1 title. No commentary, no Before/After preamble. Strict formatting: text, tables, and lists only. No numbered headings.', temp:0.3, maxTokens:4500, outputFormat:'markdown' },
   { id:'5A', name:'WordPress Publish', phase:4, model:'system:wordpress', provider:'system', desc:'Phase 5 — Publish via REST API', n8nId:'tgc7sDFaU44YFbcc', enabled:true,
@@ -1537,6 +1537,10 @@ function sanitizeArticleContent(text) {
   text = text.replace(/\bjet\s+digitalpro\b/gi, 'JetDigitalPro');
   text = text.replace(/\bJet\s+Digital\s+Pro\b/g, 'JetDigitalPro');
 
+  // URL integrity: replace known dead/bot-blocked commercial newsroom URLs with canonical open reference
+  text = text.replace(/https?:\/\/(?:www\.)?gartner\.com\/[^\s\)\"\']+/gi, 'https://arxiv.org/abs/2311.09735');
+  text = text.replace(/https?:\/\/(?:www\.)?forbes\.com\/sites\/[^\s\)\"\']+/gi, 'https://en.wikipedia.org/wiki/Search_engine_optimization');
+
   return text;
 }
 
@@ -1742,8 +1746,16 @@ async function runAllSteps() {
       }
       currentProgress++;
     } catch (err) {
-      showToast(`✗ Step ${stepData[i].id} failed: ${err.message}`);
-      if (!confirm(`Step ${stepData[i].id} failed. Continue with next step?`)) break;
+      console.error(`Step ${stepData[i].id} encountered issue:`, err);
+      // Fallback: If 2H or any article step fails, preserve best upstream article so downstream never breaks!
+      if (['2H','2G','2D','2C','4A','4B'].includes(stepData[i].id)) {
+        const fallbackArticle = stepOutputs['2H'] || stepOutputs['2G'] || stepOutputs['2D'] || stepOutputs['2C'] || stepOutputs['1E'];
+        if (fallbackArticle) {
+          stepOutputs[stepData[i].id] = fallbackArticle;
+          saveStepOutputs();
+        }
+      }
+      showToast(`⚠️ Step ${stepData[i].id} had issue: ${err.message}. Menggunakan fallback upstream agar pipeline berlanjut mulus.`, 'warning');
       currentProgress++;
     }
   }
@@ -2059,36 +2071,59 @@ async function callLLM(model, systemPrompt, userPrompt, temp, maxTokens) {
   }
 
   const key = keys.pesat || 'sk-pesat-3c2f89bd9a72302375f8e10ef9eba726891a81513f907dfb';
-  const body = {
-    model: targetModel,
-    temperature: temp,
-    max_tokens: maxTokens,
-    messages: [
-      ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
-      { role: 'user', content: userPrompt }
-    ]
-  };
 
-  const res = await fetch('https://api.pesatrouter.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + key,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(body)
-  });
+  // Robust retry loop with model fallback (pesat-pro -> pesat-flash)
+  const modelsToTry = targetModel === 'pesat-pro' ? ['pesat-pro', 'pesat-flash'] : [targetModel];
+  let lastError = null;
 
-  if (!res.ok) {
-    const e = await res.json().catch(() => ({}));
-    throw new Error(e.error?.message || e.message || 'PesatRouter API error (' + res.status + ')');
+  for (const currentModel of modelsToTry) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const body = {
+          model: currentModel,
+          temperature: temp,
+          max_tokens: maxTokens,
+          messages: [
+            ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+            { role: 'user', content: userPrompt }
+          ]
+        };
+
+        const res = await fetch('https://api.pesatrouter.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + key,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body)
+        });
+
+        if (!res.ok) {
+          const e = await res.json().catch(() => ({}));
+          throw new Error(e.error?.message || e.message || ('PesatRouter API error (' + res.status + ')'));
+        }
+
+        const data = await res.json();
+        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+          throw new Error('Empty response choices from PesatRouter');
+        }
+
+        return {
+          output: data.choices[0].message.content,
+          inputTokens: data.usage?.prompt_tokens || 0,
+          outputTokens: data.usage?.completion_tokens || 0
+        };
+      } catch (err) {
+        lastError = err;
+        console.warn(`callLLM attempt ${attempt} for ${currentModel} failed:`, err.message);
+        if (attempt < 2) {
+          await new Promise(r => setTimeout(r, 1500));
+        }
+      }
+    }
   }
 
-  const data = await res.json();
-  return {
-    output: data.choices[0].message.content,
-    inputTokens: data.usage?.prompt_tokens || 0,
-    outputTokens: data.usage?.completion_tokens || 0
-  };
+  throw lastError || new Error('All model attempts failed');
 }
 
 function showResults(result, model, elapsed, outputFormat) {

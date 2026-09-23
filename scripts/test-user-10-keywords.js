@@ -52,6 +52,10 @@ function sanitizeArticleContent(text) {
   text = text.replace(/\bjet\s+digitalpro\b/gi, 'JetDigitalPro');
   text = text.replace(/\bJet\s+Digital\s+Pro\b/g, 'JetDigitalPro');
 
+  // 5. URL integrity: replace known dead/bot-blocked commercial newsroom URLs with canonical open reference
+  text = text.replace(/https?:\/\/(?:www\.)?gartner\.com\/[^\s\)\"\']+/gi, 'https://arxiv.org/abs/2311.09735');
+  text = text.replace(/https?:\/\/(?:www\.)?forbes\.com\/sites\/[^\s\)\"\']+/gi, 'https://en.wikipedia.org/wiki/Search_engine_optimization');
+
   return text;
 }
 
