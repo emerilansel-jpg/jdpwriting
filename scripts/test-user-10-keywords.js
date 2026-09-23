@@ -18,7 +18,10 @@ const USER_KEYWORDS = [
 
 function sanitizeArticleContent(text) {
   if (!text || typeof text !== 'string') return text;
-  
+
+  // Strip leading numbers from headings (e.g. "## 1. Title" -> "## Title", "### 2) Title" -> "### Title", "## Section 1: Title" -> "## Title")
+  text = text.replace(/^(#{1,6})\s*(?:(?:Section|Step|Bagian)\s+)?(?:\d+\.|\d+\)|\d+\s*[-–—]|\d+\:)\s*/gim, '$1 ');
+
   // 1. Remove code blocks containing arrow diagrams
   text = text.replace(/```(?:[a-zA-Z]*\n)?([\s\S]*?)```/g, (match, code) => {
     if ((code.includes('↓') || code.includes('->') || code.includes('-->') || code.includes('→')) && code.includes('[')) {
@@ -54,6 +57,9 @@ function checkFormattingViolations(text) {
   }
   if (/^\s*↓\s*$/m.test(text)) {
     violations.push('Orphan arrow line ↓');
+  }
+  if (/^(?:#{1,6})\s*(?:(?:Section|Step|Bagian)\s+)?(?:\d+\.|\d+\)|\d+\s*[-–—]|\d+\:)/mi.test(text)) {
+    violations.push('Numbered heading (e.g. ## 1. Title)');
   }
   return violations;
 }
@@ -131,7 +137,7 @@ Requirements:
 2. Meta Description: 150-160 chars labeled "Meta description:".
 3. Introduction (~100 words): First sentence <=40 words directly answers search intent. Include a verified statistic and context.
 4. Key Takeaways: H2 with 3 bullet insights.
-5. Main Body: Minimum 6 comprehensive H2 sections. First paragraph under each H2 must provide a concise direct answer (<=40 words) for featured snippet and AI citation capture. Bold key statistics and named entities.
+5. Main Body: Minimum 6 comprehensive H2 sections. First paragraph under each H2 must provide a concise direct answer (<=40 words) for featured snippet and AI citation capture. Bold key statistics and named entities. CRITICAL HEADING RULE: Do NOT number any headings or section titles (never write "## 1. Title", "## 2. ...", or "## Section 1:"). All headings (H2, H3) must be unnumbered topical titles or questions.
 6. Comparison Table: Include at least one structured Markdown comparison table (3-5 columns, >=3 rows).
 7. Expert Citations: Include 2-3 cited expert statements formatted as > "Quote." — [Author/Institution, Year](URL if available) to anchor authority.
 8. FAQ Section: Include 3-5 high-intent Q&A pairs directly addressing related queries.

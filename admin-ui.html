@@ -949,10 +949,10 @@ const STEPS = [
     userPrompt:'For topic \'{{keyword}}\' using research context: {{prev_output}}\n\nGenerate JSON with: 1) Primary LSI (20 terms), 2) Secondary LSI (15), 3) Semantic entities (10), 4) Topical clusters (5), 5) Question-based keywords (10), 6) Long-tail variations (10), 7) Related concepts (10).', temp:0.3, maxTokens:1500, outputFormat:'json' },
   { id:'1D', name:'Outline Creation', phase:0, model:'pesat-flash', provider:'pesat', desc:'Phase 1 — Create article outline from research', n8nId:'eAMwyeXFoPwzKWNq', enabled:true,
     systemPrompt:'You are a GEO specialist (ChatGPT, Gemini, Perplexity) who creates comprehensive article outlines. All stats/claims must be web-verifiable.',
-    userPrompt:'Create outline for \'{{keyword}}\' using: Info Gain: {{info_gain}} | LSI Keywords: {{lsi_keywords}} | Internal links: {{internal_links}} | CTA: {{cta}}\n\nRequirements: match dominant search intent. Cover all identified gaps. Use LSI keywords naturally in H2/H3 headings. Structure for featured snippets (direct answers, lists, tables). Include an FAQ plan (at least 3 Qs) with answers. Target total word count: 1500-2500 words. Each section must include: purpose + suggested word count. Output: Complete outline with H2, H3, bullet points, direct answer suggestions, and format recommendations. Headings rule: 60% of total H2/H3 headings MUST be in question form (end with ?). Sections: 1. Intro - explicit direct answer <=40 words + 1 stat/named entity. <=100 words total. 2. Key takeaway section - heading must NOT be "Key Takeaways" (rename). 3 bullet points summarizing core answers. 3. Main body - minimum 10 H2 sections. Each H2 + content <=200 words. Per H2: direct answer <=40 words, 1 bold statistic, 1 bold named entity. Strict format rule: Outline and article must strictly use ONLY standard prose paragraphs, structured Markdown tables, and Markdown lists (ordered/bulleted). STRICTLY FORBIDDEN: ASCII art, text flowcharts, arrow diagrams, box flows ([ A ] ↓ [ B ]), or code blocks (```) used for formatting. Any process or workflow must be outlined strictly as numbered steps or comparison tables. 4. Conclusion - <=100 words, includes {{cta}}, forward-looking takeaway. 5. FAQ section - 3+ Q&A pairs (answers from outline, not pulled from article). Tone: knowledgeable, approachable, semi-formal, active voice, sentences <=20 words. No clickbait. No stacked CTAs. Banned: delve/tapestry/landscape/realm/embark/vital/comprehensive/vibrant/pivotal/moreover/arguably/notably/elevate/captivate/resonate/foster/endeavor. Return only the outline - no commentary, no meta text.', temp:0.4, maxTokens:2000, outputFormat:'markdown' },
+    userPrompt:'Create outline for \'{{keyword}}\' using: Info Gain: {{info_gain}} | LSI Keywords: {{lsi_keywords}} | Internal links: {{internal_links}} | CTA: {{cta}}\n\nRequirements: match dominant search intent. Cover all identified gaps. Use LSI keywords naturally in H2/H3 headings. Structure for featured snippets (direct answers, lists, tables). Include an FAQ plan (at least 3 Qs) with answers. Target total word count: 1500-2500 words. Each section must include: purpose + suggested word count. Output: Complete outline with H2, H3, bullet points, direct answer suggestions, and format recommendations. Headings rule: 60% of total H2/H3 headings MUST be in question form (end with ?). CRITICAL HEADING RULE: Do NOT number any headings or sections (never write "1.", "2.", "Section 1:", etc. in headings). Headings must be clean, unnumbered topical titles or questions. Sections: Intro - explicit direct answer <=40 words + 1 stat/named entity. <=100 words total. Key takeaway section - heading must NOT be "Key Takeaways" (rename). 3 bullet points summarizing core answers. Main body - minimum 10 H2 sections. Each H2 + content <=200 words. Per H2: direct answer <=40 words, 1 bold statistic, 1 bold named entity. Strict format rule: Outline and article must strictly use ONLY standard prose paragraphs, structured Markdown tables, and Markdown lists (ordered/bulleted). STRICTLY FORBIDDEN: ASCII art, text flowcharts, arrow diagrams, box flows ([ A ] ↓ [ B ]), or code blocks (```) used for formatting. Any process or workflow must be outlined strictly as numbered steps or comparison tables. Conclusion - <=100 words, includes {{cta}}, forward-looking takeaway. FAQ section - 3+ Q&A pairs (answers from outline, not pulled from article). Tone: knowledgeable, approachable, semi-formal, active voice, sentences <=20 words. No clickbait. No stacked CTAs. Banned: delve/tapestry/landscape/realm/embark/vital/comprehensive/vibrant/pivotal/moreover/arguably/notably/elevate/captivate/resonate/foster/endeavor. Return only the outline - no commentary, no meta text.', temp:0.4, maxTokens:2000, outputFormat:'markdown' },
   { id:'1E', name:'Generate Article', phase:0, model:'pesat-flash', provider:'pesat', desc:'Phase 1 — Write full article from outline', n8nId:'iC210o6qoXTO8muA', enabled:true,
     systemPrompt:'You are an expert SEO/GEO writer. Generate ~2000-word articles in American English with anti-detection techniques, genuine factual grounding, and professional human voice.',
-    userPrompt:'Write a comprehensive, professional, search-optimized ~2000-word article in American English based on the provided topic, outline, and research context.\n\nTarget Keyword: {{keyword}}\nCall to Action (CTA): {{cta}}\nInternal Links: {{internal_links}}\n\nContent Outline:\n{{outline}}\n\nResearch Data & Context:\n{{info_gain}}\n{{lsi_keywords}}\n\nRequirements:\n1. Title: H1 (50-60 chars, keyword-first, benefit-driven).\n2. Meta Description: 150-160 chars labeled "Meta description:".\n3. Introduction (~100 words): First sentence <=40 words directly answers search intent. Include a verified statistic and context.\n4. Key Takeaways: H2 with 3 bullet insights.\n5. Main Body: Follow the H2/H3 outline thoroughly. First paragraph under each H2 must provide a concise direct answer (<=40 words) for featured snippet and AI citation capture. Bold key statistics and named entities.\n6. Comparison Table: Include at least one structured Markdown comparison table (3-5 columns, >=3 rows).\n7. Expert Citations: Include 2-3 cited expert statements formatted as > "Quote." — [Author/Institution, Year](URL). CITATION ACCURACY: All quotes must be genuine documented findings from real experts or research bodies. URLs must be real, live links (DOI https://doi.org/..., PubMed, .gov, .edu, Wikipedia, or official hubs); NEVER invent non-existent sub-slugs.\n8. FAQ Section: Include 3-5 high-intent Q&A pairs directly addressing related queries.\n9. Tone: Grounded, authoritative, engaging human voice. Active voice, sentence variety, no AI clichés.\n10. Conclusion: Actionable next steps ending with CTA [{{cta}}].\n11. STRICT CONTENT FORMATTING RULE: The article must consist ONLY of: a) Standard prose paragraphs with H1, H2, H3 headings, bold text, and blockquotes (>); b) Structured Markdown comparison tables (| Col 1 | Col 2 |); c) Numbered or bulleted Markdown lists. STRICTLY FORBIDDEN: NO ASCII art, text boxes, flowcharts, or process maps; NO bracketed box chains or arrows (NEVER write [ Step 1 ] ↓ [ Step 2 ] or [ Action ] → [ Outcome ]); NO code blocks (```) used for diagrams, workflows, or formatting. Any protocol, routine, mechanism, or sequence MUST be formatted exclusively as a clean numbered list (1., 2., 3.) or a Markdown table.\n\nWrite the COMPLETE full-length article in Markdown. Begin directly with the H1 title. Do not ask questions or request more input.', temp:0.7, maxTokens:5000, outputFormat:'markdown' },
+    userPrompt:'Write a comprehensive, professional, search-optimized ~2000-word article in American English based on the provided topic, outline, and research context.\n\nTarget Keyword: {{keyword}}\nCall to Action (CTA): {{cta}}\nInternal Links: {{internal_links}}\n\nContent Outline:\n{{outline}}\n\nResearch Data & Context:\n{{info_gain}}\n{{lsi_keywords}}\n\nRequirements:\n1. Title: H1 (50-60 chars, keyword-first, benefit-driven).\n2. Meta Description: 150-160 chars labeled "Meta description:".\n3. Introduction (~100 words): First sentence <=40 words directly answers search intent. Include a verified statistic and context.\n4. Key Takeaways: H2 with 3 bullet insights.\n5. Main Body: Follow the H2/H3 outline thoroughly. First paragraph under each H2 must provide a concise direct answer (<=40 words) for featured snippet and AI citation capture. Bold key statistics and named entities. CRITICAL HEADING RULE: Do NOT number any headings or section titles (never write "## 1. Title", "## 2. ...", or "## Section 1:"). All headings (H2, H3) must be unnumbered topical titles or questions.\n6. Comparison Table: Include at least one structured Markdown comparison table (3-5 columns, >=3 rows).\n7. Expert Citations: Include 2-3 cited expert statements formatted as > "Quote." — [Author/Institution, Year](URL). CITATION ACCURACY: All quotes must be genuine documented findings from real experts or research bodies. URLs must be real, live links (DOI https://doi.org/..., PubMed, .gov, .edu, Wikipedia, or official hubs); NEVER invent non-existent sub-slugs.\n8. FAQ Section: Include 3-5 high-intent Q&A pairs directly addressing related queries.\n9. Tone: Grounded, authoritative, engaging human voice. Active voice, sentence variety, no AI clichés.\n10. Conclusion: Actionable next steps ending with CTA [{{cta}}].\n11. STRICT CONTENT FORMATTING RULE: The article must consist ONLY of: a) Standard prose paragraphs with H1, H2, H3 headings, bold text, and blockquotes (>); b) Structured Markdown comparison tables (| Col 1 | Col 2 |); c) Numbered or bulleted Markdown lists. STRICTLY FORBIDDEN: NO ASCII art, text boxes, flowcharts, or process maps; NO bracketed box chains or arrows (NEVER write [ Step 1 ] ↓ [ Step 2 ] or [ Action ] → [ Outcome ]); NO code blocks (```) used for diagrams, workflows, or formatting. Any protocol, routine, mechanism, or sequence MUST be formatted exclusively as a clean numbered list (1., 2., 3.) or a Markdown table.\n\nWrite the COMPLETE full-length article in Markdown. Begin directly with the H1 title. Do not ask questions or request more input.', temp:0.7, maxTokens:5000, outputFormat:'markdown' },
   { id:'2A', name:'Title & Meta', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — SEO title, meta, slug', n8nId:'NhssXDWzEktwl6MM', enabled:true,
     systemPrompt:'You are an expert SEO/GEO content generator.',
     userPrompt:'Generate SEO metadata as JSON only. If {{article}} exists: extract title (50-60 chars, keyword-first), meta description (150-160 chars, includes CTA, no "discover"), URL slug (lowercase, hyphens). If {{article}} empty: create based on {{keyword}} and optional {{outline}}. JSON format: {"title":"...", "meta_description":"...", "slug":"..."}', temp:0.5, maxTokens:600, outputFormat:'json' },
@@ -1503,6 +1503,10 @@ function autoFillTestInputs(stepId, silent, force) {
 }
 function sanitizeArticleContent(text) {
   if (!text || typeof text !== 'string') return text;
+
+  // Strip leading numbers from headings (e.g. "## 1. Title" -> "## Title", "### 2) Title" -> "### Title", "## Section 1: Title" -> "## Title")
+  text = text.replace(/^(#{1,6})\s*(?:(?:Section|Step|Bagian)\s+)?(?:\d+\.|\d+\)|\d+\s*[-–—]|\d+\:)\s*/gim, '$1 ');
+
   // Convert any code blocks containing arrow diagrams into numbered lists
   text = text.replace(/```(?:[a-zA-Z]*\n)?([\s\S]*?)```/g, (match, code) => {
     if ((code.includes('↓') || code.includes('->') || code.includes('-->') || code.includes('→')) && code.includes('[')) {
@@ -2177,14 +2181,21 @@ function buildFullArticleBundle() {
     } catch {}
   }
 
+  let cleanBestArticle = bestArticle || '';
+  if (cleanBestArticle) {
+    cleanBestArticle = cleanBestArticle.replace(/^#\s+[^\n]+\n+/, '');
+    cleanBestArticle = cleanBestArticle.replace(/^Meta description:\s*[^\n]+\n+/i, '');
+    cleanBestArticle = sanitizeArticleContent(cleanBestArticle);
+  }
+
   let bundle = '# ' + title + '\n\n';
-  bundle += '> **URL Slug:** `/' + slug + '`\n';
-  bundle += '> **Meta Description:** ' + (metaDesc || 'N/A') + '\n';
-  bundle += '> **Primary Keyword:** ' + (keyword || 'N/A') + '\n\n';
+  bundle += '> 🔗 **URL Slug:** `/' + slug.replace(/^\//, '') + '`\n>\n';
+  bundle += '> 📝 **Meta Description:** ' + (metaDesc || 'N/A') + '\n>\n';
+  bundle += '> 🎯 **Primary Keyword:** ' + (keyword || 'N/A') + '\n\n';
   bundle += '---\n\n';
 
-  if (bestArticle) {
-    bundle += bestArticle + '\n\n';
+  if (cleanBestArticle) {
+    bundle += cleanBestArticle + '\n\n';
   } else {
     bundle += '*[Belum ada artikel yang digenerate. Jalankan Step 1E atau Run All terlebih dahulu.]*\n\n';
   }
@@ -2258,12 +2269,31 @@ function renderMarkdownHTML(md) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
-  
-  html = html.replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold text-slate-100 mt-6 mb-2.5">$1</h3>');
-  html = html.replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold text-white mt-8 mb-3.5 border-b border-surface-border/60 pb-2 flex items-center gap-2">$1</h2>');
-  html = html.replace(/^# (.*$)/gim, '<h1 class="text-2xl font-black text-white mb-4 leading-snug">$1</h1>');
-  
-  html = html.replace(/^\> (.*$)/gim, '<blockquote class="border-l-4 border-blue-500 bg-blue-950/20 pl-4 py-2 my-3 text-sm text-blue-200 italic rounded-r">$1</blockquote>');
+
+  // Dedicated clean rendering for Article Metadata Box (URL Slug, Meta Description, Primary Keyword) with generous spacing
+  html = html.replace(/&gt;\s*(?:\*\*)?(?:🔗\s*)?URL Slug:?(?:\*\*)?\s*`?([^\n`]+)`?[\s\S]*?&gt;\s*(?:\*\*)?(?:📝\s*)?Meta Description:?(?:\*\*)?\s*([^\n]+)[\s\S]*?&gt;\s*(?:\*\*)?(?:🎯\s*)?Primary Keyword:?(?:\*\*)?\s*([^\n]+)/i, function(_, slugVal, descVal, kwVal) {
+    return `<div class="my-6 p-5 rounded-2xl bg-slate-900 border border-slate-700/80 shadow-md space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider min-w-[140px] flex items-center gap-1.5"><span>🔗</span> <span>URL Slug:</span></span>
+        <span class="text-sm font-mono text-emerald-400 bg-emerald-950/70 border border-emerald-700/50 px-3 py-1 rounded-lg">/${slugVal.trim().replace(/^\//, '')}</span>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:items-start gap-2">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider min-w-[140px] pt-1 flex items-center gap-1.5"><span>📝</span> <span>Meta Description:</span></span>
+        <div class="text-sm text-slate-200 leading-relaxed bg-slate-950/70 p-3 rounded-lg border border-slate-800 flex-1">${descVal.trim()}</div>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider min-w-[140px] flex items-center gap-1.5"><span>🎯</span> <span>Primary Keyword:</span></span>
+        <span class="text-sm font-semibold text-blue-300 bg-blue-950/70 border border-blue-700/50 px-3 py-1 rounded-lg">${kwVal.trim()}</span>
+      </div>
+    </div>`;
+  });
+
+  // Strip leading numbers from headings (e.g. "## 1. Title" -> "## Title")
+  html = html.replace(/^###\s*(?:(?:Section|Step|Bagian)\s+)?(?:\d+\.|\d+\)|\d+\s*[-–—]|\d+\:)?\s*(.*$)/gim, '<h3 class="text-lg font-bold text-slate-100 mt-6 mb-2.5">$1</h3>');
+  html = html.replace(/^##\s*(?:(?:Section|Step|Bagian)\s+)?(?:\d+\.|\d+\)|\d+\s*[-–—]|\d+\:)?\s*(.*$)/gim, '<h2 class="text-xl font-bold text-white mt-8 mb-3.5 border-b border-surface-border/60 pb-2 flex items-center gap-2">$1</h2>');
+  html = html.replace(/^#\s*(?:(?:Section|Step|Bagian)\s+)?(?:\d+\.|\d+\)|\d+\s*[-–—]|\d+\:)?\s*(.*$)/gim, '<h1 class="text-2xl font-black text-white mb-4 leading-snug">$1</h1>');
+
+  html = html.replace(/^\&gt; (.*$)/gim, '<blockquote class="border-l-4 border-blue-500 bg-blue-950/20 pl-4 py-2 my-3 text-sm text-blue-200 italic rounded-r">$1</blockquote>');
   
   html = html.replace(/\*\*(.*?)\*\*/gim, '<strong class="font-bold text-white">$1</strong>');
   html = html.replace(/\*(.*?)\*/gim, '<em class="italic text-slate-300">$1</em>');
@@ -2359,11 +2389,35 @@ function viewFullArticleBundle() {
   const el = document.getElementById('bundle-content');
   if (el) el.textContent = content;
 
-  // Extract best article for rendered view
+  // Extract best article for rendered view with clean metadata card and unnumbered headings
   const bestArticle = getBestArticle();
+  let readingContent = '';
+  if (bestArticle) {
+    const keyword = document.getElementById('ti-keyword') ? document.getElementById('ti-keyword').value.trim() : '';
+    let title = keyword ? (keyword.charAt(0).toUpperCase() + keyword.slice(1)) : 'Optimized Article';
+    let slug = keyword ? keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : 'article';
+    let metaDesc = '';
+    if (stepOutputs['2A']) {
+      try {
+        const parsed = JSON.parse(stepOutputs['2A'].replace(/```json\n?/g,'').replace(/```/g,'').trim());
+        if (parsed.title) title = parsed.title;
+        if (parsed.slug) slug = parsed.slug;
+        if (parsed.meta_description) metaDesc = parsed.meta_description;
+      } catch {}
+    }
+    let cleanArt = bestArticle.replace(/^#\s+[^\n]+\n+/, '').replace(/^Meta description:\s*[^\n]+\n+/i, '');
+    cleanArt = sanitizeArticleContent(cleanArt);
+
+    readingContent = '# ' + title + '\n\n';
+    readingContent += '> 🔗 **URL Slug:** `/' + slug.replace(/^\//, '') + '`\n>\n';
+    readingContent += '> 📝 **Meta Description:** ' + (metaDesc || 'N/A') + '\n>\n';
+    readingContent += '> 🎯 **Primary Keyword:** ' + (keyword || 'N/A') + '\n\n';
+    readingContent += '---\n\n' + cleanArt;
+  }
+
   const renderedEl = document.getElementById('bundle-rendered-content');
   if (renderedEl) {
-    renderedEl.innerHTML = renderMarkdownHTML(bestArticle || content);
+    renderedEl.innerHTML = renderMarkdownHTML(readingContent || content);
   }
 
   // Extract visual prompts

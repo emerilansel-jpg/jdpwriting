@@ -178,6 +178,7 @@ Requirements:
 - Plan for CTA placement: {{cta}}
 - Target 1500-2500 words total
 - Each section should have a clear purpose and estimated word count
+- CRITICAL HEADING RULE: Do NOT number any headings or section titles (never write "1.", "2.", "Section 1:", etc. in headings). All headings (H2, H3) must be unnumbered topical titles or questions.
 - Strict format rule: Outline and article must strictly use ONLY standard prose paragraphs, structured Markdown tables, and Markdown lists (ordered/bulleted). STRICTLY FORBIDDEN: ASCII art, text flowcharts, arrow diagrams, box flows ([ A ] ↓ [ B ]), or code blocks (```) used for formatting. Any process or workflow must be outlined strictly as numbered steps or comparison tables.
 
 Return a complete outline with H2, H3, and bullet points describing each section.
@@ -218,6 +219,7 @@ Requirements:
 - Meta Description: 150-160 chars labeled "Meta description:"
 - First paragraph under H1 directly answers main search intent (<=40 words)
 - First paragraph under each H2 must provide a concise direct answer (<=40 words) for AI snippet & GEO citation
+- CRITICAL HEADING RULE: Do NOT number any headings or section titles (never write "## 1. Title", "## 2. ...", or "## Section 1:"). All headings (H2, H3) must be unnumbered topical titles or questions.
 - Include at least 1 structured Markdown comparison table (3-5 columns, >=3 rows)
 - Include at least 3 statistics from authoritative sources with citations
 - Include 2-3 cited expert statements formatted as > "Quote." — [Author/Institution, Year](URL)

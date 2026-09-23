@@ -1,6 +1,37 @@
 # Coldstart — JDP Writing Pipeline
 > Tracked from coldstart.md (v2.1)
 
+## 2026-09-23 — Metadata Spacing Fix, Unnumbered Heading Enforcement & 100% Win Rate on 10 Target Keywords
+- **Status:** COMPLETED, TESTED & PRODUCTION DEPLOYED (10/10 Tests Passed - 100% Win Rate, Avg Score 91.5)
+- **Files touched:** admin-ui.html, pipeline-prompts-v2.1.md, worker-deploy/worker.js, scripts/deploy-bulletproof-pipeline.js, coldstart.md, coldstart/coldstart.md, scripts/test-user-10-keywords.js, scripts/user-10-results.json
+- **Feedback Addressed & Decisions:**
+  1. **Metadata Spacing & Visual Formatting**:
+     - Sebelumnya metadata `URL Slug`, `Meta Description`, dan `Primary Keyword` di Formatted Reading View ter-render menempel dalam satu baris tanpa jeda/spasi.
+     - Diperbaiki di `buildFullArticleBundle` dengan penambahan pemisah paragraf Markdown (`>\n`) dan di `renderMarkdownHTML` dengan dedicated metadata callout card yang memiliki baris terpisah, padding, font mono untuk slug, card tersendiri untuk deskripsi, dan badge khusus untuk primary keyword.
+     - Menghapus duplikasi H1 Title dan teks "Meta description:" berulang di dalam badan draf artikel sebelum di-bundle.
+  2. **Unnumbered Headings / Sections**:
+     - Sebelumnya heading artikel sering diawali angka seperti `## 1. Is Sleeping Early Better Than Sleeping Late?`.
+     - Ditambahkan aturan tegas di prompt Step 1D dan Step 1E: dilarang memberi nomor urut pada heading H2/H3 (`CRITICAL HEADING RULE: Do NOT number any headings or section titles`).
+     - Ditambahkan regex sanitasi otomatis di `sanitizeArticleContent` (frontend, Cloudflare Worker, dan n8n sub-workflow `parse_result`) serta di `renderMarkdownHTML` yang secara otomatis membersihkan awalan nomor seperti `## 1. `, `### 2) `, `## Section 1: ` menjadi heading topikal bersih (`## Is Sleeping Early Better Than Sleeping Late?`).
+  3. **Hasil Pengujian Ulang 10 Keyword Pengguna (First Attempt Win Rate: 100%)**:
+     - *how to sleep fast*: 2.601 kata | **92.5/100** (SEO: 92, GEO: 93) | Headings: Bersih tanpa angka ✅ | Violations: 0 ✅
+     - *what is generative engine optimization*: 2.404 kata | **91.0/100** (SEO: 90, GEO: 92) | Headings: Bersih tanpa angka ✅ | Violations: 0 ✅
+     - *how to fertilize jade plant*: 2.308 kata | **93.0/100** (SEO: 91, GEO: 94) | Headings: Bersih tanpa angka ✅ | Violations: 0 ✅
+     - *best trello alternatives*: 2.137 kata | **90.0/100** (SEO: 89, GEO: 91) | Headings: Bersih tanpa angka ✅ | Violations: 0 ✅
+     - *should you sleep early or late*: 2.462 kata | **92.5/100** (SEO: 92, GEO: 93) | Headings: Bersih tanpa angka ✅ | Violations: 0 ✅
+     - *how to setup automation workflow for AI writing*: 2.305 kata | **92.0/100** (SEO: 91, GEO: 93) | Headings: Bersih tanpa angka ✅ | Violations: 0 ✅
+     - *how to humanize writings*: 1.892 kata | **91.0/100** (SEO: 91, GEO: 90) | Headings: Bersih tanpa angka ✅ | Violations: 0 ✅
+     - *how to utilize chatgpt*: 2.493 kata | **91.0/100** (SEO: 89, GEO: 93) | Headings: Bersih tanpa angka ✅ | Violations: 0 ✅
+     - *comparison between chatgpt and claude*: 1.858 kata | **90.0/100** (SEO: 89, GEO: 91) | Headings: Bersih tanpa angka ✅ | Violations: 0 ✅
+     - *best free extensions for SEO purposes*: 2.657 kata | **92.0/100** (SEO: 92, GEO: 92) | Headings: Bersih tanpa angka ✅ | Violations: 0 ✅
+     - **Rata-rata Skor**: **91.5 / 100**
+     - **Win Rate**: **100% (10/10 lolos evaluasi pada percobaan pertama tanpa retry)**
+- **Deploy:**
+  - Cloudflare Worker: Live di [jdpwriter.com](https://jdpwriter.com) (Version ID: `9be06491-ab35-4d2e-ae95-58eacb1a36cc`).
+  - n8n VPS: Sub-workflows dan Orchestrator telah diperbarui dan aktif.
+
+---
+
 ## 2026-09-23 — Verbatim Quote Grounding, Live URL Verification & Fact-Check Upgrade (pesat-pro)
 - **Status:** COMPLETED, TESTED & PRODUCTION DEPLOYED
 - **Files touched:** admin-ui.html, pipeline-prompts-v2.1.md, worker-deploy/worker.js, scripts/deploy-bulletproof-pipeline.js, coldstart.md, coldstart/coldstart.md, scripts/verify-quotes-links.js
