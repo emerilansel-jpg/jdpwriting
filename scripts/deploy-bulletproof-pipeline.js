@@ -152,6 +152,10 @@ if (input.external_links) user = user.replace(/{{external_links}}/g, String(inpu
 if (input.title) user = user.replace(/{{title}}/g, String(input.title));
 if (input.meta_description) user = user.replace(/{{meta_description}}/g, String(input.meta_description));
 if (input.slug) user = user.replace(/{{slug}}/g, String(input.slug));
+if (input.article) user = user.replace(/{{article}}/g, String(input.article));
+if (input.info_gain) user = user.replace(/{{info_gain}}/g, typeof input.info_gain === 'object' ? JSON.stringify(input.info_gain) : String(input.info_gain));
+if (input.serp_data) user = user.replace(/{{serp_data}}/g, typeof input.serp_data === 'object' ? JSON.stringify(input.serp_data) : String(input.serp_data));
+if (input.eeat_hcu_eav_analysis) user = user.replace(/{{eeat_hcu_eav_analysis}}/g, typeof input.eeat_hcu_eav_analysis === 'object' ? JSON.stringify(input.eeat_hcu_eav_analysis) : String(input.eeat_hcu_eav_analysis));
 
 return [{
   json: {

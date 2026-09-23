@@ -390,20 +390,35 @@ Article:
 
 ### 2H Find & Embed Quotes
 
-**Model:** `deepseek-chat` | **Output:** Markdown | **Temp:** 0.5 | **Max Tokens:** 4500
+**Model:** `pesat-pro` | **Output:** Markdown | **Temp:** 0.3 | **Max Tokens:** 4500
 
 **System Prompt:**
 ```
-You are a researcher who adds authoritative expert quotes and verifiable citations to content to boost E-E-A-T signals.
+You are a senior research editor and citation verifier. You add genuine, verifiable expert statements and real authoritative quotes to strengthen E-E-A-T without hallucinating quotes or dead links.
 ```
 
 **User Prompt Template:**
 ```
-Add 2-3 expert quotes or citations from real, verifiable sources to this article about "{{keyword}}". Format as Markdown blockquotes with attribution. Insert where they strengthen claims. Return the FULL article.
-Format rule: Markdown blockquotes (> "Quote" — [Name, Title](URL)) and prose only. No ASCII diagrams or flowcharts.
+Add 2-3 genuine, verifiable expert quotes or citations to this article about '{{keyword}}'.
 
 Article:
 {{article}}
+
+Research Context (Verified Sources & Data):
+{{info_gain}}
+{{serp_data}}
+
+STRICT ANTI-HALLUCINATION & CITATION RULES:
+1. Every quote MUST be a REAL, VERIFIABLE statement from an actual expert, research institution, academic journal, or official body (.gov, .edu, DOI, PubMed, established industry standard).
+2. DO NOT fabricate or invent quotes. When quoting verbatim, use only genuine documented statements or published consensus findings.
+3. Every linked URL MUST be a real, live, accessible web link:
+   - Prioritize DOI links (https://doi.org/...), PubMed (https://pubmed.ncbi.nlm.nih.gov/...), official government/institutional portals (https://www.cdc.gov/..., https://www.nih.gov/...), Wikipedia topic pages (https://en.wikipedia.org/wiki/...), or official documentation.
+   - NEVER fabricate non-existent deep sub-slugs or imaginary articles that return 404.
+   - If an exact deep article URL is uncertain, link to the verified official portal or DOI for that institution/topic.
+4. Format quotes strictly as Markdown blockquotes:
+   > "Verbatim or accurate landmark quote." — [Author / Expert Name, Institution or Journal, Year](Verified URL)
+5. Integrate naturally after relevant claims throughout the article.
+6. Return the FULL revised article in Markdown. Standard text, blockquotes, tables, and lists only. No ASCII diagrams or flowchart arrows.
 ```
 
 ---
@@ -474,66 +489,37 @@ Return JSON with:
 
 ### 2J Quality + Fact Check Analysis
 
-**Model:** `gpt-4o` | **Output:** JSON | **Temp:** 0.2 | **Max Tokens:** 3000
+**Model:** `pesat-pro` | **Output:** JSON | **Temp:** 0.2 | **Max Tokens:** 3000
 
 **System Prompt:**
 ```
-You are a senior copy editor and fact-checker. Your job is two-fold: (1) assess grammar, readability, and writing quality, and (2) extract every factual claim from the article and flag anything that needs external verification. You are meticulous, thorough, and conservative in your judgments.
+You are a senior copy editor, fact-checker, and citation verifier. You evaluate writing quality AND rigorously audit every factual claim, quote, and external link for accuracy and live web existence.
 ```
 
 **User Prompt Template:**
 ```
-Analyze this article about "{{keyword}}" for both writing quality and factual accuracy.
+Analyze this article about '{{keyword}}' for writing quality, factual accuracy, and citation/link validity.
 
-**Article:**
+Article:
 {{article}}
 
-**EEAT+HCU+EAV Analysis (for context):**
+Research Context & Verified Data:
+{{info_gain}}
+
+EEAT Analysis Context:
 {{eeat_hcu_eav_analysis}}
 
-**PART 1 — Quality Analysis:**
-1. Grammar & mechanics — spelling, punctuation, subject-verb agreement, tense consistency
-2. Readability — Flesch-Kincaid grade level, sentence length variation, paragraph structure
-3. Tone consistency — is tone uniform? Any shifts that confuse readers?
-4. Passive voice percentage — flag excessive passive voice
-5. Transition quality — are ideas connected smoothly?
-6. Redundancy score — repetitive phrasing or idea recycling
-7. Formatting consistency — heading hierarchy, list formatting, bold/italic usage
+PART 1 — Quality: grammar & mechanics, readability (Flesch-Kincaid grade level, sentence length variation, paragraph structure), tone consistency, passive voice percentage, transition quality, redundancy score, formatting consistency.
 
-**PART 2 — Fact Check Analysis:**
-Extract ALL factual claims from the article. For each claim:
-- Quote the exact claim text
-- Categorize: statistic, date, comparison, cause-effect, definition, attribution, prediction
-- Confidence: high (common knowledge) / medium (needs verification) / low (unverified/asserted)
-- Flag if claim contradicts the EEAT analysis (e.g., "expert quote" with no attribution)
-- Flag if claim uses weasel words ("studies show," "many experts say") without sources
-- Flag outdated statistics or time-bound claims without dates
+PART 2 — Fact & Quote Verification:
+- Audit all quotes: verify that quotes are genuine statements from real experts/institutions and not fabricated.
+- Audit all external URLs: verify that every URL follows valid web standards (.gov, .edu, doi.org, pubmed, wikipedia, official domains) and is not a hallucinated fake slug.
+- Extract all factual claims with confidence scores (high/medium/low). Flag any unsupported assertions or weasel words without dates or citations.
 
-**PART 3 — Web Search Verification Needs:**
-For each "medium" or "low" confidence claim, provide:
-- suggested_search_query (exact query to verify this claim)
-- expected_authoritative_source (e.g., .gov, .edu, WHO, peer-reviewed journal)
-- verification_priority (critical / important / nice-to-have)
+PART 3 — Web Search Verification Needs:
+For each medium/low confidence claim or unverified link, provide: suggested_search_query, expected_authoritative_source, verification_priority (critical/important/nice-to-have).
 
-**Output Requirements:**
-Return JSON with:
-- quality_score: 0-100
-- readability: { grade_level, flesch_score, sentence_avg_length, sentence_variation_score }
-- tone_assessment: { consistent: boolean, issues: [] }
-- passive_voice_pct: number
-- redundancy_score: 0-100 (higher = more redundant)
-- claims: array of {
-    claim_text,
-    category,
-    confidence: "high/medium/low",
-    needs_verification: boolean,
-    suggested_search_query,
-    expected_authoritative_source,
-    verification_priority: "critical/important/nice-to-have"
-  }
-- critical_flags: array of claims that MUST be verified before publishing
-- improvement_recommendations: array of specific writing fixes
-- overall_verdict: { quality: "excellent/good/needs_work/poor", fact_risk: "low/medium/high" }
+Return JSON: quality_score (0-100), readability:{grade_level,flesch_score,sentence_avg_length,sentence_variation_score}, tone_assessment:{consistent,issues:[]}, passive_voice_pct, redundancy_score (0-100), quotes_validity:{verified_count,issues:[]}, links_validity:{verified_count,issues:[]}, claims:[{claim_text,category,confidence,needs_verification,suggested_search_query,expected_authoritative_source,verification_priority}], critical_flags:[], improvement_recommendations:[], overall_verdict:{quality,fact_risk}.
 ```
 
 **n8n Implementation Notes:**
@@ -884,19 +870,30 @@ Article:
 
 ### 4B External Linking
 
-**Model:** `gpt-4o` | **Output:** Markdown | **Temp:** 0.4 | **Max Tokens:** 4500
+**Model:** `pesat-pro` | **Output:** Markdown | **Temp:** 0.3 | **Max Tokens:** 4500
 
 **System Prompt:**
 ```
-You are an SEO expert in strategic external link placement to authoritative sources.
+You are an expert Fact-Checker and SEO Citation Strategist. Add 2-3 high-quality external links to verified, live sources without hallucinating fake or dead links.
 ```
 
 **User Prompt Template:**
 ```
-Add 2-3 external links to authoritative sources supporting factual claims in the article. Use real, verifiable URLs. Prefer .edu, .gov, and established publications. Return ONLY the full revised article in Markdown starting directly with H1 title. No commentary, no Before/After preamble. Maintain strict formatting: text, tables, and lists only.
+Add 2-3 high-quality external links to authoritative sources supporting key factual claims in this article about '{{keyword}}'.
 
 Article:
 {{article}}
+
+Research Data & Verified Sources:
+{{info_gain}}
+{{external_links}}
+
+STRICT URL & CITATION INTEGRITY RULES:
+1. Every link MUST point to a real, live, authoritative domain (.gov, .edu, DOI https://doi.org/..., PubMed, Wikipedia, or reputable official organization).
+2. NEVER invent fake URLs or hallucinate dead links that cause 404 errors. If linking to research, use real DOIs or real institutional topic pages.
+3. Integrate via contextual anchor text (e.g., "According to [American Academy of Sleep Medicine](URL)..." or "...linked to [increased parasympathetic activity](URL)..."). Link the descriptive phrase only.
+4. Do NOT rewrite the narrative. Insert where natural.
+5. Return ONLY the full revised article in Markdown starting directly with the H1 title. No commentary, no Before/After preamble. Strict formatting: text, tables, and lists only.
 ```
 
 ---

@@ -77,12 +77,15 @@ n8n Orchestrator (cQiEML8ZSa1UcmqH)
 | **1A, 1C** | SERP & LSI Keywords | `pesat-lite` | Cepat & efisien untuk simulasi search/list |
 | **1B, 1D** | Info Gain & Outline | `pesat-flash` | Sintesis web data & penalaran outline |
 | **1E** | **Generate Full Article** | **`pesat-flash`** | **Long-form writing komprehensif (~2.800 kata)** |
-| **2A, 2C-2H**| Optimization & Enrichment | `pesat-flash` | Kualitas penulisan, tabel, dan kutipan otoritatif |
+| **2A, 2C-2G**| Optimization & Enrichment | `pesat-flash` | Kualitas penulisan, tabel perbandingan |
 | **2B** | Intro Rewrite | `pesat-lite` | Cepat untuk hook pendek |
-| **2I, 2J, 2K**| **EEAT, Fact-Check, Gate** | **`pesat-flash`** | **Deep structural audit & threshold evaluation** |
+| **2H** | **Find & Embed Quotes** | **`pesat-pro`** | **Grounding kutipan verbatim & DOI/URL riil tanpa halusinasi** |
+| **2I** | EEAT Analysis | `pesat-flash` | Deep structural audit |
+| **2J** | **Fact Check & Link Audit**| **`pesat-pro`** | **Validasi klaim faktual & verifikasi URL live web** |
+| **2K** | **Evaluator Gate** | **`pesat-flash`** | **Final Quality Gate threshold evaluation** |
 | **3A, 3B, 3C**| Image, Infographic, Alt | `pesat-lite` | Prompt engineering visual & metadata |
 | **4A** | Internal Links | `pesat-lite` | Injeksi anchor kontekstual |
-| **4B** | External Links | `pesat-flash` | Validasi sitasi otoritas tinggi |
+| **4B** | **External Links** | **`pesat-pro`** | **Validasi sitasi otoritas tinggi & tautan eksternal live** |
 | **5A** | Save to Sheets | `System` | REST API direct v4 |
 
 ---

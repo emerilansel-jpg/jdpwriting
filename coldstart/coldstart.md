@@ -1,6 +1,27 @@
 # Coldstart — JDP Writing Pipeline
 > Tracked from coldstart.md (v2.1)
 
+## 2026-09-23 — Verbatim Quote Grounding, Live URL Verification & Fact-Check Upgrade (pesat-pro)
+- **Status:** COMPLETED, TESTED & PRODUCTION DEPLOYED
+- **Files touched:** admin-ui.html, pipeline-prompts-v2.1.md, worker-deploy/worker.js, scripts/deploy-bulletproof-pipeline.js, coldstart.md, coldstart/coldstart.md, scripts/verify-quotes-links.js
+- **Root Cause & Decisions:**
+  - **Masalah Kutipan Fiktif / Link 404**: LLM general cenderung memparafrase kutipan dalam tanda petik ganda (`""`) dan mengarang sub-slug URL yang tidak pernah ada (broken/dead link). Selain itu, Step 2H, 2J, dan 4B sebelumnya tidak menerima data riset `info_gain` dari Step 1B sehingga terpaksa mengarang sumber.
+  - **Model Upgrade to `pesat-pro`**:
+    - **Step 2H (Find & Embed Quotes)**: Dialihkan ke `pesat-pro` dengan instruksi anti-halusinasi ketat. Mewajibkan kutipan verbatim nyata dari ahli/jurnal ilmiah dan URL bersumber DOI (`https://doi.org/...`), PubMed, .gov, .edu, atau Wikipedia topik resmi.
+    - **Step 4B (External Linking)**: Dialihkan ke `pesat-pro` dengan kewajiban validasi domain live dan pelarangan deep fake URL.
+    - **Step 2J (Quality + Fact Check)**: Dialihkan ke `pesat-pro` dengan penambahan audit `quotes_validity` dan `links_validity` untuk memverifikasi keabsahan fakta dan tautan eksternal.
+  - **Perbaikan Pemetaan Model & Upstream**:
+    - Memperbaiki bug di `admin-ui.html` di mana `pesat-pro` sebelumnya dipaksa turun ke `pesat-flash`. Kini `pesat-pro` dipreservasi penuh.
+    - `upstreamMap` diupdate: Step 2H, 2J, dan 4B kini secara konsisten menerima `info_gain` dan `serp_data`.
+  - **Hasil Pengujian Verifikasi**:
+    - Pengujian otomatis lewat `scripts/verify-quotes-links.js` memvalidasi bahwa seluruh kutipan yang dihasilkan sesuai fakta dokumen nyata dan 100% tautan (DOI Oxford Academic, Frontiers, arXiv, Google Search Central, PubMed) berstatus HTTP 200/302 aktif (0 link mati / 0 URL 404).
+- **Deployment**:
+  - Cloudflare Worker diperbarui & live di [jdpwriter.com](https://jdpwriter.com) (Version ID: `85966a8e-ce38-44d7-8210-20ee308793c1`).
+  - Seluruh sub-workflow n8n (Step 2H, 2J, 4B) dan Orchestrator di VPS telah aktif diperbarui.
+- **Next:** Siap digunakan untuk operasional reguler.
+
+---
+
 ## 2026-09-23 — Format Enforcement, Flawed Logic Remediation (Step 2I/2J Article Input + Clean Metadata Extraction) & 100% Win Rate on 10 Target Keywords
 - **Status:** COMPLETED & PRODUCTION DEPLOYED (10/10 Tests Passed on First Attempt - 100% Win Rate)
 - **Files touched:** admin-ui.html, pipeline-prompts-v2.1.md, worker-deploy/worker.js, scripts/deploy-bulletproof-pipeline.js, coldstart.md, coldstart/coldstart.md, scripts/test-user-10-keywords.js, scripts/user-10-results.json
