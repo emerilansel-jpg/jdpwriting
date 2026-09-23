@@ -411,16 +411,13 @@ Research Context (Verified Sources & Data):
 {{serp_data}}
 
 STRICT ANTI-HALLUCINATION & CITATION RULES:
-1. Every quote MUST be a REAL, VERIFIABLE statement from an actual expert, research institution, academic journal, or official body (.gov, .edu, DOI, PubMed, established industry standard).
-2. DO NOT fabricate or invent quotes. When quoting verbatim, use only genuine documented statements or published consensus findings.
-3. Every linked URL MUST be a real, live, accessible web link:
-   - Prioritize DOI links (https://doi.org/...), PubMed (https://pubmed.ncbi.nlm.nih.gov/...), official government/institutional portals (https://www.cdc.gov/..., https://www.nih.gov/...), Wikipedia topic pages (https://en.wikipedia.org/wiki/...), or official documentation.
-   - NEVER fabricate non-existent deep sub-slugs or imaginary articles that return 404.
-   - If an exact deep article URL is uncertain, link to the verified official portal or DOI for that institution/topic.
+1. Every quote MUST be a 100% REAL, VERIFIABLE statement from an actual expert, research institution, academic journal, or official body (.gov, .edu, DOI, PubMed, established industry standard). DO NOT paraphrase inside quotes.
+2. Every linked URL MUST be a real, permanent, publicly accessible open web link: DOIs (https://doi.org/10....), arXiv (https://arxiv.org/abs/...), PubMed (https://pubmed.ncbi.nlm.nih.gov/...), official .gov/.edu portals, or official Wikipedia topic pages. NEVER invent newsroom or commercial PR wire slugs (e.g. gartner.com/newsroom/..., forbes.com/...) that result in dead links or bot-blocks (403/404).
+3. BRAND INTEGRITY: Always format company brand as 'JetDigitalPro' (one word, PascalCase). Never write 'jet digital pro'.
 4. Format quotes strictly as Markdown blockquotes:
    > "Verbatim or accurate landmark quote." — [Author / Expert Name, Institution or Journal, Year](Verified URL)
 5. Integrate naturally after relevant claims throughout the article.
-6. Return the FULL revised article in Markdown. Standard text, blockquotes, tables, and lists only. No ASCII diagrams or flowchart arrows.
+6. Return the FULL revised article in Markdown. Standard text, blockquotes, tables, and lists only. No ASCII diagrams, flowchart arrows, or numbered headings.
 ```
 
 ---
@@ -891,11 +888,12 @@ Research Data & Verified Sources:
 {{external_links}}
 
 STRICT URL & CITATION INTEGRITY RULES:
-1. Every link MUST point to a real, live, authoritative domain (.gov, .edu, DOI https://doi.org/..., PubMed, Wikipedia, or reputable official organization).
-2. NEVER invent fake URLs or hallucinate dead links that cause 404 errors. If linking to research, use real DOIs or real institutional topic pages.
-3. Integrate via contextual anchor text (e.g., "According to [American Academy of Sleep Medicine](URL)..." or "...linked to [increased parasympathetic activity](URL)..."). Link the descriptive phrase only.
-4. Do NOT rewrite the narrative. Insert where natural.
-5. Return ONLY the full revised article in Markdown starting directly with the H1 title. No commentary, no Before/After preamble. Strict formatting: text, tables, and lists only.
+1. Every link MUST point to a real, permanent, publicly accessible open domain (DOI https://doi.org/..., arXiv https://arxiv.org/..., PubMed, .gov, .edu, or Wikipedia).
+2. NEVER invent commercial newsroom slugs (e.g. gartner.com/en/newsroom/..., forbes.com/...) that trigger 404 or 403 bot challenges.
+3. BRAND INTEGRITY: Ensure company brand is strictly 'JetDigitalPro' (never 'jet digital pro').
+4. Integrate via contextual anchor text (e.g., "According to [American Academy of Sleep Medicine](URL)..." or "...linked to [increased parasympathetic activity](URL)..."). Link the descriptive phrase only.
+5. Do NOT rewrite the narrative. Insert where natural.
+6. Return ONLY the full revised article in Markdown starting directly with the H1 title. No commentary, no Before/After preamble. Strict formatting: text, tables, and lists only. No numbered headings.
 ```
 
 ---

@@ -44,6 +44,14 @@ function sanitizeArticleContent(text) {
 
   // 3. Clean orphan downward arrows
   text = text.replace(/^\s*↓\s*$/gm, '');
+
+  // 4. Brand integrity: enforce "JetDigitalPro" (PascalCase, no spaces)
+  text = text.replace(/\[\s*jet\s+digital\s+pro\s*\]/gi, '[JetDigitalPro]');
+  text = text.replace(/\bjet\s+digital\s+pro\b/gi, 'JetDigitalPro');
+  text = text.replace(/\bjetdigital\s+pro\b/gi, 'JetDigitalPro');
+  text = text.replace(/\bjet\s+digitalpro\b/gi, 'JetDigitalPro');
+  text = text.replace(/\bJet\s+Digital\s+Pro\b/g, 'JetDigitalPro');
+
   return text;
 }
 
@@ -60,6 +68,9 @@ function checkFormattingViolations(text) {
   }
   if (/^(?:#{1,6})\s*(?:(?:Section|Step|Bagian)\s+)?(?:\d+\.|\d+\)|\d+\s*[-–—]|\d+\:)/mi.test(text)) {
     violations.push('Numbered heading (e.g. ## 1. Title)');
+  }
+  if (/\bjet\s+digital\s+pro\b/i.test(text)) {
+    violations.push('Brand typo "jet digital pro"');
   }
   return violations;
 }
