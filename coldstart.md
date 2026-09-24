@@ -28,7 +28,7 @@ curl -X POST https://n8n.jetdigitalpro.com/webhook/pipeline-orchestrator \
 | | Research Tool | https://jdpwriter.com/research | 🟢 Live |
 | | Backup Domain | https://www.jdpwriter.com | 🟢 Live |
 | | Legacy UI | https://write.jetdigitalpro.com | 🟡 Deprecated |
-| | Cloudflare Fallback | https://jdp-pipeline-admin.n311311.workers.dev | 🟡 Fallback |
+| | Cloudflare Fallback | https://jdp-pipeline-admin.emerilansel.workers.dev | 🟢 Live |
 | **Engine** | n8n VPS | https://n8n.jetdigitalpro.com | 🟢 Active |
 | | Orchestrator ID | `cQiEML8ZSa1UcmqH` | 🟢 Active |
 | | n8n Webhook | `https://n8n.jetdigitalpro.com/webhook/pipeline-orchestrator` | 🟢 Active |
