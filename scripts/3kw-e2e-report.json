@@ -1,0 +1,97 @@
+[
+  {
+    "kw": "how to calibrate an espresso machine",
+    "wordCount": 2283,
+    "hasTable": true,
+    "hasDirectAnswers": true,
+    "evalScore": {
+      "seo_score": 88,
+      "geo_score": 89,
+      "overall_score": 88.5,
+      "pass": true,
+      "key_strengths": [
+        "Immediate BLUF answer with 18g dose/36g yield/25-30s target",
+        "Strong visual ASCII calibration loop aiding GEO extraction",
+        "Proper citation to industry source (Perfect Daily Grind)",
+        "Clear key takeaways section with bolded quantitative targets"
+      ],
+      "improvements": [
+        "Fix title tag keyword stuffing syntax ('How to Master how to calibrate...')",
+        "Add full comparison table for grind size vs extraction time adjustments",
+        "Complete truncated draft text",
+        "Replace self-referential circular internal link with relevant contextual anchor"
+      ]
+    },
+    "totalUrls": 4,
+    "liveUrls": 1,
+    "deadUrls": 3,
+    "deadList": [
+      "https://jetdigitalpro.com/how-to-calibrate-an-espresso-machine (404)",
+      "https://perfectdailygrind.com/2022/04/a-guide-to-calibrating-espresso-recipes/ (403)",
+      "https://coffee-sensor.com/why-calibrate-coffee-machines/ (ERR_ECONNRESET)"
+    ],
+    "pdfs": 0,
+    "hallucinationPassed": false
+  },
+  {
+    "kw": "what causes high bounce rate in analytics",
+    "wordCount": 2182,
+    "hasTable": true,
+    "hasDirectAnswers": true,
+    "evalScore": {
+      "seo_score": 73,
+      "geo_score": 75,
+      "overall_score": 74,
+      "pass": true,
+      "key_strengths": [
+        "Direct answer definitions for GA4 bounce logic in intro",
+        "Explicit mathematical criteria and ASCII flowchart aid snippet extraction",
+        "Verified citations to Think with Google and Google Analytics Help"
+      ],
+      "improvements": [
+        "Draft truncated mid-sentence; complete missing sections and comparison table",
+        "Fix title tag phrasing: avoid raw keyword stuffing ('How to Master what causes...')",
+        "Remove self-referential internal link targeting its own URL slug"
+      ]
+    },
+    "totalUrls": 4,
+    "liveUrls": 2,
+    "deadUrls": 2,
+    "deadList": [
+      "https://support.google.com/analytics/answer/12195621?hl=en (404)",
+      "https://jetdigitalpro.com/what-causes-high-bounce-rate-in-analytics (404)"
+    ],
+    "pdfs": 0,
+    "hallucinationPassed": false
+  },
+  {
+    "kw": "indoor plant leaf turning yellow reasons",
+    "wordCount": 2689,
+    "hasTable": true,
+    "hasDirectAnswers": true,
+    "evalScore": {
+      "seo_score": 84,
+      "geo_score": 86,
+      "overall_score": 85,
+      "pass": true,
+      "key_strengths": [
+        "Direct diagnostic answers placed immediately under H1 and H2 headings",
+        "Authoritative citation sourcing from university extension and domain experts",
+        "Structured takeaways and causal sequence modeling for AI snippet extraction"
+      ],
+      "improvements": [
+        "Add diagnostic Markdown comparison table mapping leaf symptoms directly to specific causes",
+        "Refine awkward title tag phrasing to sound more natural",
+        "Complete truncated draft sections covering underwatering, lighting, and nutrient deficiencies"
+      ]
+    },
+    "totalUrls": 4,
+    "liveUrls": 3,
+    "deadUrls": 1,
+    "deadList": [
+      "https://jetdigitalpro.com/indoor-plant-leaf-turning-yellow-reasons (404)"
+    ],
+    "pdfs": 0,
+    "hallucinationPassed": false
+  }
+]
