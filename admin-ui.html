@@ -344,9 +344,13 @@ tailwind.config = {
     <!-- Step Header -->
     <div class="flex items-start justify-between mb-5">
       <div>
-        <div class="flex items-center gap-3 mb-1">
+        <div class="flex items-center gap-3 mb-1 flex-wrap">
           <span id="step-badge" class="text-xs font-bold px-2 py-0.5 rounded badge-deepseek text-white">1A</span>
           <h1 id="step-title-display" class="text-xl font-bold text-white">Generate Article</h1>
+          <span id="step-search-engine-badge" class="hidden text-xs bg-orange-950/80 border border-orange-700/60 text-orange-300 px-2.5 py-0.5 rounded-full font-semibold flex items-center gap-1.5 shadow-sm">
+            <span class="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse"></span>
+            <span>Web Search: Firecrawl API Active</span>
+          </span>
           <label class="flex items-center gap-1.5 ml-3">
             <input type="checkbox" id="step-enabled" checked onchange="markDirty()" class="w-4 h-4 accent-blue-500">
             <span class="text-xs text-slate-400">Enabled</span>
@@ -379,7 +383,10 @@ tailwind.config = {
     <div id="tab-core">
       <div class="grid grid-cols-3 gap-4 mb-5">
         <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1.5">LLM Model</label>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-xs font-semibold text-slate-300">LLM Synthesis Model</label>
+            <span id="cfg-web-search-tag" class="hidden text-[11px] text-orange-400 font-mono font-medium">+ Firecrawl Search</span>
+          </div>
           <select id="cfg-model" onchange="onModelChange()" class="w-full bg-surface-input border border-surface-border rounded px-3 py-2 text-sm text-white">
             <optgroup label="PesatRouter (Unified AI)">
               <option value="pesat-lite">pesat-lite (Fast / Cheap)</option>
@@ -463,6 +470,7 @@ tailwind.config = {
             <span class="text-xs bg-slate-700 px-1.5 py-0.5 rounded cursor-pointer hover:bg-slate-600 text-slate-300" onclick="insertVar('{{info_gain}}')">{{info_gain}}</span>
             <span class="text-xs bg-slate-700 px-1.5 py-0.5 rounded cursor-pointer hover:bg-slate-600 text-slate-300" onclick="insertVar('{{lsi_keywords}}')">{{lsi_keywords}}</span>
             <span class="text-xs bg-slate-700 px-1.5 py-0.5 rounded cursor-pointer hover:bg-slate-600 text-slate-300" onclick="insertVar('{{outline}}')">{{outline}}</span>
+            <span class="text-xs bg-orange-950/80 border border-orange-700/60 px-1.5 py-0.5 rounded cursor-pointer hover:bg-orange-900 text-orange-300 font-semibold" onclick="insertVar('{{live_search_data}}')">{{live_search_data}}</span>
             <span class="text-xs bg-slate-700 px-1.5 py-0.5 rounded cursor-pointer hover:bg-slate-600 text-slate-300" onclick="insertVar('{{prev_output}}')">{{prev_output}}</span>
             <span class="text-xs bg-slate-700 px-1.5 py-0.5 rounded cursor-pointer hover:bg-slate-600 text-slate-300" onclick="insertVar('{{eeat_hcu_eav_analysis}}')">{{eeat_hcu_eav_analysis}}</span>
             <span class="text-xs bg-slate-700 px-1.5 py-0.5 rounded cursor-pointer hover:bg-slate-600 text-slate-300" onclick="insertVar('{{quality_fact_check}}')">{{quality_fact_check}}</span>
@@ -639,6 +647,15 @@ tailwind.config = {
         <div>
           <label class="block text-xs text-slate-400 mb-1">{{serp_data}}</label>
           <textarea id="ti-serp" class="w-full bg-surface-input border border-surface-border rounded px-3 py-1.5 text-xs text-slate-300 font-mono" rows="3" placeholder="AI will simulate SERP analysis automatically. Paste here only if you want to override."></textarea>
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs text-orange-400 font-semibold">{{live_search_data}} <span class="text-slate-500">(Firecrawl Web Results)</span></label>
+            <button onclick="triggerFirecrawlSearchManual()" type="button" class="text-[10px] bg-orange-950 hover:bg-orange-900 border border-orange-700/60 text-orange-300 px-2 py-0.5 rounded flex items-center gap-1 shadow-sm transition cursor-pointer">
+              <span>🔍</span> <span>Search with Firecrawl</span>
+            </button>
+          </div>
+          <textarea id="ti-live-search" class="w-full bg-surface-input border border-orange-500/40 rounded px-3 py-1.5 text-xs text-slate-300 font-mono" rows="3" placeholder="Click 'Search with Firecrawl' to fetch live web data or let pipeline auto-fetch..."></textarea>
         </div>
         <div>
           <label class="block text-xs text-slate-400 mb-1">{{info_gain}}</label>
@@ -952,9 +969,9 @@ const STEPS = [
   { id:'1A', name:'AI SERP Research', phase:0, model:'pesat-lite', provider:'pesat', desc:'Phase 1 — AI simulates SERP analysis for keyword', n8nId:'hC16jI9w1BbG2vhg', enabled:true,
     systemPrompt:'You are an expert SEO research analyst. Simulate SERP analysis for any keyword using your knowledge of what typically ranks.',
     userPrompt:'Perform SERP analysis for keyword \'{{keyword}}\'. Return JSON with: heading_patterns (common H2/H3), avg_word_count, content_gaps (missing topics), snippet_type (paragraph/list/table), paa_questions (5-7), dominant_intent (info/commercial/transactional/navigational), competitor_weaknesses, freshness_signals, key_sources (authoritative domains), common_format (listicle/guide/comparison).', temp:0.3, maxTokens:2000, outputFormat:'json' },
-  { id:'1B', name:'Information Gain', phase:0, model:'pesat-flash', provider:'pesat', desc:'Phase 1 — Find what content is missing from SERP via live web search', n8nId:'vpm0xEY8QlnlDog2', enabled:true,
-    systemPrompt:'You are an expert Research Analyst specializing in information gain and web intelligence for blog content. Analyze live search findings and domain knowledge to extract verifiable statistics, landmark studies, and authoritative sources. You ground every claim and link in real data.',
-    userPrompt:'Analyze research and web intelligence for \'{{keyword}}\' using the provided SERP context and live web search data.\n\nSERP & Web Intelligence Context:\n{{prev_output}}\n\nIdentify 10-15 verifiable statistics and expert findings. For each key finding: bold key numbers, provide source organization or author, publication year, real URL (from the provided web search data or canonical institutional domain), and suggested use in the blog article. Highlight unique data points that competitors typically miss.\n\nOutput format — JSON with:\n- topic: the keyword\n- key_findings: array of {finding, source_name, year, url, suggested_use}\n- expert_consensus: 2-3 sentences summarizing expert consensus\n- content_gaps: topics competitors miss\n- landmark_studies: array of {study_name, authors, journal, year, key_finding, url}\n- verified_sources: array of {title, url}', temp:0.3, maxTokens:2000, outputFormat:'json' },
+  { id:'1B', name:'Information Gain', phase:0, model:'pesat-flash', provider:'pesat', desc:'Phase 1 — Web Intelligence via Firecrawl Search + pesat-flash synthesis', n8nId:'vpm0xEY8QlnlDog2', enabled:true,
+    systemPrompt:'You are an expert Research Analyst specializing in information gain and web intelligence for blog content. Analyze live search findings from Firecrawl and domain knowledge to extract verifiable statistics, landmark studies, and authoritative sources. You ground every claim and link in real data.',
+    userPrompt:'Analyze research and web intelligence for \'{{keyword}}\' using live web search data retrieved via Firecrawl:\n\nLive Web Search Data (Firecrawl):\n{{live_search_data}}\n\nSERP Context:\n{{serp_data}}\n\nIdentify 10-15 verifiable statistics and expert findings. For each key finding: bold key numbers, provide source organization or author, publication year, real URL (from the provided Firecrawl search data or canonical institutional domain), and suggested use in the blog article. Highlight unique data points that competitors typically miss.\n\nOutput format — JSON with:\n- topic: the keyword\n- key_findings: array of {finding, source_name, year, url, suggested_use}\n- expert_consensus: 2-3 sentences summarizing expert consensus\n- content_gaps: topics competitors miss\n- landmark_studies: array of {study_name, authors, journal, year, key_finding, url}\n- verified_sources: array of {title, url}', temp:0.3, maxTokens:2000, outputFormat:'json' },
   { id:'1C', name:'LSI Keywords', phase:0, model:'pesat-lite', provider:'pesat', desc:'Phase 1 — Discover semantic keywords & entities', n8nId:'WoQb38HgkMeXIFp8', enabled:true,
     systemPrompt:'You are a semantic SEO expert who discovers LSI keywords, related concepts, and named entities.',
     userPrompt:'For topic \'{{keyword}}\' using research context: {{prev_output}}\n\nGenerate JSON with: 1) Primary LSI (20 terms), 2) Secondary LSI (15), 3) Semantic entities (10), 4) Topical clusters (5), 5) Question-based keywords (10), 6) Long-tail variations (10), 7) Related concepts (10).', temp:0.3, maxTokens:1500, outputFormat:'json' },
@@ -1028,6 +1045,7 @@ const stepData = STEPS.map(s => ({...s}));
 const inputFieldMap = {
   keyword: 'ti-keyword', cta: 'ti-cta', internal_links: 'ti-links', external_links: 'ti-external-links',
   article: 'ti-article', prev_output: 'ti-prev', serp_data: 'ti-serp', info_gain: 'ti-info-gain',
+  live_search_data: 'ti-live-search',
   lsi_keywords: 'ti-lsi', outline: 'ti-outline', eeat_hcu_eav_analysis: 'ti-eeat',
   quality_fact_check: 'ti-quality', seo_geo_evaluator: 'ti-evaluator', image_prompts: 'ti-image-prompts',
   infographic_prompt: 'ti-infographic', alt_texts: 'ti-alt-texts', title: 'ti-title',
@@ -1036,7 +1054,7 @@ const inputFieldMap = {
 
 const upstreamMap = {
   '1A': {},
-  '1B': { prev_output: '1A' },
+  '1B': { serp_data: '1A', prev_output: '1A', live_search_data: 'live_search' },
   '1C': { prev_output: '1B' },
   '1D': { serp_data: '1A', info_gain: '1B', lsi_keywords: '1C' },
   '1E': { serp_data: '1A', info_gain: '1B', lsi_keywords: '1C', outline: '1D' },
@@ -1383,6 +1401,18 @@ function loadStep(idx) {
   document.getElementById('step-title-display').textContent = s.name;
   document.getElementById('step-desc').textContent = s.desc;
   document.getElementById('step-enabled').checked = s.enabled;
+
+  const isWebSearchStep = (s.id === '1B' || s.id === '4B');
+  const searchBadge = document.getElementById('step-search-engine-badge');
+  if (searchBadge) {
+    if (isWebSearchStep) searchBadge.classList.remove('hidden');
+    else searchBadge.classList.add('hidden');
+  }
+  const searchTag = document.getElementById('cfg-web-search-tag');
+  if (searchTag) {
+    if (isWebSearchStep) searchTag.classList.remove('hidden');
+    else searchTag.classList.add('hidden');
+  }
 
   document.getElementById('cfg-model').value = s.model;
   document.getElementById('cfg-temp').value = s.temp;
@@ -1940,6 +1970,45 @@ async function runTest() {
   await runTestInternal(false);
 }
 
+async function triggerFirecrawlSearchManual() {
+  const kw = (document.getElementById('ti-keyword') ? document.getElementById('ti-keyword').value : '') ||
+             (document.getElementById('wv-keyword') ? document.getElementById('wv-keyword').value : '');
+  if (!kw) {
+    showToast('⚠️ Masukkan keyword terlebih dahulu', 'warning');
+    return;
+  }
+  showToast('🔍 Mencari live web via Firecrawl...');
+  try {
+    const [res1, res2] = await Promise.all([
+      searchFirecrawl(kw, 4),
+      searchFirecrawl(kw + ' research study statistics guidelines', 4)
+    ]);
+    const combined = [...(res1 || []), ...(res2 || [])];
+    const seen = new Set();
+    const unique = [];
+    for (const item of combined) {
+      if (item && item.url && !seen.has(item.url)) {
+        seen.add(item.url);
+        unique.push(item);
+      }
+    }
+    if (unique.length > 0) {
+      const text = unique.map((src, idx) =>
+        `[Source ${idx + 1}] Title: ${src.title}\nURL: ${src.url}\nSummary: ${(src.description || '').trim()}`
+      ).join('\n\n');
+      const el = document.getElementById('ti-live-search');
+      if (el) el.value = text;
+      stepOutputs['live_search'] = text;
+      saveStepOutputs();
+      showToast(`✓ Firecrawl menemukan ${unique.length} sumber web live`);
+    } else {
+      showToast('⚠️ Firecrawl tidak menemukan hasil pencarian', 'warning');
+    }
+  } catch (err) {
+    showToast('✗ Gagal memanggil Firecrawl: ' + err.message, 'error');
+  }
+}
+
 async function runTestInternal(isPipelineMode) {
   const s = stepData[currentStepIdx];
   const model = document.getElementById('cfg-model').value;
@@ -1960,6 +2029,7 @@ async function runTestInternal(isPipelineMode) {
     prev_output: document.getElementById('ti-prev').value,
     serp_data: document.getElementById('ti-serp').value,
     info_gain: document.getElementById('ti-info-gain').value,
+    live_search_data: document.getElementById('ti-live-search') ? document.getElementById('ti-live-search').value : '',
     lsi_keywords: document.getElementById('ti-lsi').value,
     outline: document.getElementById('ti-outline').value,
     eeat_hcu_eav_analysis: document.getElementById('ti-eeat').value,
@@ -2006,8 +2076,11 @@ async function runTestInternal(isPipelineMode) {
       }
     }
     if (liveSearch) {
+      vars.live_search_data = liveSearch;
       vars.prev_output = (vars.prev_output ? vars.prev_output + '\n\n' : '') +
         `### Live Web Search Findings (via Firecrawl):\n${liveSearch}`;
+      const tiLive = document.getElementById('ti-live-search');
+      if (tiLive && !tiLive.value) tiLive.value = liveSearch;
       const tiPrev = document.getElementById('ti-prev');
       if (tiPrev && !tiPrev.value.includes('Live Web Search Findings')) {
         tiPrev.value = vars.prev_output;

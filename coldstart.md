@@ -72,23 +72,31 @@ n8n Orchestrator / Client Engine (cQiEML8ZSa1UcmqH)
 
 ---
 
-## 🤖 LLM Model Strategy (Flash vs Lite)
+## 🤖 Arsitektur Model: Firecrawl Search vs LLM Synthesis
 
-| Step | Output | Model | Alasan Pemilihan |
+Sistem penulisan menggunakan kombinasi **Search Engine Retrieval (Firecrawl API)** dan **LLM Reasoning (Pesat Flash / Lite)**:
+
+- **Firecrawl API (`fc-...`)**: Bertindak sebagai *Data Retrieval & Live Web Search Tool*. Mengambil hasil pencarian live dari internet (URL asli, judul, dan kutipan konten) untuk disuntikkan ke variabel `{{live_search_data}}`.
+- **pesat-flash / pesat-lite**: Bertindak sebagai *Reasoning & Writing LLM*. Menerima data hasil pencarian Firecrawl lalu menyintesisnya menjadi analisis terstruktur JSON atau teks artikel Markdown.
+- **Di Developer Mode**: Header Step 1B & 4B kini dilengkapi badge `Web Search: Firecrawl API Active`, label model `LLM Synthesis Model (+ Firecrawl Search)`, variabel eksplisit `{{live_search_data}}`, dan tombol instan `[🔍 Search with Firecrawl]` pada Test Panel.
+
+| Step | Kategori | Engine / Model | Peran Web Search & Pemilihan Model |
 |---|---|---|---|
-| **1A, 1C** | SERP & LSI Keywords | `pesat-lite` | Cepat & efisien untuk simulasi search/list |
-| **1B, 1D** | Info Gain & Outline | `pesat-flash` | **Live Web Search via Firecrawl** + Outline Reasoning. Menghubungkan keyword ke sumber web nyata, mengekstrak data & studi aktual dengan atribusi URL live terverifikasi. |
-| **1E** | **Generate Full Article** | **`pesat-flash`** | **Long-form writing (~2.800 kata, 7th-grade readability), grounded citations & statistics integrity dari live research data, causation vs correlation enforcement** |
-| **2A, 2C-2G**| Optimization & Enrichment | `pesat-flash` | Kualitas penulisan, keterbacaan kelas 7, tabel perbandingan (stats integrity: dilarang mengarang angka presisi) |
-| **2B** | Intro Rewrite | `pesat-lite` | Cepat untuk hook pendek |
-| **2H** | **Find & Embed Quotes** | **`pesat-flash`** | **Citations & Quotes terverifikasi: TYPE A (verbatim abstract landmark) & TYPE B (paraphrase default) dengan link terverifikasi dari research context / domain institusional.** |
-| **2I** | EEAT Analysis | `pesat-flash` | Deep structural audit |
-| **2J** | **Fact Check & Link Audit**| **`pesat-flash`** | **4 audit: Verbatim Test (deteksi kutipan palsu), Adjusted vs Unadjusted check, Statistical Precision Audit (flag angka tak terverifikasi), Causation Language Audit** |
-| **2K** | **Evaluator Gate** | **`pesat-flash`** | **Calibrated Quality Gate (baseline 80–95 untuk draf lengkap, pass >= 70)** |
-| **3A, 3B, 3C**| Image, Infographic, Alt | `pesat-lite` | Prompt engineering visual & metadata |
-| **4A** | **Internal Links** | **`pesat-lite`** | **Injeksi multi-internal links kontekstual (2-5 tautan)** |
-| **4B** | **External Links** | **`pesat-flash`** | **Grounding link otoritas ke sumber web nyata dari hasil pencarian Firecrawl, Wikipedia canonical (%28 %29), dan institutional root domains (.gov/.edu/.org). Sanitizer otomatis membersihkan bot-blocked domains & trailing punctuation.** |
-| **5A** | Save to Sheets | `System` | REST API direct v4 |
+| **1A** | SERP Research | `pesat-lite` | Cepat & efisien untuk ekstraksi heading pattern & search intent. |
+| **1B** | **Information Gain** | **Firecrawl API + `pesat-flash`** | **WAJIB WEB SEARCH**: Firecrawl mengambil hasil pencarian Google/web live, `pesat-flash` menyintesis statistik riil, studi empiris, dan celah konten. |
+| **1C** | LSI Keywords | `pesat-lite` | Menemukan entitas semantik dan kata kunci turunan. |
+| **1D** | Outline Creation | `pesat-flash` | Penalaran outline berbasis data riset 1B (`info_gain`). |
+| **1E** | **Generate Full Article** | **`pesat-flash`** | **Grounding Downstream**: Menulis ~2.800 kata dari fakta 1B. Dilarang mengarang angka/data di luar hasil riset. |
+| **2A, 2C-2G**| Optimization & Enrichment | `pesat-flash` | Kualitas penulisan, keterbacaan kelas 7, tabel Markdown terstruktur. |
+| **2B** | Intro Rewrite | `pesat-lite` | Hook pendek langsung menjawab search intent. |
+| **2H** | **Find & Embed Quotes** | **`pesat-flash`** | Menanam kutipan grounded dari hasil riset 1B: TYPE A (verbatim abstract) & TYPE B (paraphrase). |
+| **2I** | EEAT Analysis | `pesat-flash` | Audit mendalam standar Google Search Quality Evaluator. |
+| **2J** | **Fact Check & Link Audit**| **`pesat-flash`** | 4-layer audit untuk mendeteksi deviasi fakta atau fabrikasi klaim. |
+| **2K** | **Evaluator Gate** | **`pesat-flash`** | Calibrated Quality Gate (baseline 80–95 untuk draf lengkap, pass >= 70). |
+| **3A, 3B, 3C**| Image, Infographic, Alt | `pesat-lite` | Prompt visual & deskripsi alt. |
+| **4A** | **Internal Links** | **`pesat-lite`** | Injeksi multi-internal links kontekstual dari input user. |
+| **4B** | **External Links** | **Firecrawl Data + `pesat-flash`** | **WAJIB LINK GROUNDING**: Memetakan entitas di artikel ke URL live dari hasil pencarian Firecrawl, Wikipedia (%28 %29), dan institusi resmi. |
+| **5A** | Save to Sheets | `System` | REST API direct v4 append tab HISTORY. |
 
 ---
 
