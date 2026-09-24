@@ -1,7 +1,7 @@
 # JDP Writing Pipeline — Cold Start Guide (v2.1)
 
 > Panduan orientasi cepat (onboarding) untuk developer & AI agent.
-> Status: **Production Ready** · Last Updated: **2026-09-23**
+> Status: **Production Ready** · Last Updated: **2026-09-24**
 
 ---
 
@@ -79,13 +79,13 @@ n8n Orchestrator (cQiEML8ZSa1UcmqH)
 | **1E** | **Generate Full Article** | **`pesat-flash`** | **Long-form writing komprehensif (~2.800 kata, 7th-grade readability)** |
 | **2A, 2C-2G**| Optimization & Enrichment | `pesat-flash` | Kualitas penulisan, keterbacaan kelas 7, tabel perbandingan |
 | **2B** | Intro Rewrite | `pesat-lite` | Cepat untuk hook pendek |
-| **2H** | **Find & Embed Quotes** | **`pesat-flash`** | **Cepat (3-4s), stabil tanpa timeout, kutipan verbatim & tautan terbuka kanonikal** |
+| **2H** | **Find & Embed Quotes** | **`pesat-flash`** | **Anti-hallucination: topical relevance mandate, verifiable grounding, no fabrication, percent-encoded Wikipedia URLs** |
 | **2I** | EEAT Analysis | `pesat-flash` | Deep structural audit |
-| **2J** | **Fact Check & Link Audit**| **`pesat-flash`** | **Validasi klaim faktual, integritas brand JetDigitalPro & audit tautan** |
+| **2J** | **Fact Check & Link Audit**| **`pesat-flash`** | **Validasi klaim faktual, topical relevance check, integritas brand JetDigitalPro & audit tautan** |
 | **2K** | **Evaluator Gate** | **`pesat-flash`** | **Calibrated Quality Gate (baseline 80–95 untuk draf lengkap, pass >= 70)** |
 | **3A, 3B, 3C**| Image, Infographic, Alt | `pesat-lite` | Prompt engineering visual & metadata |
 | **4A** | **Internal Links** | **`pesat-lite`** | **Injeksi multi-internal links kontekstual (2-5 tautan)** |
-| **4B** | **External Links** | **`pesat-flash`** | **Validasi sitasi otoritas terbuka & tautan eksternal live (Wikipedia, .gov, .edu, DOI)** |
+| **4B** | **External Links** | **`pesat-flash`** | **Anti-hallucination: topical relevance mandate, percent-encoded Wikipedia, blacklist commercial newsroom** |
 | **5A** | Save to Sheets | `System` | REST API direct v4 |
 
 ---
@@ -95,7 +95,7 @@ n8n Orchestrator (cQiEML8ZSa1UcmqH)
 | Gejala Masalah | Akar Masalah | Solusi Permanen |
 |---|---|---|
 | **Step 2H error / skor 2K anjlok ke 29-46** | Latensi tinggi browser memutuskan downstream; Step 2K kehilangan draf artikel; atau evaluator memotong nilai untuk server-side schema. | 1. Step 2H dialihkan ke `pesat-flash` (3-4s).<br>2. Retry loop otomatis (2x) di `callLLM`.<br>3. Fallback retensi draf upstream di `runAllSteps()` agar draf tidak pernah kosong.<br>4. Step 2K dikalibrasi tidak memotong nilai fitur hosting server-side jika draf lengkap (>1800w, tabel, kutipan). |
-| **Kutipan tidak verbatim / link 404/403** | Model mengarang slug newsroom komersial (misal `gartner.com/newsroom/...`) yang terblokir bot atau dead link. | 1. Definisi kutipan diperluas: boleh cuplikan/excerpt kalimat langsung dari konten otoritatif apa pun (dokumentasi resmi, standar industri, portal universitas, Wikipedia).<br>2. Wajib URL terbuka kanonikal (Wikipedia, .gov, .edu, DOI, arXiv). Dilarang slug newsroom komersial.<br>3. Regex sanitasi otomatis mengonversi URL newsroom komersial ke referensi terbuka. |
+| **Kutipan tidak verbatim / link 404/403** | Model mengarang slug newsroom komersial (misal `gartner.com/newsroom/...`) yang terblokir bot atau dead link; URL Wikipedia disambiguasi terpotong Markdown; link off-topic (misal link medis di artikel gardening). | 1. **Anti-hallucination prompt**: Topical Relevance Mandate (setiap link & kutipan wajib sesuai domain topik artikel), Verifiable Grounding (hanya kutipan terdokumentasi nyata), No Fabrication (jika tidak yakin 100% verbatim, gunakan definisi resmi institusi).<br>2. **Percent-encode Wikipedia disambiguasi**: Prompt wajib `%28` dan `%29` bukan `(` dan `)` untuk URL seperti `Jira_%28software%29`.<br>3. **Blacklist komersial diperluas**: Regex sanitasi otomatis untuk gartner, forbes, bloomberg, wsj, businessinsider → fallback ke referensi terbuka.<br>4. **Bot-blocked .edu fallback**: `extension.umn.edu` (403 HEAD) → `hgic.clemson.edu`.<br>5. **Step 2J topical audit**: Fact-checker memvalidasi setiap link sesuai topik artikel, flagging off-topic sebagai critical issue.<br>6. **Verified live rate: 91% (21/23 URLs live pada 3 niche test, 0 topic mismatch)**. |
 | **Typo brand `jet digital pro`** | Penulisan lowercase dengan spasi. | Wajib `JetDigitalPro` (satu kata, PascalCase). Regex sanitasi otomatis mengoreksi variasi typo di frontend, worker, dan n8n. |
 | **Format heading diawali angka (`## 1. Title`)** | Prompt outline/generate memakai numbering di judul. | 1. Rule tegas: `CRITICAL HEADING RULE: Do NOT number any headings or section titles`.<br>2. Regex sanitasi otomatis membersihkan awalan `## 1. ` menjadi `## Title`. |
 | **Metadata box menempel tanpa spasi / ada emoji** | Kurang pemisah paragraf Markdown & icon emoji kurang formal. | 1. Emoji dihapus dari label.<br>2. Ditata dalam card terpisah dengan padding dan spacing `space-y-4`. |

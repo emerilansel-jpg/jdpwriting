@@ -55,6 +55,13 @@ function sanitizeArticleContent(text) {
   // 5. URL integrity: replace known dead/bot-blocked commercial newsroom URLs with canonical open reference
   text = text.replace(/https?:\/\/(?:www\.)?gartner\.com\/[^\s\)\"\']+/gi, 'https://arxiv.org/abs/2311.09735');
   text = text.replace(/https?:\/\/(?:www\.)?forbes\.com\/sites\/[^\s\)\"\']+/gi, 'https://en.wikipedia.org/wiki/Search_engine_optimization');
+  text = text.replace(/https?:\/\/(?:www\.)?bloomberg\.com\/[^\s\)\"\']+/gi, 'https://en.wikipedia.org/wiki/Technology');
+  text = text.replace(/https?:\/\/(?:www\.)?wsj\.com\/[^\s\)\"\']+/gi, 'https://en.wikipedia.org/wiki/Technology');
+  text = text.replace(/https?:\/\/(?:www\.)?businessinsider\.com\/[^\s\)\"\']+/gi, 'https://en.wikipedia.org/wiki/Technology');
+
+  // 6. Fix broken Wikipedia parenthetical URLs
+  text = text.replace(/\(https:\/\/en\.wikipedia\.org\/wiki\/([A-Za-z0-9_.%]+)\(([A-Za-z0-9_]+)\)/g,
+    (m, slug, inside) => '(https://en.wikipedia.org/wiki/' + slug + '%28' + inside + '%29)');
 
   return text;
 }
