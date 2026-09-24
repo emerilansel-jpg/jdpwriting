@@ -1,0 +1,123 @@
+{
+  "timestamp": "2026-09-24T08:08:10.855Z",
+  "results": [
+    {
+      "kw": "how to calibrate an espresso machine",
+      "urlsIn1B": 0,
+      "urlsIn1E": 0,
+      "totalUrls": 1,
+      "live": 1,
+      "dead": 0,
+      "pdfs": 0,
+      "deadList": [],
+      "pass": true
+    },
+    {
+      "kw": "what causes high bounce rate in analytics",
+      "urlsIn1B": 0,
+      "urlsIn1E": 0,
+      "totalUrls": 0,
+      "live": 0,
+      "dead": 0,
+      "pdfs": 0,
+      "deadList": [],
+      "pass": true
+    },
+    {
+      "kw": "indoor plant leaf turning yellow reasons",
+      "urlsIn1B": 0,
+      "urlsIn1E": 0,
+      "totalUrls": 2,
+      "live": 2,
+      "dead": 0,
+      "pdfs": 0,
+      "deadList": [],
+      "pass": true
+    },
+    {
+      "kw": "difference between microservices and monolith architecture",
+      "error": "TIMEOUT",
+      "pass": false
+    },
+    {
+      "kw": "strength training recovery time guidelines",
+      "urlsIn1B": 0,
+      "urlsIn1E": 0,
+      "totalUrls": 2,
+      "live": 0,
+      "dead": 2,
+      "pdfs": 0,
+      "deadList": [
+        "https://www.nih.gov (403)",
+        "https://www.acsm.org, (ERR_ENOTFOUND)"
+      ],
+      "pass": false
+    },
+    {
+      "kw": "best noise cancelling headphones for office",
+      "urlsIn1B": 0,
+      "urlsIn1E": 0,
+      "totalUrls": 0,
+      "live": 0,
+      "dead": 0,
+      "pdfs": 0,
+      "deadList": [],
+      "pass": true
+    },
+    {
+      "kw": "notion vs monday project management review",
+      "urlsIn1B": 0,
+      "urlsIn1E": 0,
+      "totalUrls": 2,
+      "live": 1,
+      "dead": 1,
+      "pdfs": 0,
+      "deadList": [
+        "https://en.wikipedia.org/wiki/Notion_(productivity_software (404)"
+      ],
+      "pass": false
+    },
+    {
+      "kw": "top cloud hosting providers for small business",
+      "urlsIn1B": 0,
+      "urlsIn1E": 0,
+      "totalUrls": 3,
+      "live": 3,
+      "dead": 0,
+      "pdfs": 0,
+      "deadList": [],
+      "pass": true
+    },
+    {
+      "kw": "ergonomic desk chair under 300",
+      "urlsIn1B": 0,
+      "urlsIn1E": 0,
+      "totalUrls": 0,
+      "live": 0,
+      "dead": 0,
+      "pdfs": 0,
+      "deadList": [],
+      "pass": true
+    },
+    {
+      "kw": "semrush alternatives comparison",
+      "urlsIn1B": 0,
+      "urlsIn1E": 0,
+      "totalUrls": 0,
+      "live": 0,
+      "dead": 0,
+      "pdfs": 0,
+      "deadList": [],
+      "pass": true
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "totalUrls": 10,
+    "liveUrls": 7,
+    "deadUrls": 3,
+    "leakedIn1B": 0,
+    "leakedIn1E": 0,
+    "pdfs": 0
+  }
+}

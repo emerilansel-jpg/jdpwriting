@@ -886,6 +886,10 @@ tailwind.config = {
         <input type="password" id="key-pesat" class="w-full bg-surface-input border border-blue-500/60 rounded px-3 py-2 text-sm text-white font-mono" placeholder="sk-pesat-...">
       </div>
       <div>
+        <label class="block text-xs text-orange-400 font-semibold mb-1">Firecrawl API Key (Live Web Search)</label>
+        <input type="password" id="key-firecrawl" class="w-full bg-surface-input border border-orange-500/60 rounded px-3 py-2 text-sm text-white font-mono" placeholder="fc-...">
+      </div>
+      <div>
         <label class="block text-xs text-slate-400 mb-1">OpenAI API Key (Optional)</label>
         <input type="password" id="key-openai" class="w-full bg-surface-input border border-surface-border rounded px-3 py-2 text-sm text-white font-mono" placeholder="sk-...">
       </div>
@@ -944,9 +948,9 @@ const STEPS = [
   { id:'1A', name:'AI SERP Research', phase:0, model:'pesat-lite', provider:'pesat', desc:'Phase 1 — AI simulates SERP analysis for keyword', n8nId:'hC16jI9w1BbG2vhg', enabled:true,
     systemPrompt:'You are an expert SEO research analyst. Simulate SERP analysis for any keyword using your knowledge of what typically ranks.',
     userPrompt:'Perform SERP analysis for keyword \\'{{keyword}}\\'. Return JSON with: heading_patterns (common H2/H3), avg_word_count, content_gaps (missing topics), snippet_type (paragraph/list/table), paa_questions (5-7), dominant_intent (info/commercial/transactional/navigational), competitor_weaknesses, freshness_signals, key_sources (authoritative domains), common_format (listicle/guide/comparison).', temp:0.3, maxTokens:2000, outputFormat:'json' },
-  { id:'1B', name:'Information Gain', phase:0, model:'pesat-flash', provider:'pesat', desc:'Phase 1 — Find what content is missing from SERP', n8nId:'vpm0xEY8QlnlDog2', enabled:true,
-    systemPrompt:'You are an Information Gain Researcher specializing in deep-web file retrieval for blog content. Given a topic, search using filetype operators (pdf, ppt, docx, xlsx) and prioritize .gov/.edu/NGO sources. Find verifiable statistics with source attribution.',
-    userPrompt:'Search for \\'{{keyword}}\\' using operators: filetype:pdf "{{keyword}}", site:edu filetype:ppt "{{keyword}}", filetype:docx "{{keyword}}", filetype:xlsx "{{keyword}}", etc. Prioritize .gov/.edu/NGO sources. Find at least 20 verifiable statistics. For each: bold key number(s), source name and year, full plain-text URL (plus clickable hyperlink), file type, suggested blog use (e.g., pull quote, embed chart, cite in intro). Flag outdated or unreliable sources. No paywalls. Output: Markdown report with: 1. Bulleted stats with details. 2. Summary table: Statistic | Source | Year | URL | File Type | Suggested Use. No in-line citations. No footnotes. Return only the report.', temp:0.5, maxTokens:2000, outputFormat:'json' },
+  { id:'1B', name:'Information Gain', phase:0, model:'pesat-flash', provider:'pesat', desc:'Phase 1 — Find what content is missing from SERP via live web search', n8nId:'vpm0xEY8QlnlDog2', enabled:true,
+    systemPrompt:'You are an expert Research Analyst specializing in information gain and web intelligence for blog content. Analyze live search findings and domain knowledge to extract verifiable statistics, landmark studies, and authoritative sources. You ground every claim and link in real data.',
+    userPrompt:'Analyze research and web intelligence for \\'{{keyword}}\\' using the provided SERP context and live web search data.\\n\\nSERP & Web Intelligence Context:\\n{{prev_output}}\\n\\nIdentify 10-15 verifiable statistics and expert findings. For each key finding: bold key numbers, provide source organization or author, publication year, real URL (from the provided web search data or canonical institutional domain), and suggested use in the blog article. Highlight unique data points that competitors typically miss.\\n\\nOutput format — JSON with:\\n- topic: the keyword\\n- key_findings: array of {finding, source_name, year, url, suggested_use}\\n- expert_consensus: 2-3 sentences summarizing expert consensus\\n- content_gaps: topics competitors miss\\n- landmark_studies: array of {study_name, authors, journal, year, key_finding, url}\\n- verified_sources: array of {title, url}', temp:0.3, maxTokens:2000, outputFormat:'json' },
   { id:'1C', name:'LSI Keywords', phase:0, model:'pesat-lite', provider:'pesat', desc:'Phase 1 — Discover semantic keywords & entities', n8nId:'WoQb38HgkMeXIFp8', enabled:true,
     systemPrompt:'You are a semantic SEO expert who discovers LSI keywords, related concepts, and named entities.',
     userPrompt:'For topic \\'{{keyword}}\\' using research context: {{prev_output}}\\n\\nGenerate JSON with: 1) Primary LSI (20 terms), 2) Secondary LSI (15), 3) Semantic entities (10), 4) Topical clusters (5), 5) Question-based keywords (10), 6) Long-tail variations (10), 7) Related concepts (10).', temp:0.3, maxTokens:1500, outputFormat:'json' },
@@ -955,7 +959,7 @@ const STEPS = [
     userPrompt:'Create outline for \\'{{keyword}}\\' using: Info Gain: {{info_gain}} | LSI Keywords: {{lsi_keywords}} | Internal links: {{internal_links}} | CTA: {{cta}}\\n\\nRequirements: match dominant search intent. Cover all identified gaps. Use LSI keywords naturally in H2/H3 headings. Structure for featured snippets (direct answers, lists, tables). Include an FAQ plan (at least 3 Qs) with answers. Target total word count: 1500-2500 words. Each section must include: purpose + suggested word count. Output: Complete outline with H2, H3, bullet points, direct answer suggestions, and format recommendations. Headings rule: 60% of total H2/H3 headings MUST be in question form (end with ?). CRITICAL HEADING RULE: Do NOT number any headings or sections (never write "1.", "2.", "Section 1:", etc. in headings). Headings must be clean, unnumbered topical titles or questions. Sections: Intro - explicit direct answer <=40 words + 1 stat/named entity. <=100 words total. Key takeaway section - heading must NOT be "Key Takeaways" (rename). 3 bullet points summarizing core answers. Main body - minimum 10 H2 sections. Each H2 + content <=200 words. Per H2: direct answer <=40 words, 1 bold statistic, 1 bold named entity. Strict format rule: Outline and article must strictly use ONLY standard prose paragraphs, structured Markdown tables, and Markdown lists (ordered/bulleted). STRICTLY FORBIDDEN: ASCII art, text flowcharts, arrow diagrams, box flows ([ A ] ↓ [ B ]), or code blocks (\`\`\`) used for formatting. Any process or workflow must be outlined strictly as numbered steps or comparison tables. Conclusion - <=100 words, includes {{cta}}, forward-looking takeaway. FAQ section - 3+ Q&A pairs (answers from outline, not pulled from article). Tone: knowledgeable, approachable, semi-formal, active voice, sentences <=20 words. No clickbait. No stacked CTAs. Banned: delve/tapestry/landscape/realm/embark/vital/comprehensive/vibrant/pivotal/moreover/arguably/notably/elevate/captivate/resonate/foster/endeavor. Return only the outline - no commentary, no meta text.', temp:0.4, maxTokens:2000, outputFormat:'markdown' },
   { id:'1E', name:'Generate Article', phase:0, model:'pesat-flash', provider:'pesat', desc:'Phase 1 — Write full article from outline', n8nId:'iC210o6qoXTO8muA', enabled:true,
     systemPrompt:'You are an expert SEO/GEO writer. Generate ~2000-word articles in American English with anti-detection techniques, genuine factual grounding, easy 7th-grade reading level, and professional human voice.',
-    userPrompt:'Write a comprehensive, professional, search-optimized ~2000-word article in American English based on the provided topic, outline, and research context.\\n\\nTarget Keyword: {{keyword}}\\nCall to Action (CTA): {{cta}}\\nInternal Links: {{internal_links}}\\n\\nContent Outline:\\n{{outline}}\\n\\nResearch Data & Context:\\n{{info_gain}}\\n{{lsi_keywords}}\\n\\nRequirements:\\n1. Title: H1 (50-60 chars, keyword-first, benefit-driven). Must directly address the primary search intent of "{{keyword}}".\\n2. Meta Description: 150-160 chars labeled "Meta description:".\\n3. Introduction (~100 words): First sentence <=40 words directly answers search intent. Include a statistic from the Research Data context below. STATISTICS INTEGRITY: Only cite specific numbers (percentages, fold-risks, exact figures) that appear in the Research Data provided. If no exact number is available for a claim, write the general finding without inventing a precise figure. NEVER fabricate statistics. If uncertain about a number, use hedging language (e.g. "research suggests" or "studies indicate") without a specific percentage.\\n4. Key Takeaways: H2 with 3 bullet insights.\\n5. Main Body: Follow the H2/H3 outline thoroughly. First paragraph under each H2 must provide a concise direct answer (<=40 words) for featured snippet and AI citation capture. Bold key statistics and named entities. CRITICAL HEADING RULE: Do NOT number any headings or section titles (never write "## 1. Title", "## 2. ...", or "## Section 1:"). All headings (H2, H3) must be unnumbered topical titles or questions.\\n6. Comparison Table: Include at least one structured Markdown comparison table (3-5 columns, >=3 rows).\\n7. Expert Citations: Include 2-3 cited statements. Use TWO formats: (A) VERBATIM QUOTE with quotation marks ONLY if you are 100% certain of exact wording from a published abstract — > "Exact text from abstract." — [Author, Journal, Year](DOI URL). (B) PARAPHRASE CITATION (DEFAULT) without quotation marks — > According to [Author (Year)](DOI), [paraphrased finding]. NEVER put quotation marks around text you composed yourself. URLs must be real DOI or permanent open links. NEVER invent newsroom slugs.\\n8. FAQ Section: Include 3-5 high-intent Q&A pairs directly addressing related queries.\\n9. READABILITY MANDATE: Write in clear, active, engaging American English at an accessible 7th-grade to 8th-grade reading level (Flesch-Kincaid grade level 7.0–8.0, Flesch Reading Ease score 65–75). Keep sentences clear, punchy, and direct (average 12–16 words). Avoid dense academic jargon.\\n10. Tone: Grounded, authoritative, engaging human voice. Active voice, sentence variety, no AI clichés.\\n11. CAUSATION VS CORRELATION: When citing observational studies (cohort, cross-sectional, UK Biobank, Nurses Health Study), use associative language ("is associated with", "is linked to", "correlates with"). Reserve causal language ("causes", "leads to", "raises risk") ONLY for RCTs or Mendelian randomization studies. When citing a risk ratio, specify if it is adjusted or unadjusted.\\n12. Conclusion: Actionable next steps ending with CTA [{{cta}}].\\n13. BRAND INTEGRITY RULE: The company/brand name is strictly \\'JetDigitalPro\\' (one word, PascalCase: JetDigitalPro). NEVER write \\'jet digital pro\\', \\'jet digitalpro\\', or \\'Jet Digital Pro\\'. Always format as \\'JetDigitalPro\\'.\\n14. STRICT CONTENT FORMATTING RULE: The article must consist ONLY of: a) Standard prose paragraphs with H1, H2, H3 headings, bold text, and blockquotes (>); b) Structured Markdown comparison tables (| Col 1 | Col 2 |); c) Numbered or bulleted Markdown lists. STRICTLY FORBIDDEN: NO ASCII art, text boxes, flowcharts, or process maps; NO bracketed box chains or arrows (NEVER write [ Step 1 ] ↓ [ Step 2 ] or [ Action ] → [ Outcome ]); NO code blocks (\`\`\`) used for diagrams, workflows, or formatting. Any protocol, routine, mechanism, or sequence MUST be formatted exclusively as a clean numbered list (1., 2., 3.) or a Markdown table.\\n\\nWrite the COMPLETE full-length article in Markdown. Begin directly with the H1 title. Do not ask questions or request more input.', temp:0.7, maxTokens:5000, outputFormat:'markdown' },
+    userPrompt:'Write a comprehensive, professional, search-optimized ~2000-word article in American English based on the provided topic, outline, and research context.\\n\\nTarget Keyword: {{keyword}}\\nCall to Action (CTA): {{cta}}\\nInternal Links: {{internal_links}}\\n\\nContent Outline:\\n{{outline}}\\n\\nResearch Data & Context:\\n{{info_gain}}\\n{{lsi_keywords}}\\n\\nRequirements:\\n1. Title: H1 (50-60 chars, keyword-first, benefit-driven). Must directly address the primary search intent of "{{keyword}}".\\n2. Meta Description: 150-160 chars labeled "Meta description:".\\n3. Introduction (~100 words): First sentence <=40 words directly answers search intent. Include a verified statistic from the Research Data context below. STATISTICS INTEGRITY: Cite specific numbers from the verified Research Data. If no exact number is available, describe the general trend. NEVER invent statistics.\\n4. Key Takeaways: H2 with 3 bullet insights.\\n5. Main Body: Follow the H2/H3 outline thoroughly. First paragraph under each H2 must provide a concise direct answer (<=40 words) for featured snippet and AI citation capture. Bold key statistics and named entities. CRITICAL HEADING RULE: Do NOT number any headings or section titles (never write "## 1. Title", "## 2. ...", or "## Section 1:"). All headings (H2, H3) must be unnumbered topical titles or questions.\\n6. Comparison Table: Include at least one structured Markdown comparison table (3-5 columns, >=3 rows).\\n7. Expert Citations: Include 2-3 cited statements grounded in the Research Data. Use TWO formats:\\n   (A) VERBATIM QUOTE — ONLY if 100% certain of exact wording from a published abstract: > "[Exact text]" — [Author et al., Journal/Org, Year](URL)\\n   (B) PARAPHRASE CITATION (DEFAULT): > According to [Author/Org (Year)](URL), [finding in your own words].\\n   Ground citations in verified sources from the Research Data, Wikipedia canonical pages (percent-encode parens %28 %29), or institutional root domains (.gov, .edu, .org). Never invent URLs or deep PDF paths.\\n8. FAQ Section: Include 3-5 high-intent Q&A pairs directly addressing related queries.\\n9. READABILITY MANDATE: Write in clear, active, engaging American English at an accessible 7th-grade to 8th-grade reading level (Flesch-Kincaid grade level 7.0–8.0, Flesch Reading Ease score 65–75). Keep sentences clear, punchy, and direct (average 12–16 words). Avoid dense academic jargon.\\n10. Tone: Grounded, authoritative, engaging human voice. Active voice, sentence variety, no AI clichés.\\n11. CAUSATION VS CORRELATION: When citing observational studies (cohort, cross-sectional, UK Biobank, Nurses Health Study), use associative language ("is associated with", "is linked to", "correlates with"). Reserve causal language ("causes", "leads to", "raises risk") ONLY for RCTs or Mendelian randomization studies. When citing a risk ratio, specify if it is adjusted or unadjusted.\\n12. Conclusion: Actionable next steps ending with CTA [{{cta}}].\\n13. BRAND INTEGRITY RULE: The company/brand name is strictly \\'JetDigitalPro\\' (one word, PascalCase: JetDigitalPro). NEVER write \\'jet digital pro\\', \\'jet digitalpro\\', or \\'Jet Digital Pro\\'. Always format as \\'JetDigitalPro\\'.\\n14. STRICT CONTENT FORMATTING RULE: The article must consist ONLY of: a) Standard prose paragraphs with H1, H2, H3 headings, bold text, and blockquotes (>); b) Structured Markdown comparison tables (| Col 1 | Col 2 |); c) Numbered or bulleted Markdown lists. STRICTLY FORBIDDEN: NO ASCII art, text boxes, flowcharts, or process maps; NO bracketed box chains or arrows (NEVER write [ Step 1 ] ↓ [ Step 2 ] or [ Action ] → [ Outcome ]); NO code blocks (\`\`\`) used for diagrams, workflows, or formatting. Any protocol, routine, mechanism, or sequence MUST be formatted exclusively as a clean numbered list (1., 2., 3.) or a Markdown table.\\n\\nWrite the COMPLETE full-length article in Markdown. Begin directly with the H1 title. Do not ask questions or request more input.', temp:0.7, maxTokens:5000, outputFormat:'markdown' },
   { id:'2A', name:'Title & Meta', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — SEO title, meta, slug', n8nId:'NhssXDWzEktwl6MM', enabled:true,
     systemPrompt:'You are an expert SEO/GEO content generator.',
     userPrompt:'Generate SEO metadata as JSON only. If {{article}} exists: extract title (50-60 chars, keyword-first), meta description (150-160 chars, includes CTA, no "discover"), URL slug (lowercase, hyphens). If {{article}} empty: create based on {{keyword}} and optional {{outline}}. JSON format: {"title":"...", "meta_description":"...", "slug":"..."}', temp:0.5, maxTokens:600, outputFormat:'json' },
@@ -976,10 +980,10 @@ const STEPS = [
     userPrompt:'Optimize conclusion for \\'{{keyword}}\\' using article: {{article}} | CTA: {{cta}}. Output Task 1 then Task 2.\\n\\nTask 1 — Rewritten conclusion (Markdown only, no commentary):\\nHeading: H2/H3, no colon, human-sounding (e.g., \\'So here\\'s the takeaway\\').\\nParagraph 1 (max 70w): start with physical frustration, address \\'you\\', include 3 key takeaways (break trio rule — no First/Second/Third, weave into natural sentences or use pair + standout), end with natural pivot to solution.\\nParagraph 2 (max 50w): include brand only if in article, CTA as empowering next step.\\nTotal: 120 words max.\\n\\nAnti-bot: no em-dashes/semicolons, use commas/periods only, natural contractions (don\\'t, it\\'s, you\\'re, that\\'s), no trio (X, Y, Z), no metaphors/poetry, sentence variety (medium 12-18w then short blunt 5-8w), \\'invisible\\' synonyms only (common verbs, no poetic), brand only if in input.\\n\\nBanned: It\\'s important to note that, When it comes to, Let\\'s dive in, In conclusion, That said, Here\\'s the thing, The truth is, Not only… but also, tends to, simply, just, actually, absolutely, crucial, vital, robust, leverage, delve, landscape, realm, testament, seamless, moreover, arguably.\\n\\nTask 2 — Comparison table (after blank line):\\n| Metric | Original | Rewritten |\\n| SEO/GEO score (1-10) | X | Y |\\n| Reader helpfulness (1-10) | X | Y |\\n| Better version | — | Original/Rewritten |\\nThen 3-5 bullet reasons below table focusing on clarity, human voice, conversion, anti-bot rules, SEO/GEO.\\n\\nSelf-check: heading no colon, two paragraphs only, ≤120w, no em-dashes/semicolons, contractions present, no trio, no metaphors, sentence variety, brand only if in input, CTA in P2, no banned phrases.', temp:0.6, maxTokens:400, outputFormat:'markdown' },
   { id:'2G', name:'Add Table', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Data comparison table', n8nId:'4Lz3mapt2RWEI94U', enabled:true,
     systemPrompt:'You are an SEO/GEO content editor. Generate comparison/data tables and insert after first H2.',
-    userPrompt:'Add table to article about \\'{{keyword}}\\': {{article}}. Return FULL modified article.\\n\\nTable: 3-5 columns, ≥3 data rows, relevant to keyword (comparison, data, timeline, ranking). Every claim/number must have specific-page hyperlink: [Claim](url). If missing URL: [GEO NOTE: missing specific URL].\\nSTATISTICS INTEGRITY: Only include specific numbers that appear in the article text or research context. NEVER invent precise percentages, fold-risks, or exact figures to fill table cells. If a precise number is not available, describe the finding qualitatively (e.g. "Higher risk" instead of "54% higher risk"). Insert immediately after first H2. If no H2, insert after H1 with comment <!-- No H2 found – table after H1 -->.\\n\\nAnti-detection: no banned phrases/words, contractions natural, avoid parallel triples in cells, cells mostly 5-12 words, be direct.\\nStrict format rule: Standard Markdown table only (| Col 1 | Col 2 |). Never use ASCII box art, unicode arrows, or code block diagrams.\\n\\nBanned: It\\'s important to note that, When it comes to, Let\\'s dive in, In conclusion, That said, Here is how, The truth is, Not only… but also, tends to, simply, just, actually, crucial, vital, robust, leverage.\\n\\nBanned words: delve, tapestry, landscape, realm, embark, excels, pivotal, moreover, arguably, notably, resonate, foster, endeavor, truly, very, really, quite.\\n\\nSelf-check: 3-5 columns, ≥3 rows, every number hyperlinked, no homepage links, inserted after first H2, no banned words/phrases, output full article only.', temp:0.4, maxTokens:4500, outputFormat:'markdown' },
+    userPrompt:'Add table to article about \\'{{keyword}}\\': {{article}}. Return FULL modified article.\\n\\nTable: 3-5 columns, ≥3 data rows, relevant to keyword (comparison, data, timeline, ranking). Every claim/number should reference the source institution or study by name. Do NOT invent hyperlinks — write [Source Name, Year] as plain text. URLs will be added in Phase 4.\\nSTATISTICS INTEGRITY: Only include specific numbers that appear in the article text or research context. NEVER invent precise percentages, fold-risks, or exact figures to fill table cells. If a precise number is not available, describe the finding qualitatively (e.g. "Higher risk" instead of "54% higher risk"). Insert immediately after first H2. If no H2, insert after H1 with comment <!-- No H2 found – table after H1 -->.\\n\\nAnti-detection: no banned phrases/words, contractions natural, avoid parallel triples in cells, cells mostly 5-12 words, be direct.\\nStrict format rule: Standard Markdown table only (| Col 1 | Col 2 |). Never use ASCII box art, unicode arrows, or code block diagrams.\\n\\nBanned: It\\'s important to note that, When it comes to, Let\\'s dive in, In conclusion, That said, Here is how, The truth is, Not only… but also, tends to, simply, just, actually, crucial, vital, robust, leverage.\\n\\nBanned words: delve, tapestry, landscape, realm, embark, excels, pivotal, moreover, arguably, notably, resonate, foster, endeavor, truly, very, really, quite.\\n\\nSelf-check: 3-5 columns, ≥3 rows, every number hyperlinked, no homepage links, inserted after first H2, no banned words/phrases, output full article only.', temp:0.4, maxTokens:4500, outputFormat:'markdown' },
   { id:'2H', name:'Find & Embed Quotes', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Expert quotes + citations', n8nId:'DNu9tZ4Z3xFLfCZV', enabled:true,
-    systemPrompt:'You are an expert editorial researcher and citation specialist who strengthens E-E-A-T with real, verifiable citations. CARDINAL RULE: You can ONLY quote text that appears verbatim in a published paper\\'s abstract or conclusion. If you are not 100% certain of the exact wording, you MUST use a PARAPHRASE CITATION instead (no quotation marks). You NEVER fabricate quotes, invent URLs, or insert off-topic links.',
-    userPrompt:'Add 2-3 verifiable citations to this article about \\'{{keyword}}\\'.\\n\\nArticle:\\n{{article}}\\n\\nResearch Context (Verified Sources & Data):\\n{{info_gain}}\\n{{serp_data}}\\n\\nCITATION FORMAT — TWO ALLOWED TYPES:\\n\\nTYPE A — VERBATIM QUOTE (use ONLY when you are 100% certain of exact wording from a published abstract or conclusion):\\n> "[Exact text copied from paper abstract or conclusion]" — [Author et al., Journal Name, Year](https://doi.org/...)\\n\\nTYPE B — PARAPHRASE CITATION (DEFAULT — use this when you know the finding but not the exact words):\\n> According to [Author et al. (Year)](https://doi.org/...), [paraphrased finding in your own words without quotation marks].\\n\\nSTRICT ANTI-FABRICATION RULES:\\n1. NEVER put quotation marks around text you composed yourself. Quotation marks mean you copied the exact words from a source document. If you are paraphrasing, do NOT use quotation marks.\\n2. TOPICAL RELEVANCE: Every citation MUST directly relate to \\'{{keyword}}\\'. Never insert off-topic sources.\\n3. VERIFIABLE GROUNDING: Every cited finding must come from a real, named, published study or official institutional statement. Include the journal/organization name and year.\\n4. DOI PREFERRED: Link to https://doi.org/... or https://pubmed.ncbi.nlm.nih.gov/... when citing research papers. For official statements, link to the institutional page.\\n5. PERMANENT CANONICAL OPEN URLS:\\n   - Wikipedia disambiguation: percent-encode parens (%28 %29).\\n   - NEVER invent commercial newsroom slugs or deep file paths.\\n6. BRAND INTEGRITY: \\'JetDigitalPro\\' (PascalCase).\\n7. Integrate naturally after relevant claims throughout the article.\\n8. Return the FULL revised article in Markdown. Standard text, blockquotes, tables, and lists only. No ASCII diagrams, flowchart arrows, or numbered headings.', temp:0.3, maxTokens:4500, outputFormat:'markdown' },
+    systemPrompt:'You are an expert editorial researcher who strengthens E-E-A-T with real, verifiable citations. You have TWO citation modes:\\n- VERBATIM QUOTE: Use ONLY for landmark studies whose exact abstract or conclusion wording is verified from the research context.\\n- PARAPHRASE CITATION (default): Describe the finding in your own words without quotation marks.\\nGround all citations in the provided research data and verified authoritative sources. Never fabricate quotes or invent ungrounded URLs.',
+    userPrompt:'Add 2-3 verifiable citations to this article about \\'{{keyword}}\\'.\\n\\nArticle:\\n{{article}}\\n\\nResearch Context (Verified Sources & Data):\\n{{info_gain}}\\n{{serp_data}}\\n\\nCITATION FORMAT — TWO ALLOWED TYPES:\\n\\nTYPE A — VERBATIM QUOTE (use ONLY when you are 100% certain of exact wording from a published abstract or conclusion):\\n> "[Exact text copied from paper abstract or conclusion]" — [Author et al., Journal Name, Year](URL)\\n\\nTYPE B — PARAPHRASE CITATION (DEFAULT — use this when you know the finding but not the exact words):\\n> According to [Author et al. (Year)](URL), [paraphrased finding in your own words without quotation marks].\\n\\nSTRICT ANTI-FABRICATION RULES:\\n1. NEVER put quotation marks around text you composed yourself. Quotation marks mean you copied the exact words from a source document. If you are paraphrasing, do NOT use quotation marks.\\n2. TOPICAL RELEVANCE: Every citation MUST directly relate to \\'{{keyword}}\\'. Never insert off-topic sources.\\n3. VERIFIABLE GROUNDING: Every cited finding must come from a real, named, published study or official institutional statement from the Research Context. Include the journal/organization name and year.\\n4. URL RULES — VERIFIED & LIVE GROUNDING:\\n   - Ground links in real sources from the Research Context, Wikipedia canonical pages (https://en.wikipedia.org/wiki/...), or institutional root domains (.gov, .edu, .org).\\n   - Wikipedia disambiguation: percent-encode parens (%28 %29).\\n   - BOT-BLOCKED domains (use plain text, NO link): nih.gov direct root, bifma.org, nngroup.com, gartner.com, forbes.com, bloomberg.com, wsj.com — cite by organization name only.\\n   - FORBIDDEN: Deep PDF links or constructed commercial newsroom slugs.\\n5. BRAND INTEGRITY: \\'JetDigitalPro\\' (PascalCase).\\n6. Integrate naturally after relevant claims throughout the article.\\n7. Return the FULL revised article in Markdown. Standard text, blockquotes, tables, and lists only. No ASCII diagrams, flowchart arrows, or numbered headings.', temp:0.3, maxTokens:4500, outputFormat:'markdown' },
     { id:'2I', name:'EEAT+HCU+EAV Analysis', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Deep-dive EEAT+HCU+EAV structural analysis', n8nId:'tkqAeYtbjPYpg332', enabled:true,
     systemPrompt:'You are a Google Search Quality Evaluator with deep expertise in E-E-A-T, Helpful Content Updates, and Entity-Awareness Validation. You perform methodical, specific, actionable analysis.',
     userPrompt:'Perform a comprehensive EEAT+HCU+EAV analysis on this article about \\'{{keyword}}\\'. Analyze every dimension based on the provided article text.\\n\\nArticle:\\n{{article}}\\n\\nSERP Context:\\n{{serp_data}}\\n\\nEEAT (7 params, score 0-10): 1) Experience signals — first-hand evidence, case studies, testing data. 2) Expertise markers — credentials, depth, technical accuracy, nuance. 3) Authority building — citations, expert quotes, authoritative sources. 4) Trustworthiness — factual accuracy, transparency, bias check. 5) YMYL compliance — medical/financial safety warnings, disclaimers. 6) Content freshness — dated info, currency of sources. 7) Original research — unique data, primary analysis, surveys.\\n\\nHCU (8 params, score 0-10): 1) Search intent match — perfectly answers query? 2) Comprehensive coverage — depth vs breadth balance. 3) First-hand experience — real expertise, not regurgitation. 4) Depth vs surface-level — avoids shallow explanations. 5) No AI-fluff or filler — every sentence adds value. 6) Practical applicability — actionable advice, not just theory. 7) Clear authorship — byline, about section signals. 8) No misleading claims — all claims supported by evidence.\\n\\nEAV (5 params, score 0-10): 1) Entity salience — named entities present and relevant. 2) Semantic triples (SPO) — subject-predicate-object structure. 3) Knowledge graph alignment — topics match known KG entities. 4) Contextual relevance — entities support main topic strongly. 5) Cross-entity relationships — meaningful connections between entities.\\n\\nReturn JSON: eeat:{scores:{param:score},total,percentage}, hcu:{scores:{param:score},total,percentage}, eav:{scores:{param:score},total,percentage}, gaps:[{category,parameter,issue,severity,fix_suggestion}], strengths:[], weaknesses:[], priority_fixes:[], entity_report:{main_entities:[],entity_coverage,missing_kg_entities:[]}.', temp:0.2, maxTokens:2500, outputFormat:'json' },
@@ -1002,8 +1006,8 @@ const STEPS = [
     systemPrompt:'You are an expert Content Editor and SEO Strategist. Insert provided internal links contextually across the article.',
     userPrompt:'Insert internal links into article: {{article}}.\\n\\nProvided internal links (may be multiple, separated by newlines or commas):\\n{{internal_links}}\\n\\nRules:\\n1) Extract meaningful target anchor keywords or phrases from the URL slugs or path names. If linking to homepage or company brand, anchor text MUST be strictly \\'JetDigitalPro\\' (one word, PascalCase). NEVER write \\'jet digital pro\\'.\\n2) Insert ALL provided internal links (or 2-5 distinct links) across separate, contextually relevant sections of the article.\\n3) Natural integration — integrate into the natural flow of sentences. Do not use generic anchors like \\'click here\\', \\'read more\\', or raw naked URLs.\\n4) Return ONLY the full revised article in Markdown starting directly with the H1 title. No commentary, no Before/After preamble. Maintain strict formatting: text, tables, and lists only. No numbered headings.\\n5) Contextual relevance: ensure every link is placed where it adds natural value for the reader.', temp:0.3, maxTokens:4500, outputFormat:'markdown' },
   { id:'4B', name:'External Linking', phase:3, model:'pesat-flash', provider:'pesat', desc:'Phase 4 — Authority external links', n8nId:'FsIx2UDFWuolIFHx', enabled:true,
-    systemPrompt:'You are an expert Fact-Checker and SEO Citation Strategist. Add 2-3 high-quality external links to verified, live, topically relevant sources. You NEVER hallucinate fake URLs or insert off-topic links.',
-    userPrompt:'Add 2-3 high-quality external links to authoritative open-web sources supporting key factual claims in this article about \\'{{keyword}}\\'.\\n\\nArticle:\\n{{article}}\\n\\nResearch Data & Verified Sources:\\n{{info_gain}}\\n{{external_links}}\\n\\nSTRICT TOPICAL RELEVANCE & URL INTEGRITY RULES:\\n1. STRICT TOPICAL RELEVANCE: Every external link MUST be directly related to \\'{{keyword}}\\' and its subject domain. For gardening/plants, link to botanical databases or university extensions. For software/tech, link to official documentation or technical encyclopedias. For health, link to health institutes. NEVER use unrelated links.\\n2. PERMANENT CANONICAL OPEN URLS:\\n   - Canonical Wikipedia topic pages: https://en.wikipedia.org/wiki/<Entity_Name>. For disambiguation pages, percent-encode parentheses: write %28 and %29 instead of ( and ) to prevent Markdown breaking.\\n   - Official docs: https://support.atlassian.com, https://www.rhs.org.uk, etc.\\n   - Academic DOIs: https://doi.org/...\\n   - Gov/Edu: .gov, .edu root or well-known top-level paths only. Do NOT invent deep file paths that may 404.\\n   - NEVER fabricate commercial newsroom URLs (forbes.com, gartner.com, bloomberg.com) or deep paths that 404.\\n3. BRAND INTEGRITY: Ensure company brand is strictly \\'JetDigitalPro\\'.\\n4. Integrate via contextual anchor text. Link the descriptive phrase only.\\n5. Do NOT rewrite the narrative. Insert where natural.\\n6. Return ONLY the full revised article in Markdown starting directly with the H1 title. No commentary. Strict formatting: text, tables, and lists only. No numbered headings.', temp:0.3, maxTokens:4500, outputFormat:'markdown' },
+    systemPrompt:'You are an expert Fact-Checker and SEO Citation Strategist. Add 2-3 high-quality external links to verified, live, topically relevant sources. Use verified sources from the Research Data and authoritative open-web references.',
+    userPrompt:'Add 2-3 verified external links to existing citations and key claims in this article about \\'{{keyword}}\\'.\\n\\nArticle:\\n{{article}}\\n\\nResearch Data & Verified Sources:\\n{{info_gain}}\\n{{external_links}}\\n\\nRules:\\n1. Prioritize URLs provided in the Research Data (real sources found from live search).\\n2. SAFE URLs: Wikipedia canonical (https://en.wikipedia.org/wiki/Topic, percent-encode parens %28 %29 for disambiguation), official institutional root domains (.gov, .edu, .org).\\n3. Match citations and claims in the article to their actual sources.\\n4. TOPICAL RELEVANCE: Every link must directly relate to \\'{{keyword}}\\'. Never insert off-topic links.\\n5. Never invent commercial newsroom slugs or deep PDF paths.\\n6. BRAND INTEGRITY: \\'JetDigitalPro\\'.\\n7. Return ONLY the full revised article in Markdown starting directly with H1. No commentary.', temp:0.3, maxTokens:4500, outputFormat:'markdown' },
   { id:'5A', name:'WordPress Publish', phase:4, model:'system:wordpress', provider:'system', desc:'Phase 5 — Publish via REST API', n8nId:'tgc7sDFaU44YFbcc', enabled:true,
     systemPrompt:'',
     userPrompt:'', temp:0, maxTokens:0, outputFormat:'json' },
@@ -1540,22 +1544,25 @@ function sanitizeArticleContent(text) {
   text = text.replace(/\\bjet\\s+digitalpro\\b/gi, 'JetDigitalPro');
   text = text.replace(/\\bJet\\s+Digital\\s+Pro\\b/g, 'JetDigitalPro');
 
-  // URL integrity: replace known dead/bot-blocked commercial newsroom URLs with canonical open reference
-  text = text.replace(/https?:\\/\\/(?:www\\.)?gartner\\.com\\/[^\\s\\)\\"\\']+/gi, 'https://arxiv.org/abs/2311.09735');
-  text = text.replace(/https?:\\/\\/(?:www\\.)?forbes\\.com\\/sites\\/[^\\s\\)\\"\\']+/gi, 'https://en.wikipedia.org/wiki/Search_engine_optimization');
-  text = text.replace(/https?:\\/\\/(?:www\\.)?bloomberg\\.com\\/[^\\s\\)\\"\\']+/gi, 'https://en.wikipedia.org/wiki/Technology');
-  text = text.replace(/https?:\\/\\/(?:www\\.)?wsj\\.com\\/[^\\s\\)\\"\\']+/gi, 'https://en.wikipedia.org/wiki/Technology');
-  text = text.replace(/https?:\\/\\/(?:www\\.)?businessinsider\\.com\\/[^\\s\\)\\"\\']+/gi, 'https://en.wikipedia.org/wiki/Technology');
+  // URL integrity: strip known bot-blocked/commercial domains — remove link, keep anchor text
+  // Matches both root domains (gartner.com) and deep paths (gartner.com/en/newsroom/...)
+  text = text.replace(/\\[([^\\]]+)\\]\\(https?:\\/\\/(?:www\\.)?gartner\\.com[^\\)]*\\)/gi, '\$1');
+  text = text.replace(/\\[([^\\]]+)\\]\\(https?:\\/\\/(?:www\\.)?forbes\\.com[^\\)]*\\)/gi, '\$1');
+  text = text.replace(/\\[([^\\]]+)\\]\\(https?:\\/\\/(?:www\\.)?bloomberg\\.com[^\\)]*\\)/gi, '\$1');
+  text = text.replace(/\\[([^\\]]+)\\]\\(https?:\\/\\/(?:www\\.)?wsj\\.com[^\\)]*\\)/gi, '\$1');
+  text = text.replace(/\\[([^\\]]+)\\]\\(https?:\\/\\/(?:www\\.)?businessinsider\\.com[^\\)]*\\)/gi, '\$1');
+  text = text.replace(/\\[([^\\]]+)\\]\\(https?:\\/\\/(?:www\\.)?bifma\\.org[^\\)]*\\)/gi, '\$1');
+  text = text.replace(/\\[([^\\]]+)\\]\\(https?:\\/\\/(?:www\\.)?nngroup\\.com[^\\)]*\\)/gi, '\$1');
+  text = text.replace(/\\[([^\\]]+)\\]\\(https?:\\/\\/(?:www\\.)?nih\\.gov\\/?\\)/gi, '\$1');
   // Bot-blocked .edu extensions — replace root-only links with known-live alternative
   text = text.replace(/\\]\\(https?:\\/\\/extension\\.umn\\.edu\\)/gi, '](https://hgic.clemson.edu)');
 
+  // Clean trailing punctuation inside markdown link URLs: [Anchor](https://domain.com/path,) -> [Anchor](https://domain.com/path),
+  text = text.replace(/\\[([^\\]]+)\\]\\((https?:\\/\\/[^\\s\\)]+?)([,.;:]+)\\)/g, '[\$1](\$2)\$3');
+
   // Fix broken Wikipedia parenthetical URLs: wiki/Foo_(bar -> wiki/Foo_%28bar%29
-  // LLM outputs wiki/Jira_(software) which Markdown parser eats the closing paren
-  text = text.replace(/\\(https:\\/\\/en\\.wikipedia\\.org\\/wiki\\/([A-Za-z0-9_.%]+)\\(([A-Za-z0-9_]+)\\)/g,
-    (m, slug, inside) => '(https://en.wikipedia.org/wiki/' + slug + '%28' + inside + '%29)');
-  // Catch already-truncated URLs missing closing paren
-  text = text.replace(/\\(https:\\/\\/en\\.wikipedia\\.org\\/wiki\\/([A-Za-z0-9_.]+)_\\(([A-Za-z0-9_]+)\$/gm,
-    (m, slug, inside) => '(https://en.wikipedia.org/wiki/' + slug + '_%28' + inside + '%29)');
+  // Robust paren encoding: handles full markdown links, truncated parens, and missing closing parens
+  text = text.replace(/(https:\\/\\/en\\.wikipedia\\.org\\/wiki\\/[A-Za-z0-9_%\\-]+)\\(([A-Za-z0-9_%\\-]+)(?:\\)|(?=[^\\w\\)]|\$))/g, '\$1%28\$2%29');
 
   return text;
 }
@@ -1963,6 +1970,47 @@ async function runTestInternal(isPipelineMode) {
     post_url: document.getElementById('ti-post-url').value,
   };
 
+  // Live web search via Firecrawl for Step 1B
+  if (s.id === '1B' && vars.keyword) {
+    let liveSearch = stepOutputs['live_search'];
+    if (!liveSearch) {
+      try {
+        const query1 = vars.keyword;
+        const query2 = vars.keyword + ' research study statistics guidelines';
+        const [res1, res2] = await Promise.all([
+          searchFirecrawl(query1, 4),
+          searchFirecrawl(query2, 4)
+        ]);
+        const combined = [...(res1 || []), ...(res2 || [])];
+        const seenUrls = new Set();
+        const uniqueSources = [];
+        for (const item of combined) {
+          if (item && item.url && !seenUrls.has(item.url)) {
+            seenUrls.add(item.url);
+            uniqueSources.push(item);
+          }
+        }
+        if (uniqueSources.length > 0) {
+          liveSearch = uniqueSources.map((src, idx) =>
+            \`[Source \${idx + 1}] Title: \${src.title}\\nURL: \${src.url}\\nSummary: \${(src.description || '').trim()}\`
+          ).join('\\n\\n');
+          stepOutputs['live_search'] = liveSearch;
+          saveStepOutputs();
+        }
+      } catch (err) {
+        console.warn('Firecrawl search in 1B encountered issue:', err);
+      }
+    }
+    if (liveSearch) {
+      vars.prev_output = (vars.prev_output ? vars.prev_output + '\\n\\n' : '') +
+        \`### Live Web Search Findings (via Firecrawl):\\n\${liveSearch}\`;
+      const tiPrev = document.getElementById('ti-prev');
+      if (tiPrev && !tiPrev.value.includes('Live Web Search Findings')) {
+        tiPrev.value = vars.prev_output;
+      }
+    }
+  }
+
   // Ensure vars.article is NEVER empty when running steps that require article text
   if (!vars.article || vars.article.trim().length < 200) {
     const candidates = ['4B', '4A', '2H', '2G', '2D', '2C', '1E'];
@@ -2030,6 +2078,13 @@ async function runTestInternal(isPipelineMode) {
         critical_flags: [],
         overall_verdict: { quality: 'high', fact_risk: 'low' }
       });
+    }
+  }
+
+  if (s.id === '4B' && stepOutputs['live_search']) {
+    if (!vars.info_gain || !vars.info_gain.includes('Live Web Search')) {
+      vars.info_gain = (vars.info_gain ? vars.info_gain + '\\n\\n' : '') +
+        \`### Live Web Search Verified Sources:\\n\${stepOutputs['live_search']}\`;
     }
   }
 
@@ -2602,11 +2657,19 @@ function useAsArticle() {
 
 // ─── API KEYS ─────────────────────────────────────────────────────────────────
 function getKeys() {
-  return { pesat: localStorage.getItem('jdp_key_pesat')||'sk-pesat-3c2f89bd9a72302375f8e10ef9eba726891a81513f907dfb', openai: localStorage.getItem('jdp_key_openai')||'', anthropic: localStorage.getItem('jdp_key_anthropic')||'', deepseek: localStorage.getItem('jdp_key_deepseek')||'', gemini: localStorage.getItem('jdp_key_gemini')||'' };
+  return {
+    pesat: localStorage.getItem('jdp_key_pesat')||'sk-pesat-3c2f89bd9a72302375f8e10ef9eba726891a81513f907dfb',
+    firecrawl: localStorage.getItem('jdp_key_firecrawl')||'fc-ff28587bf520455e932c0e458046ab85',
+    openai: localStorage.getItem('jdp_key_openai')||'',
+    anthropic: localStorage.getItem('jdp_key_anthropic')||'',
+    deepseek: localStorage.getItem('jdp_key_deepseek')||'',
+    gemini: localStorage.getItem('jdp_key_gemini')||''
+  };
 }
 function loadKeys() {
   const k = getKeys();
   if (document.getElementById('key-pesat')) document.getElementById('key-pesat').value = k.pesat;
+  if (document.getElementById('key-firecrawl')) document.getElementById('key-firecrawl').value = k.firecrawl;
   document.getElementById('key-openai').value = k.openai;
   document.getElementById('key-anthropic').value = k.anthropic;
   document.getElementById('key-deepseek').value = k.deepseek;
@@ -2614,12 +2677,35 @@ function loadKeys() {
 }
 function saveKeys() {
   if (document.getElementById("key-pesat")) localStorage.setItem("jdp_key_pesat", document.getElementById("key-pesat").value);
+  if (document.getElementById("key-firecrawl")) localStorage.setItem("jdp_key_firecrawl", document.getElementById("key-firecrawl").value);
   localStorage.setItem('jdp_key_openai', document.getElementById('key-openai').value);
   localStorage.setItem('jdp_key_anthropic', document.getElementById('key-anthropic').value);
   localStorage.setItem('jdp_key_deepseek', document.getElementById('key-deepseek').value);
   localStorage.setItem('jdp_key_gemini', document.getElementById('key-gemini').value);
   closeSettings();
   showToast('✓ API keys saved');
+}
+
+async function searchFirecrawl(query, limit = 5) {
+  const keys = getKeys();
+  const apiKey = keys.firecrawl || 'fc-ff28587bf520455e932c0e458046ab85';
+  if (!apiKey) return null;
+  try {
+    const res = await fetch('https://api.firecrawl.dev/v1/search', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + apiKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ query: query, limit: limit })
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return (json && json.success && Array.isArray(json.data)) ? json.data : null;
+  } catch (e) {
+    console.warn('Firecrawl search error:', e);
+    return null;
+  }
 }
 function openSettings() {
   loadKeys();
