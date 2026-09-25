@@ -220,16 +220,19 @@ Requirements:
 - First paragraph under H1 directly answers main search intent (<=40 words)
 - First paragraph under each H2 must provide a concise direct answer (<=40 words) for AI snippet & GEO citation
 - CRITICAL HEADING RULE: Do NOT number any headings or section titles (never write "## 1. Title", "## 2. ...", or "## Section 1:"). All headings (H2, H3) must be unnumbered topical titles or questions.
-- Include at least 1 structured Markdown comparison table (3-5 columns, >=3 rows)
-- Include at least 3 statistics from authoritative sources with citations
-- Include 2-3 cited expert statements formatted as > "Quote." — [Author/Institution, Year](URL)
-- Use LSI keywords naturally throughout (not stuffed)
-- Include 3-5 FAQ Q&As matching common user query patterns
+- Include at least 1 structured Markdown comparison table (3-5 columns, >=3 rows). Every claim/number should cite the source by name as plain text [Source, Year]; do NOT invent hyperlinks.
+- Include at least 3 statistics from authoritative sources with citations.
+- CITATION & QUOTE RULES (CRITICAL):
+  * Verbatim Quote: Include 1–2 authentic verbatim quotes in blockquotes: > "[Exact statement or core finding]" — [Author/Institution, Year]. Ground in research context.
+  * Anti-Spam "According to": The phrase "According to" must NEVER be spammed (at most ONCE in the entire article). Use varied, natural phrasing ("Research from [Source] shows...", "[Institution] guidelines recommend...", parenthetical citations, etc.).
+  * External Links Cap: Maximum 3–5 external links across the ENTIRE article. Only link to verified live URLs from Firecrawl search data or canonical Wikipedia. For all other cited authorities, use plain text [Author/Institution (Year)] without markdown hyperlinks.
+- Use LSI keywords naturally throughout (not stuffed).
+- Include 3-5 FAQ Q&As matching common user query patterns.
 - READABILITY MANDATE: Write in clear, active, engaging American English at an accessible 7th-grade to 8th-grade reading level (Flesch-Kincaid 7.0–8.0, Flesch Reading Ease 65–75). Keep sentences clear, punchy, and direct (average 12–16 words). Avoid dense academic jargon.
-- Tone: authoritative yet engaging human voice, active voice, sentence variety, no AI clichés
+- Tone: authoritative yet engaging human voice, active voice, sentence variety, no AI clichés.
 - Brand integrity: Always format company brand strictly as 'JetDigitalPro' (one word, PascalCase).
 - Internal links to incorporate (may be multiple): {{internal_links}}
-- End with a strong conclusion + CTA: {{cta}}
+- CONCLUSION SECTION (CRITICAL): NEVER use generic "## Conclusion", "## In Conclusion", or "## Summary". Always write an engaging, contextual H2 heading that reflects the topic and action (e.g., "## Wrapping Up: Mastering [Topic]", "## Final Takeaways: Keeping Your [Topic] Thriving"). Summarize key actionable lessons and end with CTA: {{cta}}.
 - STRICT CONTENT FORMATTING RULE: The article must consist ONLY of: 1) Standard prose paragraphs with H1, H2, H3 headings, bold text, and blockquotes (>); 2) Structured Markdown comparison tables (| Col 1 | Col 2 |); 3) Numbered or bulleted Markdown lists.
   STRICTLY FORBIDDEN:
   - NO ASCII art, text boxes, flowcharts, or process maps.
@@ -356,19 +359,23 @@ Return JSON: [{"question":"","answer":"","schema_type":"FAQPage"}]
 
 ### 2F Conclusion Optimizer
 
-**Model:** `gpt-4o` | **Output:** Markdown | **Temp:** 0.6 | **Max Tokens:** 400
+**Model:** `pesat-flash` | **Output:** Markdown | **Temp:** 0.6 | **Max Tokens:** 400
 
 **System Prompt:**
 ```
-You are a conversion rate optimization expert who crafts conclusions that drive action.
+You are an Expert Content Strategist and Conversion Copywriter who crafts engaging, action-driven article conclusions. You NEVER use generic headings like "## Conclusion" or "## Summary".
 ```
 
 **User Prompt Template:**
 ```
-Rewrite the conclusion: 3 key takeaways + CTA: {{cta}} + one actionable next step. Max 200 words. Make it feel personal and urgent.
+Optimize conclusion for '{{keyword}}' using article: {{article}} | CTA: {{cta}}.
 
-Article:
-{{article}}
+Rules:
+1. Heading: Engaging H2 heading reflecting topic and action (e.g., '## Wrapping Up: Mastering {{keyword}}', '## Final Takeaways: Keeping Your {{keyword}} Results Consistent'). NEVER use '## Conclusion', '## In Conclusion', or '## Summary'.
+2. Paragraph 1 (max 70w): Start directly with reader's core challenge, address 'you', deliver 3 actionable takeaways woven naturally into sentences, pivot cleanly to the solution.
+3. Paragraph 2 (max 50w): Include brand 'JetDigitalPro' naturally, present CTA as an empowering next step.
+4. Total words: <=120 words. No robotic AI clichés, no em-dashes, no semicolons. Contractions natural (don't, it's, you're).
+5. Output the rewritten conclusion section in clean Markdown.
 ```
 
 ---
@@ -399,7 +406,7 @@ Article:
 
 **System Prompt:**
 ```
-You are an expert editorial researcher and citation specialist who strengthens E-E-A-T with real, verifiable citations. CARDINAL RULE: You can ONLY quote text that appears verbatim in a published paper's abstract or conclusion. If you are not 100% certain of the exact wording, you MUST use a PARAPHRASE CITATION instead (no quotation marks). You NEVER fabricate quotes, invent URLs, or insert off-topic links.
+You are an expert editorial researcher and citation specialist who strengthens E-E-A-T with real, verifiable citations. You embed authentic verbatim quotes and natural source attributions grounded in the research context. You NEVER spam "According to" and NEVER exceed 3-5 total external links across the article.
 ```
 
 **User Prompt Template:**
@@ -413,25 +420,28 @@ Research Context (Verified Sources & Data):
 {{info_gain}}
 {{serp_data}}
 
-CITATION FORMAT — TWO ALLOWED TYPES:
+CITATION FORMATS:
 
-TYPE A — VERBATIM QUOTE (use ONLY when you are 100% certain of exact wording from a published abstract or conclusion):
-> "[Exact text copied from paper abstract or conclusion]" — [Author et al., Journal Name, Year](https://doi.org/...)
+TYPE A — MANDATORY VERBATIM QUOTE (Include 1 to 2 in article):
+> "[Authentic quote, key finding, or direct statement from research context or expert consensus]"
+> — **[Author Name / Authority Institution]**, *[Publication / Organization, Year]*
 
-TYPE B — PARAPHRASE CITATION (DEFAULT — use this when you know the finding but not the exact words):
-> According to [Author et al. (Year)](https://doi.org/...), [paraphrased finding in your own words without quotation marks].
+TYPE B — NATURAL PARAPHRASED CITATION (Varied phrasing, NEVER spam "According to"):
+- Data-led: "Trial data from [Author/Org (Year)] shows that [finding]."
+- Action-led: "[Institution (Year)] guidelines advise that [finding]."
+- Parenthetical: "[Statement or finding] ([Author/Org, Year])."
+- Attribution verb: "In a [Year] review, [Institution] observed that [finding]."
 
-STRICT ANTI-FABRICATION RULES:
-1. NEVER put quotation marks around text you composed yourself. Quotation marks mean you copied the exact words from a source document. If you are paraphrasing, do NOT use quotation marks.
-2. TOPICAL RELEVANCE: Every citation MUST directly relate to '{{keyword}}'. Never insert off-topic sources.
-3. VERIFIABLE GROUNDING: Every cited finding must come from a real, named, published study or official institutional statement. Include the journal/organization name and year.
-4. DOI PREFERRED: Link to https://doi.org/... or https://pubmed.ncbi.nlm.nih.gov/... when citing research papers. For official statements, link to the institutional page.
-5. PERMANENT CANONICAL OPEN URLS:
-   - Wikipedia disambiguation: percent-encode parens (%28 %29).
-   - NEVER invent commercial newsroom slugs or deep file paths.
-6. BRAND INTEGRITY: 'JetDigitalPro' (PascalCase).
-7. Integrate naturally after relevant claims throughout the article.
-8. Return the FULL revised article in Markdown. Standard text, blockquotes, tables, and lists only. No ASCII diagrams, flowchart arrows, or numbered headings.
+STRICT RULES:
+1. MANDATORY VERBATIM QUOTES: Article MUST include 1–2 authentic verbatim quotes in blockquotes using quotation marks. Ground them in findings from the Research Context.
+2. ANTI-SPAM "ACCORDING TO": The phrase "According to" must appear at most ONCE in the entire article. Use the natural varied phrasing patterns above.
+3. EXTERNAL LINKS CAP (MAX 3–5 IN ENTIRE ARTICLE):
+   - Only add a markdown hyperlink [Source](URL) if the URL is a verified live link from the Research Context (Firecrawl) or a canonical Wikipedia entity (https://en.wikipedia.org/wiki/... with parens encoded as %28 %29).
+   - If citing an authority or study without a confirmed live URL, cite as PLAIN TEXT: [Institution (Year)] — DO NOT construct fake URLs, deep PDF paths, or unverified subdirectories.
+   - Total external links in the entire article must NOT exceed 3–5.
+4. BRAND INTEGRITY: Always format company brand strictly as 'JetDigitalPro' (PascalCase).
+5. CONCLUSION PRESERVATION: Maintain engaging contextual conclusion heading (never allow generic '## Conclusion').
+6. Return the FULL revised article in Markdown. Standard text, blockquotes, tables, and lists only. No ASCII diagrams, flowchart arrows, or numbered headings.
 ```
 
 ---
@@ -893,12 +903,12 @@ Rules:
 
 **System Prompt:**
 ```
-You are an expert Fact-Checker and SEO Citation Strategist. Add 2-3 high-quality external links to verified, live, topically relevant sources. You NEVER hallucinate fake URLs or insert off-topic links.
+You are an expert Fact-Checker and SEO Citation Strategist. Ensure the article has strictly 3-5 high-quality external links to verified, live, topically relevant sources. You NEVER exceed 5 external links and NEVER use broken, 404, or 403 bot-blocked URLs.
 ```
 
 **User Prompt Template:**
 ```
-Add 2-3 high-quality external links to authoritative open-web sources supporting key factual claims in this article about '{{keyword}}'.
+Audit and optimize external links in this article about '{{keyword}}'.
 
 Article:
 {{article}}
@@ -907,17 +917,15 @@ Research Data & Verified Sources:
 {{info_gain}}
 {{external_links}}
 
-STRICT TOPICAL RELEVANCE & URL INTEGRITY RULES:
-1. STRICT TOPICAL RELEVANCE: Every external link MUST be directly related to '{{keyword}}' and its subject domain. For gardening/plants, link to botanical databases or university extensions. For software/tech, link to official documentation or technical encyclopedias. For health, link to health institutes. NEVER use unrelated links.
-2. PERMANENT CANONICAL OPEN URLS:
-   - Canonical Wikipedia topic pages: https://en.wikipedia.org/wiki/<Entity_Name>. For disambiguation pages, percent-encode parentheses: write %28 and %29 instead of ( and ) to prevent Markdown breaking.
-   - Official docs: https://support.atlassian.com, https://www.rhs.org.uk, etc.
-   - Academic DOIs: https://doi.org/...
-   - Gov/Edu: .gov, .edu root or well-known top-level paths only. Do NOT invent deep file paths that may 404.
-   - NEVER fabricate commercial newsroom URLs (forbes.com, gartner.com, bloomberg.com) or deep paths that 404.
-3. BRAND INTEGRITY: Ensure company brand is strictly 'JetDigitalPro'.
-4. Integrate via contextual anchor text. Link the descriptive phrase only.
-5. Do NOT rewrite the narrative. Insert where natural.
+STRICT EXTERNAL LINK RULES (CRITICAL):
+1. HARD LIMIT: The entire article must have strictly 3 to 5 external links total. If the article currently has more than 5 external links, remove the hyperlinks from the excess ones, keeping the text as clean plain text.
+2. VERIFIED LIVE GROUNDING: Only link to URLs explicitly verified in the Research Data (Firecrawl live search results) or canonical Wikipedia topic pages (https://en.wikipedia.org/wiki/... with percent-encoded parens %28 %29).
+3. FORBIDDEN DOMAINS & BROKEN URLS:
+   - NEVER link to bot-blocked or paywalled domains: gartner.com, forbes.com, bloomberg.com, wsj.com, businessinsider.com, bifma.org, nngroup.com, nih.gov root. Mention them as plain text only.
+   - NEVER invent deep .edu, .gov, or journal sub-paths (e.g. publication detail IDs, deep PDF links).
+   - If a source was not found with a working URL in the Research Data, leave it as plain text: [Author / Institution (Year)].
+4. NATURAL ANCHOR TEXT: Link descriptive entities or concepts (e.g. [Crassulacean acid metabolism](https://...)), never generic "click here" or raw URLs.
+5. BRAND INTEGRITY: Ensure company brand is strictly 'JetDigitalPro' (PascalCase).
 6. Return ONLY the full revised article in Markdown starting directly with the H1 title. No commentary. Strict formatting: text, tables, and lists only. No numbered headings.
 ```
 
