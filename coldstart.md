@@ -46,6 +46,7 @@ curl -X POST https://n8n.jetdigitalpro.com/webhook/pipeline-orchestrator \
 | **n8n API Key** | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1MmM0YmMyYS03YmUxLTQwYzktODRjMi1lOGNmYzEyMTliNWUiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiODViYzFiODQtMThmZC00MDM2LWE5ODQtMDNhNGYyYTE0NTA5IiwiaWF0IjoxNzg4OTQ0OTgyfQ.AfeoBd9QiZ6xI6XPL_prAjc9X4mktwqbzEqJuOOqjJY` | Header `X-N8N-API-KEY` |
 | **PesatRouter** | `sk-pesat-3c2f89bd9a72302375f8e10ef9eba726891a81513f907dfb` | Credential ID: `2gN5L68f3d421KId` |
 | **Firecrawl Search** | `fc-ff28587bf520455e932c0e458046ab85` | Live Web Search & Scraping |
+| **Cloudflare Token** | `cfut_VtFtXe3z8QLqVMCxdpqMrLlaQ6unWd1YlKE7Nd8N97db4a5c` | Wrangler Deploy (`jdpwriter.com`) |
 | **Google Sheets**| Connected: `emerilansel@gmail.com` | Credential ID: `9uDB213ud11FEioT` |
 
 ---
