@@ -164,6 +164,11 @@ tailwind.config = {
         <p class="text-xs text-slate-400 mt-1">Masukkan kata kunci dan tautan internal. Pipeline 23-step akan menghasilkan artikel lengkap ~2.500 kata, 5 prompt gambar, dan skor SEO/GEO.</p>
       </div>
       <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+        <button onclick="openFirecrawlModal()" class="px-3 py-1 bg-orange-950/70 hover:bg-orange-900 border border-orange-700/60 text-orange-300 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer" title="Lihat hasil pencarian web live Firecrawl">
+          <span>🔍</span>
+          <span>Hasil Firecrawl</span>
+          <span id="wv-fc-badge" class="text-[10px] text-orange-300 bg-orange-900/80 px-1.5 py-0.5 rounded border border-orange-600/40 hidden">0 live</span>
+        </button>
         <button onclick="openSettings()" class="px-3 py-1 bg-orange-950/60 hover:bg-orange-900/60 border border-orange-700/50 text-orange-300 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer" title="Atur Firecrawl API Key untuk pencarian web live">
           <span class="w-2 h-2 rounded-full bg-orange-400 inline-block animate-pulse"></span>
           <span>Web Search: Firecrawl</span>
@@ -179,19 +184,19 @@ tailwind.config = {
       <div>
         <label class="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-1.5">Target Focus Keyword <span class="text-rose-400">*</span></label>
         <div class="relative">
-          <input type="text" id="wv-keyword" oninput="syncInputsFromWriter()" placeholder="Contoh: how to sleep fast (atau kata kunci utama Anda)" class="w-full bg-slate-950 border border-surface-border rounded-xl px-4 py-3 text-base text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition font-medium">
-          <button onclick="document.getElementById('wv-keyword').value='how to sleep fast';syncInputsFromWriter();" class="absolute right-2.5 top-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-md border border-slate-700">Contoh</button>
+          <input type="text" id="wv-keyword" oninput="syncInputsFromWriter()" placeholder="Contoh: how to fertilize jade plant (atau kata kunci utama Anda)" class="w-full bg-slate-950 border border-surface-border rounded-xl px-4 py-3 text-base text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition font-medium">
+          <button onclick="document.getElementById('wv-keyword').value='how to fertilize jade plant';syncInputsFromWriter();" class="absolute right-2.5 top-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-md border border-slate-700">Contoh</button>
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-xs font-semibold text-slate-300 mb-1.5">Internal Links <span class="text-slate-500 font-normal">(Bisa >1 link, pisahkan dengan baris baru atau koma)</span></label>
-          <textarea id="wv-internal-links" oninput="syncInputsFromWriter()" rows="2" placeholder="https://jetdigitalpro.com/sleep-tips&#10;https://jetdigitalpro.com/circadian-rhythm" class="w-full bg-slate-950 border border-surface-border rounded-lg px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:border-blue-500 outline-none resize-y"></textarea>
+          <textarea id="wv-internal-links" oninput="syncInputsFromWriter()" rows="2" placeholder="https://yourdomain.com/article-1&#10;https://yourdomain.com/article-2" class="w-full bg-slate-950 border border-surface-border rounded-lg px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:border-blue-500 outline-none resize-y"></textarea>
         </div>
         <div>
           <label class="block text-xs font-semibold text-slate-300 mb-1.5">Call to Action (CTA) <span class="text-slate-500 font-normal">(Ditenun di penutup artikel)</span></label>
-          <input type="text" id="wv-cta" oninput="syncInputsFromWriter()" placeholder="Download our free sleep guide" class="w-full bg-slate-950 border border-surface-border rounded-lg px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:border-blue-500 outline-none">
+          <input type="text" id="wv-cta" oninput="syncInputsFromWriter()" placeholder="Download our complete seasonal feeding schedule" class="w-full bg-slate-950 border border-surface-border rounded-lg px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:border-blue-500 outline-none">
         </div>
       </div>
 
@@ -618,15 +623,15 @@ tailwind.config = {
       <div class="space-y-2">
         <div>
           <label class="block text-xs text-slate-400 mb-1">{{keyword}}</label>
-          <input type="text" id="ti-keyword" value="how to sleep fast" class="w-full bg-surface-input border border-surface-border rounded px-3 py-1.5 text-sm text-white">
+          <input type="text" id="ti-keyword" value="" placeholder="e.g. how to fertilize jade plant" class="w-full bg-surface-input border border-surface-border rounded px-3 py-1.5 text-sm text-white">
         </div>
         <div>
           <label class="block text-xs text-slate-400 mb-1">{{cta}}</label>
-          <input type="text" id="ti-cta" value="Download our free sleep guide" class="w-full bg-surface-input border border-surface-border rounded px-3 py-1.5 text-sm text-white">
+          <input type="text" id="ti-cta" value="" placeholder="e.g. Download our complete seasonal feeding schedule" class="w-full bg-surface-input border border-surface-border rounded px-3 py-1.5 text-sm text-white">
         </div>
         <div>
           <label class="block text-xs text-slate-400 mb-1">{{internal_links}} <span class="text-slate-500">(1 per baris atau dipisah koma)</span></label>
-          <textarea id="ti-links" rows="2" class="w-full bg-surface-input border border-surface-border rounded px-3 py-1.5 text-xs text-white resize-y">https://jetdigitalpro.com/sleep-tips</textarea>
+          <textarea id="ti-links" rows="2" class="w-full bg-surface-input border border-surface-border rounded px-3 py-1.5 text-xs text-white resize-y" placeholder="https://yourdomain.com/article-1&#10;https://yourdomain.com/article-2"></textarea>
         </div>
         <div>
           <label class="block text-xs text-slate-400 mb-1">{{external_links}}</label>
@@ -649,14 +654,19 @@ tailwind.config = {
       <div class="space-y-2">
         <div>
           <label class="block text-xs text-slate-400 mb-1">{{serp_data}}</label>
-          <textarea id="ti-serp" class="w-full bg-surface-input border border-surface-border rounded px-3 py-1.5 text-xs text-slate-300 font-mono" rows="3" placeholder="AI will simulate SERP analysis automatically. Paste here only if you want to override."></textarea>
+          <textarea id="ti-serp" class="w-full bg-surface-input border border-surface-border rounded px-3 py-1.5 text-xs text-slate-300 font-mono" rows="3" placeholder="AI will analyze SERP based on Firecrawl results automatically. Paste here only if you want to override."></textarea>
         </div>
         <div>
           <div class="flex items-center justify-between mb-1">
             <label class="block text-xs text-orange-400 font-semibold">{{live_search_data}} <span class="text-slate-500">(Firecrawl Web Results)</span></label>
-            <button onclick="triggerFirecrawlSearchManual()" type="button" class="text-[10px] bg-orange-950 hover:bg-orange-900 border border-orange-700/60 text-orange-300 px-2 py-0.5 rounded flex items-center gap-1 shadow-sm transition cursor-pointer">
-              <span>🔍</span> <span>Search with Firecrawl</span>
-            </button>
+            <div class="flex items-center gap-1.5">
+              <button onclick="openFirecrawlModal()" type="button" class="text-[10px] bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 px-2 py-0.5 rounded flex items-center gap-1 shadow-sm transition cursor-pointer" title="Buka panel inspect data Firecrawl & raw JSON">
+                <span>👁</span> <span>View Results & JSON</span>
+              </button>
+              <button onclick="triggerFirecrawlSearchManual()" type="button" class="text-[10px] bg-orange-950 hover:bg-orange-900 border border-orange-700/60 text-orange-300 px-2 py-0.5 rounded flex items-center gap-1 shadow-sm transition cursor-pointer">
+                <span>🔍</span> <span>Search with Firecrawl</span>
+              </button>
+            </div>
           </div>
           <textarea id="ti-live-search" class="w-full bg-surface-input border border-orange-500/40 rounded px-3 py-1.5 text-xs text-slate-300 font-mono" rows="3" placeholder="Click 'Search with Firecrawl' to fetch live web data or let pipeline auto-fetch..."></textarea>
         </div>
@@ -848,51 +858,120 @@ tailwind.config = {
 	          <p class="text-xs text-slate-400">SEO & GEO Optimized Content Deliverable (SOP SF Academy Ver. 3.8)</p>
 	        </div>
 	      </div>
+		      <div class="flex items-center gap-2">
+		        <button onclick="copyCleanArticleOnly()" class="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-slate-200 font-semibold flex items-center gap-1.5 shadow transition cursor-pointer" title="Copy pure markdown article only (no metadata box or visual decks)">
+		          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+		          <span>Copy Article Only</span>
+		        </button>
+		        <button onclick="copyFullArticleBundle()" class="px-3.5 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 rounded-lg text-white font-semibold flex items-center gap-1.5 shadow transition cursor-pointer">
+		          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+		          <span>Copy Markdown</span>
+		        </button>
+		        <button onclick="downloadBundleAsMd()" class="px-3.5 py-1.5 text-xs bg-emerald-700 hover:bg-emerald-600 rounded-lg text-white font-semibold flex items-center gap-1.5 shadow transition cursor-pointer">
+		          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+		          <span>Download .md</span>
+		        </button>
+		        <button onclick="closeBundleModal()" class="text-slate-400 hover:text-white text-2xl ml-2 leading-none cursor-pointer">✕</button>
+		      </div>
+		    </div>
+
+		    <!-- Bundle Modal Navigation Tabs -->
+		    <div class="flex border-b border-surface-border px-6 bg-slate-900/60 gap-2">
+		      <button id="bundle-tab-btn-reading" onclick="switchBundleTab('reading')" class="px-4 py-2.5 text-xs font-bold border-b-2 border-blue-500 text-blue-400 flex items-center gap-1.5 transition">
+		        <span>📖</span> <span>Formatted Reading View</span>
+		      </button>
+		      <button id="bundle-tab-btn-visuals" onclick="switchBundleTab('visuals')" class="px-4 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition">
+		        <span>🎨</span> <span>Visual Deck (5 Prompts)</span>
+		      </button>
+		      <button id="bundle-tab-btn-raw" onclick="switchBundleTab('raw')" class="px-4 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition">
+		        <span>📝</span> <span>Raw Markdown</span>
+		      </button>
+		      <button id="bundle-tab-btn-scores" onclick="switchBundleTab('scores')" class="px-4 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition">
+		        <span>📊</span> <span>SEO / GEO Quality Gate</span>
+		      </button>
+		      <button id="bundle-tab-btn-firecrawl" onclick="switchBundleTab('firecrawl')" class="px-4 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition">
+		        <span>🔍</span> <span>Firecrawl Research & Sources</span>
+		      </button>
+		    </div>
+
+		    <!-- Tab 1: Reading View (Rendered HTML) -->
+		    <div id="bundle-tab-reading" class="p-6 md:p-8 overflow-y-auto flex-1 bg-slate-950/80">
+		      <div id="bundle-rendered-content" class="max-w-3xl mx-auto"></div>
+		    </div>
+
+		    <!-- Tab 2: Visual Deck -->
+		    <div id="bundle-tab-visuals" class="hidden p-6 md:p-8 overflow-y-auto flex-1 bg-slate-950/80">
+		      <div id="bundle-visuals-content" class="max-w-4xl mx-auto"></div>
+		    </div>
+
+		    <!-- Tab 3: Raw Markdown -->
+		    <div id="bundle-tab-raw" class="hidden p-6 overflow-y-auto flex-1 font-mono text-xs text-slate-200 bg-slate-950/80 whitespace-pre-wrap leading-relaxed select-all" id="bundle-content"></div>
+
+		    <!-- Tab 4: Scores & Audit -->
+		    <div id="bundle-tab-scores" class="hidden p-6 md:p-8 overflow-y-auto flex-1 bg-slate-950/80">
+		      <div id="bundle-scores-content" class="max-w-3xl mx-auto space-y-4"></div>
+		    </div>
+
+		    <!-- Tab 5: Firecrawl Research & Sources -->
+		    <div id="bundle-tab-firecrawl" class="hidden p-6 md:p-8 overflow-y-auto flex-1 bg-slate-950/80">
+		      <div id="bundle-firecrawl-content" class="max-w-4xl mx-auto space-y-4"></div>
+		    </div>
+		  </div>
+		</div>
+
+	<!-- FIRECRAWL LIVE RESEARCH VIEWER MODAL -->
+	<div id="firecrawl-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-3 md:p-6">
+	  <div class="bg-surface-card border border-surface-border rounded-2xl flex flex-col w-[1050px] max-w-full max-h-[92vh] overflow-hidden shadow-2xl">
+	    <div class="px-6 py-4 border-b border-surface-border flex items-center justify-between bg-slate-900/95">
+	      <div class="flex items-center gap-3">
+	        <span class="w-8 h-8 rounded-lg bg-orange-950/80 border border-orange-700/60 flex items-center justify-center text-orange-400 font-bold text-sm">🔍</span>
+	        <div>
+	          <h2 class="font-bold text-white text-base flex items-center gap-2">
+	            <span>Firecrawl Live Web Research & SERP Intelligence</span>
+	            <span id="fc-modal-count-badge" class="text-[11px] font-mono bg-orange-900/60 text-orange-300 border border-orange-700/50 px-2 py-0.5 rounded-full">0 Sources</span>
+	          </h2>
+	          <p class="text-xs text-slate-400">Data live web murni dari Firecrawl API — diolah menjadi SERP analysis & information gain faktual tanpa data diubah.</p>
+	        </div>
+	      </div>
 	      <div class="flex items-center gap-2">
-	        <button onclick="copyFullArticleBundle()" class="px-3.5 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 rounded-lg text-white font-semibold flex items-center gap-1.5 shadow transition">
-	          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
-	          <span>Copy Markdown</span>
+	        <button onclick="triggerFirecrawlSearchManual()" class="px-3.5 py-1.5 text-xs bg-orange-700 hover:bg-orange-600 rounded-lg text-white font-semibold flex items-center gap-1.5 shadow transition cursor-pointer">
+	          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+	          <span>Re-Search Web</span>
 	        </button>
-	        <button onclick="downloadBundleAsMd()" class="px-3.5 py-1.5 text-xs bg-emerald-700 hover:bg-emerald-600 rounded-lg text-white font-semibold flex items-center gap-1.5 shadow transition">
-	          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-	          <span>Download .md</span>
-	        </button>
-	        <button onclick="closeBundleModal()" class="text-slate-400 hover:text-white text-2xl ml-2 leading-none">✕</button>
+	        <button onclick="closeFirecrawlModal()" class="text-slate-400 hover:text-white text-2xl ml-2 leading-none cursor-pointer">✕</button>
 	      </div>
 	    </div>
 
-	    <!-- Bundle Modal Navigation Tabs -->
+	    <!-- Firecrawl Sub-Tabs -->
 	    <div class="flex border-b border-surface-border px-6 bg-slate-900/60 gap-2">
-	      <button id="bundle-tab-btn-reading" onclick="switchBundleTab('reading')" class="px-4 py-2.5 text-xs font-bold border-b-2 border-blue-500 text-blue-400 flex items-center gap-1.5 transition">
-	        <span>📖</span> <span>Formatted Reading View</span>
+	      <button id="fc-tab-btn-sources" onclick="switchFirecrawlTab('sources')" class="px-4 py-2.5 text-xs font-bold border-b-2 border-orange-500 text-orange-400 flex items-center gap-1.5 transition">
+	        <span>🌐</span> <span>Verified Web Sources</span>
 	      </button>
-	      <button id="bundle-tab-btn-visuals" onclick="switchBundleTab('visuals')" class="px-4 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition">
-	        <span>🎨</span> <span>Visual Deck (5 Prompts)</span>
+	      <button id="fc-tab-btn-synthesis" onclick="switchFirecrawlTab('synthesis')" class="px-4 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition">
+	        <span>📊</span> <span>SERP & Info Gain Synthesis</span>
 	      </button>
-	      <button id="bundle-tab-btn-raw" onclick="switchBundleTab('raw')" class="px-4 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition">
-	        <span>📝</span> <span>Raw Markdown</span>
-	      </button>
-	      <button id="bundle-tab-btn-scores" onclick="switchBundleTab('scores')" class="px-4 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition">
-	        <span>📊</span> <span>SEO / GEO Quality Gate</span>
+	      <button id="fc-tab-btn-raw" onclick="switchFirecrawlTab('raw')" class="px-4 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition">
+	        <span>📦</span> <span>Raw Firecrawl JSON (Verbatim)</span>
 	      </button>
 	    </div>
 
-	    <!-- Tab 1: Reading View (Rendered HTML) -->
-	    <div id="bundle-tab-reading" class="p-6 md:p-8 overflow-y-auto flex-1 bg-slate-950/80">
-	      <div id="bundle-rendered-content" class="max-w-3xl mx-auto"></div>
+	    <!-- Content Panes -->
+	    <div id="fc-tab-sources" class="p-6 overflow-y-auto flex-1 bg-slate-950/80 space-y-4">
+	      <div id="fc-sources-list" class="max-w-4xl mx-auto space-y-3"></div>
 	    </div>
-
-	    <!-- Tab 2: Visual Deck -->
-	    <div id="bundle-tab-visuals" class="hidden p-6 md:p-8 overflow-y-auto flex-1 bg-slate-950/80">
-	      <div id="bundle-visuals-content" class="max-w-4xl mx-auto"></div>
+	    <div id="fc-tab-synthesis" class="hidden p-6 overflow-y-auto flex-1 bg-slate-950/80">
+	      <div id="fc-synthesis-content" class="max-w-4xl mx-auto space-y-4"></div>
 	    </div>
-
-	    <!-- Tab 3: Raw Markdown -->
-	    <div id="bundle-tab-raw" class="hidden p-6 overflow-y-auto flex-1 font-mono text-xs text-slate-200 bg-slate-950/80 whitespace-pre-wrap leading-relaxed select-all" id="bundle-content"></div>
-
-	    <!-- Tab 4: Scores & Audit -->
-	    <div id="bundle-tab-scores" class="hidden p-6 md:p-8 overflow-y-auto flex-1 bg-slate-950/80">
-	      <div id="bundle-scores-content" class="max-w-3xl mx-auto space-y-4"></div>
+	    <div id="fc-tab-raw" class="hidden p-6 overflow-y-auto flex-1 bg-slate-950/80">
+	      <div class="max-w-4xl mx-auto">
+	        <div class="flex justify-between items-center mb-3">
+	          <span class="text-xs text-slate-400 font-mono">Unmodified Firecrawl API Response</span>
+	          <button onclick="copyRawFirecrawlJson()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-700 flex items-center gap-1 cursor-pointer">
+	            <span>📋</span> <span>Copy JSON</span>
+	          </button>
+	        </div>
+	        <pre id="fc-raw-json" class="p-4 bg-slate-900 border border-slate-800 rounded-xl font-mono text-xs text-orange-200 overflow-x-auto whitespace-pre-wrap max-h-[60vh]"></pre>
+	      </div>
 	    </div>
 	  </div>
 	</div>
@@ -969,12 +1048,12 @@ const PHASES = [
 
 // ─── STEPS DATA ───────────────────────────────────────────────────────────────
 const STEPS = [
-  { id:'1A', name:'AI SERP Research', phase:0, model:'pesat-lite', provider:'pesat', desc:'Phase 1 — AI simulates SERP analysis for keyword', n8nId:'hC16jI9w1BbG2vhg', enabled:true,
-    systemPrompt:'You are an expert SEO research analyst. Simulate SERP analysis for any keyword using your knowledge of what typically ranks.',
-    userPrompt:'Perform SERP analysis for keyword \\'{{keyword}}\\'. Return JSON with: heading_patterns (common H2/H3), avg_word_count, content_gaps (missing topics), snippet_type (paragraph/list/table), paa_questions (5-7), dominant_intent (info/commercial/transactional/navigational), competitor_weaknesses, freshness_signals, key_sources (authoritative domains), common_format (listicle/guide/comparison).', temp:0.3, maxTokens:2000, outputFormat:'json' },
+  { id:'1A', name:'SERP Research & Intelligence', phase:0, model:'pesat-lite', provider:'pesat', desc:'Phase 1 — SERP Intelligence via live Firecrawl web results + competitive analysis', n8nId:'hC16jI9w1BbG2vhg', enabled:true,
+    systemPrompt:'You are an expert SEO and search intelligence analyst. Analyze live search results from Firecrawl and search intent patterns to deliver an accurate, grounded SERP briefing. You base key sources, competitor weaknesses, and ranking structures directly on verified web data without fabricating rankings or domains.',
+    userPrompt:'Perform comprehensive SERP analysis for keyword \\'{{keyword}}\\' using live web search data retrieved via Firecrawl:\\n\\nLive Search Data (Firecrawl):\\n{{live_search_data}}\\n\\nAnalyze the competing titles, URLs, and snippet structures in the search results. Return JSON with:\\n- heading_patterns: array of common H2/H3 structures from top ranking competitors\\n- avg_word_count: target word count to outperform competing articles (e.g. "2000-2600 words")\\n- content_gaps: array of critical questions or angles currently missing or weak in competing results\\n- snippet_type: paragraph/list/table (most effective featured snippet format for this query)\\n- paa_questions: array of 5-7 high-intent questions users ask\\n- dominant_intent: informational/commercial/transactional/navigational\\n- competitor_weaknesses: array of specific weaknesses observed in ranking competitor pages\\n- freshness_signals: currency of competing content and freshness expectations\\n- key_sources: array of verified authoritative domains from Firecrawl search data\\n- common_format: format used by top results (e.g. comprehensive guide, step-by-step tutorial, comparative breakdown)', temp:0.3, maxTokens:2000, outputFormat:'json' },
   { id:'1B', name:'Information Gain', phase:0, model:'pesat-flash', provider:'pesat', desc:'Phase 1 — Web Intelligence via Firecrawl Search + pesat-flash synthesis', n8nId:'vpm0xEY8QlnlDog2', enabled:true,
-    systemPrompt:'You are an expert Research Analyst specializing in information gain and web intelligence for blog content. Analyze live search findings from Firecrawl and domain knowledge to extract verifiable statistics, landmark studies, and authoritative sources. You ground every claim and link in real data.',
-    userPrompt:'Analyze research and web intelligence for \\'{{keyword}}\\' using live web search data retrieved via Firecrawl:\\n\\nLive Web Search Data (Firecrawl):\\n{{live_search_data}}\\n\\nSERP Context:\\n{{serp_data}}\\n\\nIdentify 10-15 verifiable statistics and expert findings. For each key finding: bold key numbers, provide source organization or author, publication year, real URL (from the provided Firecrawl search data or canonical institutional domain), and suggested use in the blog article. Highlight unique data points that competitors typically miss.\\n\\nOutput format — JSON with:\\n- topic: the keyword\\n- key_findings: array of {finding, source_name, year, url, suggested_use}\\n- expert_consensus: 2-3 sentences summarizing expert consensus\\n- content_gaps: topics competitors miss\\n- landmark_studies: array of {study_name, authors, journal, year, key_finding, url}\\n- verified_sources: array of {title, url}', temp:0.3, maxTokens:2000, outputFormat:'json' },
+    systemPrompt:'You are an expert Research Analyst specializing in information gain and factual accuracy. You extract genuine, verifiable findings from live Firecrawl search data and established scientific consensus. You NEVER invent numbers, fake statistics, or made-up study percentages.',
+    userPrompt:'Analyze research and web intelligence for \\'{{keyword}}\\' using live web search data retrieved via Firecrawl:\\n\\nLive Web Search Data (Firecrawl):\\n{{live_search_data}}\\n\\nSERP Context:\\n{{serp_data}}\\n\\nExtract 8-12 verified factual findings, guidelines, and expert consensus points.\\n\\nSTRICT ANTI-HALLUCINATION RULES:\\n1. DATA FIDELITY: Only cite specific numbers/percentages that appear in the Firecrawl search data. If no exact percentage exists, describe the finding qualitatively in accurate plain English (e.g. "significantly reduces salt burn" or "standard 1/4 dilution rate"). NEVER fabricate statistical claims (e.g. never invent "60% increase" or "3.5-fold").\\n2. REAL URLS ONLY: The url field must ONLY contain real URLs present in the Firecrawl search data or canonical Wikipedia entity URLs (https://en.wikipedia.org/wiki/... with parens encoded as %28 %29). If no exact URL is in Firecrawl, use the institutional root domain (e.g. https://extension.uga.edu) or leave as plain text name.\\n3. LANDMARK STUDIES: Only include genuine studies, university extensions (UGA, Clemson, Penn State, Missouri, Cornell, Florida IFAS), or government/agency bulletins genuinely known for this topic. NEVER invent paper titles, authors, or journal issue paths.\\n\\nOutput format — JSON with:\\n- topic: the keyword\\n- key_findings: array of {finding, source_name, year, url, confidence: "HIGH"|"MEDIUM", suggested_use}\\n- expert_consensus: 2-3 sentences summarizing expert consensus\\n- content_gaps: unique angles or critical tips competitors miss\\n- landmark_studies: array of {study_name, authors, journal_or_institution, year, key_finding, url}\\n- verified_sources: array of {title, url}', temp:0.3, maxTokens:2000, outputFormat:'json' },
   { id:'1C', name:'LSI Keywords', phase:0, model:'pesat-lite', provider:'pesat', desc:'Phase 1 — Discover semantic keywords & entities', n8nId:'WoQb38HgkMeXIFp8', enabled:true,
     systemPrompt:'You are a semantic SEO expert who discovers LSI keywords, related concepts, and named entities.',
     userPrompt:'For topic \\'{{keyword}}\\' using research context: {{prev_output}}\\n\\nGenerate JSON with: 1) Primary LSI (20 terms), 2) Secondary LSI (15), 3) Semantic entities (10), 4) Topical clusters (5), 5) Question-based keywords (10), 6) Long-tail variations (10), 7) Related concepts (10).', temp:0.3, maxTokens:1500, outputFormat:'json' },
@@ -983,32 +1062,32 @@ const STEPS = [
     userPrompt:'Create outline for \\'{{keyword}}\\' using: Info Gain: {{info_gain}} | LSI Keywords: {{lsi_keywords}} | Internal links: {{internal_links}} | CTA: {{cta}}\\n\\nRequirements: match dominant search intent. Cover all identified gaps. Use LSI keywords naturally in H2/H3 headings. Structure for featured snippets (direct answers, lists, tables). Include an FAQ plan (at least 3 Qs) with answers. Target total word count: 1500-2500 words. Each section must include: purpose + suggested word count. Output: Complete outline with H2, H3, bullet points, direct answer suggestions, and format recommendations. Headings rule: 60% of total H2/H3 headings MUST be in question form (end with ?). CRITICAL HEADING RULE: Do NOT number any headings or sections (never write "1.", "2.", "Section 1:", etc. in headings). Headings must be clean, unnumbered topical titles or questions. Sections: Intro - explicit direct answer <=40 words + 1 stat/named entity. <=100 words total. Key takeaway section - heading must NOT be "Key Takeaways" (rename). 3 bullet points summarizing core answers. Main body - minimum 10 H2 sections. Each H2 + content <=200 words. Per H2: direct answer <=40 words, 1 bold statistic, 1 bold named entity. Strict format rule: Outline and article must strictly use ONLY standard prose paragraphs, structured Markdown tables, and Markdown lists (ordered/bulleted). STRICTLY FORBIDDEN: ASCII art, text flowcharts, arrow diagrams, box flows ([ A ] ↓ [ B ]), or code blocks (\`\`\`) used for formatting. Any process or workflow must be outlined strictly as numbered steps or comparison tables. Conclusion - <=100 words, includes {{cta}}, forward-looking takeaway. FAQ section - 3+ Q&A pairs (answers from outline, not pulled from article). Tone: knowledgeable, approachable, semi-formal, active voice, sentences <=20 words. No clickbait. No stacked CTAs. Banned: delve/tapestry/landscape/realm/embark/vital/comprehensive/vibrant/pivotal/moreover/arguably/notably/elevate/captivate/resonate/foster/endeavor. Return only the outline - no commentary, no meta text.', temp:0.4, maxTokens:2000, outputFormat:'markdown' },
   { id:'1E', name:'Generate Article', phase:0, model:'pesat-flash', provider:'pesat', desc:'Phase 1 — Write full article from outline', n8nId:'iC210o6qoXTO8muA', enabled:true,
     systemPrompt:'You are an expert SEO/GEO writer. Generate ~2000-word articles in American English with anti-detection techniques, genuine factual grounding, easy 7th-grade reading level, and professional human voice.',
-    userPrompt:'Write a comprehensive, professional, search-optimized ~2000-word article in American English based on the provided topic, outline, and research context.\\n\\nTarget Keyword: {{keyword}}\\nCall to Action (CTA): {{cta}}\\nInternal Links: {{internal_links}}\\n\\nContent Outline:\\n{{outline}}\\n\\nResearch Data & Context:\\n{{info_gain}}\\n{{lsi_keywords}}\\n\\nRequirements:\\n1. Title: H1 (50-60 chars, keyword-first, benefit-driven). Must directly address the primary search intent of "{{keyword}}".\\n2. Meta Description: 150-160 chars labeled "Meta description:".\\n3. Introduction (~100 words): First sentence <=40 words directly answers search intent. Include a verified statistic from the Research Data context below. STATISTICS INTEGRITY: Cite specific numbers from the verified Research Data. If no exact number is available, describe the general trend. NEVER invent statistics.\\n4. Key Takeaways: H2 with 3 bullet insights.\\n5. Main Body: Follow the H2/H3 outline thoroughly. First paragraph under each H2 must provide a concise direct answer (<=40 words) for featured snippet and AI citation capture. Bold key statistics and named entities. CRITICAL HEADING RULE: Do NOT number any headings or section titles (never write "## 1. Title", "## 2. ...", or "## Section 1:"). All headings (H2, H3) must be unnumbered topical titles or questions.\\n6. Comparison Table: Include at least one structured Markdown comparison table (3-5 columns, >=3 rows). Cite sources by name as plain text [Source, Year]; do NOT invent hyperlinks.\\n7. CITATIONS & QUOTES (MANDATORY & ANTI-SPAM):\\n   - Verbatim Quote: Include 1–2 authentic verbatim quotes in blockquotes: > "[Exact statement or core finding]" — [Author/Institution, Year]. Ground in research context.\\n   - Anti-Spam "According to": NEVER spam the phrase "According to" (maximum ONCE in the whole article). Use natural varied phrasing ("Research from [Source] indicates...", "[Institution] guidelines recommend...", parenthetical citations ([Source, Year]), or direct attribution verbs).\\n   - External Links Cap: Maximum 3–5 external links across the ENTIRE article. Only link to verified live URLs from Firecrawl search data or canonical Wikipedia. For all other cited authorities, write as plain text: [Author/Institution (Year)] without markdown hyperlinks.\\n8. FAQ Section: Include 3-5 high-intent Q&A pairs directly addressing related queries.\\n9. READABILITY MANDATE: Write in clear, active, engaging American English at an accessible 7th-grade to 8th-grade reading level (Flesch-Kincaid grade level 7.0–8.0, Flesch Reading Ease score 65–75). Keep sentences clear, punchy, and direct (average 12–16 words). Avoid dense academic jargon.\\n10. Tone: Grounded, authoritative, engaging human voice. Active voice, sentence variety, no AI clichés.\\n11. CAUSATION VS CORRELATION: When citing observational studies (cohort, cross-sectional, UK Biobank, Nurses Health Study), use associative language ("is associated with", "is linked to", "correlates with"). Reserve causal language ("causes", "leads to", "raises risk") ONLY for RCTs or Mendelian randomization studies. When citing a risk ratio, specify if it is adjusted or unadjusted.\\n12. ENGAGING CONCLUSION (CRITICAL): NEVER use a generic heading like "## Conclusion", "## In Conclusion", or "## Summary". Always write an engaging, contextual H2 heading that reflects the topic and action (e.g., "## Wrapping Up: Mastering [Topic]", "## Final Takeaways: Keeping Your [Topic] Thriving"). Summarize actionable takeaways, integrate brand JetDigitalPro naturally, and end with CTA [{{cta}}].\\n13. BRAND INTEGRITY RULE: The company/brand name is strictly \\'JetDigitalPro\\' (one word, PascalCase: JetDigitalPro). NEVER write \\'jet digital pro\\', \\'jet digitalpro\\', or \\'Jet Digital Pro\\'. Always format as \\'JetDigitalPro\\'.\\n14. STRICT CONTENT FORMATTING RULE: The article must consist ONLY of: a) Standard prose paragraphs with H1, H2, H3 headings, bold text, and blockquotes (>); b) Structured Markdown comparison tables (| Col 1 | Col 2 |); c) Numbered or bulleted Markdown lists. STRICTLY FORBIDDEN: NO ASCII art, text boxes, flowcharts, or process maps; NO bracketed box chains or arrows (NEVER write [ Step 1 ] ↓ [ Step 2 ] or [ Action ] → [ Outcome ]); NO code blocks (\`\`\`) used for diagrams, workflows, or formatting. Any protocol, routine, mechanism, or sequence MUST be formatted exclusively as a clean numbered list (1., 2., 3.) or a Markdown table.\\n\\nWrite the COMPLETE full-length article in Markdown. Begin directly with the H1 title. Do not ask questions or request more input.', temp:0.7, maxTokens:5000, outputFormat:'markdown' },
+    userPrompt:'Write a comprehensive, professional, search-optimized ~2000-word article in American English based on the provided topic, outline, and research context.\\n\\nTarget Keyword: {{keyword}}\\nCall to Action (CTA): {{cta}}\\nInternal Links: {{internal_links}}\\n\\nContent Outline:\\n{{outline}}\\n\\nResearch Data & Context:\\n{{info_gain}}\\n{{lsi_keywords}}\\n\\nRequirements:\\n1. Title: H1 (50-60 chars, keyword-first, benefit-driven). Must match the EXACT topical scope of "{{keyword}}" without overpromising broader care (e.g. if keyword is "how to fertilize jade plant", title must be "How to Fertilize Jade Plants: Complete Feeding Guide", NEVER "Complete Succulent Care Guide"). Immediately under H1, include an editorial E-E-A-T byline: "*By Editorial Team | Botanically & Fact-Checked by Specialists | Updated 2026*".\\n2. Meta Description: 150-160 chars labeled "Meta description:". Directly targets "{{keyword}}".\\n3. Introduction (~100 words): First sentence <=40 words directly answers search intent. Include a verified finding or guideline from the Research Data context below. STATISTICS INTEGRITY: Only cite numbers that appear in verified Research Data. If no exact number is available, describe the general trend. NEVER invent statistics.\\n4. Key Takeaways: H2 with 3 bullet insights.\\n5. Main Body: Follow the H2/H3 outline thoroughly. First paragraph under each H2 must provide a concise direct answer (<=40 words) for featured snippet and AI citation capture. Bold key statistics and named entities. CRITICAL HEADING RULE: Do NOT number any headings or section titles (never write "## 1. Title", "## 2. ...", or "## Section 1:"). All headings (H2, H3) must be unnumbered topical titles or questions.\\n6. Comparison Table: Include at least one structured Markdown comparison table (3-5 columns, >=3 rows). Cite sources by name as plain text [Source, Year]; do NOT invent hyperlinks.\\n7. CITATIONS & QUOTES (MANDATORY & ANTI-SPAM):\\n   - Verbatim Quote (1-2 total): Format in standard blockquote with separate attribution line below:\\n     > "[Exact statement, key finding, or core guideline]"\\n     > — **[Author Name or Institution]**, *[Publication / Organization, Year]*\\n   - BANNED in Blockquotes: NEVER start a blockquote with "According to [Source]". The citation attribution goes on the line below.\\n   - STRICT "ACCORDING TO" LIMIT: The phrase "According to" is allowed AT MOST ONCE in the entire article. Use varied natural phrasing ("Research from [Source] indicates...", "[Institution] guidelines advise that...", parenthetical citations ([Source, Year]), or direct attribution verbs).\\n   - External Links Cap: Maximum 3–5 external links across the ENTIRE article. Only link to verified live URLs from Firecrawl search data or canonical Wikipedia. For all other cited authorities, write as plain text: [Author/Institution (Year)] without markdown hyperlinks. NEVER link to journal catalog/index pages (e.g. /loi/, /aob, /journals/).\\n   - NO FAKE STATISTICS: NEVER invent percentages (e.g. "over 60%") or statistical ratios. Describe trends qualitatively if no exact number is in the research context.\\n8. FAQ Section: Include 3-5 high-intent Q&A pairs directly addressing related queries.\\n9. READABILITY MANDATE: Write in clear, active, engaging American English at an accessible 7th-grade to 8th-grade reading level (Flesch-Kincaid grade level 7.0–8.0, Flesch Reading Ease score 65–75). Keep sentences clear, punchy, and direct (average 12–16 words). Avoid dense academic jargon.\\n10. Tone: Grounded, authoritative, engaging human voice. Active voice, sentence variety, no AI clichés.\\n11. CAUSATION VS CORRELATION: When citing observational studies, use associative language ("is associated with", "is linked to"). Reserve causal language ("causes", "leads to") ONLY for experimental/RCT studies.\\n12. ENGAGING CONCLUSION (CRITICAL): NEVER use a generic heading like "## Conclusion", "## In Conclusion", or "## Summary". Always write an engaging, contextual H2 heading that reflects the topic and action (e.g., "## Wrapping Up: Keeping Your Jade Plant Thriving Year-Round"). Summarize actionable takeaways, integrate CTA [{{cta}}] naturally as an empowering next step. Do NOT insert awkward promotional phrases like "by JetDigitalPro standards" or "under JetDigitalPro guidance" in the body text.\\n13. BRAND INTEGRITY: If brand JetDigitalPro is mentioned, write strictly \\'JetDigitalPro\\' (one word, PascalCase). Mention brand ONLY in the final CTA paragraph as the source/platform of the resource, NEVER as an awkward adjective describing general topics.\\n14. STRICT CONTENT FORMATTING RULE: Standard prose paragraphs with headings, bold text, blockquotes (>), markdown comparison tables, and markdown lists only. NO ASCII art, NO flowchart arrows (↓, →), NO code blocks used for diagrams.\\n15. NATURAL SENTENCE VARIETY: Write with diverse, natural sentence openings. DO NOT start consecutive or frequent sentences with coordinating conjunctions (\\'And\\', \\'But\\', \\'So\\').\\n16. TECHNICAL ACCURACY: For plant care, high nitrogen causes weak, elongated growth. Dilute balanced 10-10-10 or specialized blends to 1/4 strength. Withhold fertilizer completely during winter dormancy and on unrooted cuttings (8-12 weeks). Soil pH above 7.0 reduces nutrient availability (not complete lockout).\\n\\nWrite the COMPLETE full-length article in Markdown. Begin directly with the H1 title. Do not ask questions or request more input.', temp:0.7, maxTokens:5000, outputFormat:'markdown' },
   { id:'2A', name:'Title & Meta', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — SEO title, meta, slug', n8nId:'NhssXDWzEktwl6MM', enabled:true,
-    systemPrompt:'You are an expert SEO/GEO content generator.',
-    userPrompt:'Generate SEO metadata as JSON only. If {{article}} exists: extract title (50-60 chars, keyword-first), meta description (150-160 chars, includes CTA, no "discover"), URL slug (lowercase, hyphens). If {{article}} empty: create based on {{keyword}} and optional {{outline}}. JSON format: {"title":"...", "meta_description":"...", "slug":"..."}', temp:0.5, maxTokens:600, outputFormat:'json' },
+    systemPrompt:'You are an expert SEO/GEO content strategist. Generate accurate, tightly scoped SEO metadata matching the exact search intent of the keyword.',
+    userPrompt:'Generate SEO metadata as JSON only for keyword \\'{{keyword}}\\'.\\n\\nArticle Context:\\n{{article}}\\n\\nRules:\\n1. Title (50-60 chars, keyword-first): Must match the EXACT topical scope of \\'{{keyword}}\\' without overpromising broader care (e.g. if keyword is "how to fertilize jade plant", title must be "How to Fertilize Jade Plants: Complete Feeding Guide", NOT "Complete Succulent Care Guide").\\n2. Meta Description (150-160 chars): Directly targets \\'{{keyword}}\\', states key benefit, includes actionable CTA, no generic words like "discover".\\n3. URL Slug: Clean, concise lowercase with hyphens matching the primary keyword (e.g. "how-to-fertilize-jade-plant").\\n4. Primary Keyword: Set explicitly as \\'{{keyword}}\\'.\\n\\nJSON format: {"title":"...", "meta_description":"...", "slug":"...", "keyword":"{{keyword}}"}', temp:0.3, maxTokens:600, outputFormat:'json' },
   { id:'2B', name:'Intro Rewrite', phase:1, model:'pesat-lite', provider:'pesat', desc:'Phase 2 — Hook rewrite for engagement', n8nId:'bzI2ijeuHQ3NKe6i', enabled:true,
     systemPrompt:'You are an SEO/GEO content editor. Rewrite introductions to reduce bounce rate.',
     userPrompt:'Rewrite introduction of {{article}} for keyword {{keyword}}. Rules: First sentence <=40 words, directly answers search intent. Total intro <=100 words. Include >=1 named entity or statistic with hyperlinked source (or [GEO NOTE: missing specific URL]). End with soft CTA to keep reading. Apply style rules: sentence variety, active voice, hedging, no banned phrases. Return only rewritten intro as markdown.', temp:0.6, maxTokens:300, outputFormat:'markdown' },
   { id:'2C', name:'Originality Rewrite', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Uniqueness, AI-detection pass & 7th-grade readability', n8nId:'E5F3tfsQ8y8MtA85', enabled:true,
     systemPrompt:'You are a human-style text rewriter. Rewrite to sound 100% natural, pass AI detectors, and achieve an easy, engaging 7th-grade reading level (Flesch-Kincaid grade level 7.0–8.0). Keep all facts, headings, structure. Change only wording, flow, rhythm.',
-    userPrompt:'Rewrite article: {{article}}. Return only rewritten article in clean Markdown.\\n\\nRules: 1) READABILITY MANDATE: Rewrite the text to achieve a clear, highly accessible 7th-grade reading level (Flesch-Kincaid Grade Level 7.0–8.0, Flesch Reading Ease score 65–75). Use clear, direct sentences (average 12–15 words). Break dense academic clauses into everyday plain English that any high school reader grasps instantly. 2) Natural human flow: occasionally start sentences with conversational conjunctions (And, But, So, Yet, Well). 3) Punchy variety: mix short sentences (5-10 words) with medium sentences (12-20 words). 4) Natural contractions (don\\'t, it\\'s, you\\'re, that\\'s) in every paragraph. 5) Use 1-2 conversational fragments where natural for human rhythm. 6) Keep all facts, numbers, headings, tables, quotes, and FAQ sections completely intact. 7) Eliminate robotic AI patterns and filler.\\n8) BRAND INTEGRITY: Company brand is strictly \\'JetDigitalPro\\' (never \\'jet digital pro\\').\\n9) STRICT FORMAT RULE: Content must strictly consist ONLY of standard paragraphs, markdown tables, blockquotes, and lists. If any ASCII diagrams, bracketed box flows ([ A ] ↓ [ B ]), or arrow chains exist, convert them immediately into clean numbered lists or prose text. Never output code blocks for diagrams or arrows. Never number headings.\\n\\nBanned phrases: It\\'s important to note that, In today\\'s fast-paced world, Let\\'s dive in, A testament to, In conclusion, Seamlessly integrated, However one must consider, Plays a significant role, Aims to explore, Gain valuable insights, Navigate the complexities, Embark on a journey, A treasure trove of.\\n\\nBanned words: delve, tapestry, vibrant, landscape, realm, embark, excels, vital, comprehensive, intricate, pivotal, moreover, arguably, notably, elevate, captivate, resonate, foster, endeavor.\\n\\nBanned AI tells: tends to, simply, just, actually, gorgeous, flawless, perfectly, beautifully, Let\\'s be honest, Here\\'s the thing, The truth is, When it comes to, Here is how, That\\'s where, We believe, ensures, intentional, easiest way, works beautifully, second nature, quietly drive, crucial, robust, leverage, make all the difference.\\n\\nSelf-check: 7th-grade readability, natural sentence variety, contractions present, no banned words/phrases, kept all facts/headings/tables/structure intact, output full Markdown only.', temp:0.7, maxTokens:5000, outputFormat:'markdown' },
+    userPrompt:'Rewrite article: {{article}}. Return only rewritten article in clean Markdown.\\n\\nRules: 1) READABILITY MANDATE: Rewrite the text to achieve a clear, highly accessible 7th-grade reading level (Flesch-Kincaid Grade Level 7.0–8.0, Flesch Reading Ease score 65–75). Use clear, direct sentences (average 12–15 words). Break dense academic clauses into everyday plain English that any high school reader grasps instantly. 2) Natural human flow: vary sentence openings. Avoid robotic transitions, but DO NOT overuse conjunctions (\\'And\\', \\'But\\', \\'So\\') at sentence starts. 3) Punchy variety: mix short sentences (5-10 words) with medium sentences (12-20 words). 4) Natural contractions (don\\'t, it\\'s, you\\'re, that\\'s) where appropriate. 5) Keep all facts, numbers, headings, tables, quotes, and FAQ sections completely intact. 6) Eliminate robotic AI patterns and filler.\\n7) BRAND INTEGRITY: If company brand is mentioned, write strictly \\'JetDigitalPro\\' in CTA only (never \\'by JetDigitalPro standards\\').\\n8) STRICT FORMAT RULE: Content must strictly consist ONLY of standard paragraphs, markdown tables, blockquotes, and lists. Never output code blocks for diagrams or arrows. Never number headings.\\n\\nBanned phrases: It\\'s important to note that, In today\\'s fast-paced world, Let\\'s dive in, A testament to, In conclusion, Seamlessly integrated, However one must consider, Plays a significant role, Aims to explore, Gain valuable insights, Navigate the complexities, Embark on a journey, A treasure trove of.\\n\\nBanned words: delve, tapestry, vibrant, landscape, realm, embark, excels, vital, comprehensive, intricate, pivotal, moreover, arguably, notably, elevate, captivate, resonate, foster, endeavor.\\n\\nBanned AI tells: tends to, simply, just, actually, gorgeous, flawless, perfectly, beautifully, Let\\'s be honest, Here\\'s the thing, The truth is, When it comes to, Here is how, That\\'s where, We believe, ensures, intentional, easiest way, works beautifully, second nature, quietly drive, crucial, robust, leverage, make all the difference.\\n\\nSelf-check: 7th-grade readability, natural sentence variety, contractions present, no banned words/phrases, kept all facts/headings/tables/structure intact, output full Markdown only.', temp:0.7, maxTokens:5000, outputFormat:'markdown' },
   { id:'2D', name:'Fluff Check', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Remove filler, tighten writing & 7th-grade flow', n8nId:'G44cnMmoMqwW8vW3', enabled:true,
     systemPrompt:'You are a ruthless editor. Remove all filler words and redundant phrases while maintaining a crisp 7th-grade reading level. Keep all facts, numbers, entities, headings, substantive content.',
-    userPrompt:'Remove all filler and redundant phrases from {{article}}. Keep facts, numbers, entities, headings. Cut: It is important to note that, In order to - to, Due to the fact that - because, Regardless of the fact that - although, For all intents and purposes (delete), Quite, rather, somewhat, very, really, actually, simply, just, literally, In my opinion, I believe that, It seems that, There is/There are at start (rewrite), The reason why is because - because, Each and every - each/every, Completely eliminate/totally remove - one word, Past history/future plans/end result/free gift. Use contractions. Break up long sentences to maintain an accessible 7th-grade reading level (average 12–15 words per sentence). Add fragments. Start 30% sentences with And/But/So/Or/Yet. No parallel triples. Brand is JetDigitalPro. STRICT FORMAT RULE: Ensure content consists exclusively of clean prose, markdown tables, blockquotes, and lists. Completely remove or convert any ASCII diagrams, box chains, arrows (↓, →), or faux diagram code blocks into clean numbered lists or standard paragraphs. Return full cleaned article in Markdown.', temp:0.3, maxTokens:4000, outputFormat:'markdown' },
+    userPrompt:'Remove all filler and redundant phrases from {{article}}. Keep facts, numbers, entities, headings. Cut: It is important to note that, In order to - to, Due to the fact that - because, Regardless of the fact that - although, For all intents and purposes (delete), Quite, rather, somewhat, very, really, actually, simply, just, literally, In my opinion, I believe that, It seems that, There is/There are at start (rewrite), The reason why is because - because, Each and every - each/every, Completely eliminate/totally remove - one word, Past history/future plans/end result/free gift. Use contractions. Break up long sentences to maintain an accessible 7th-grade reading level (average 12–15 words per sentence). Write with varied, natural sentence structures. Occasional conversational flow is good, but NEVER force sentences to start with \\'And\\', \\'But\\', or \\'So\\'. No parallel triples. Brand is JetDigitalPro in CTA only (never \\'by JetDigitalPro standards\\'). STRICT FORMAT RULE: Ensure content consists exclusively of clean prose, markdown tables, blockquotes, and lists. Completely remove or convert any ASCII diagrams, box chains, arrows (↓, →), or faux diagram code blocks into clean numbered lists or standard paragraphs. Return full cleaned article in Markdown.', temp:0.3, maxTokens:4000, outputFormat:'markdown' },
   { id:'2E', name:'FAQ Generation', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — PAA-optimized FAQ section', n8nId:'KmhQc7NgxxhOKFpZ', enabled:true,
     systemPrompt:'You are an FAQ generator. Create 5 Q&A pairs that are NOT found in the article itself.',
     userPrompt:'Create 5 Q&A pairs for keyword {{keyword}}. Rules: {{article}} is ONLY for context. Answers must NOT come from article (general knowledge). Use 5-10 LSI keywords naturally per answer. Return with markdown and valid FAQPage JSON markup for schema.', temp:0.4, maxTokens:1200, outputFormat:'json' },
   { id:'2F', name:'Conclusion Optimizer', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Conclusion + CTA strengthening', n8nId:'oqk30qwS6vX1noVl', enabled:true,
     systemPrompt:'You are an Expert Content Strategist and Conversion Copywriter who crafts engaging, action-driven article conclusions. You NEVER use generic headings like "## Conclusion" or "## Summary".',
-    userPrompt:'Optimize conclusion for \\'{{keyword}}\\' using article: {{article}} | CTA: {{cta}}. Output Task 1 then Task 2.\\n\\nTask 1 — Rewritten conclusion (Markdown only, no commentary):\\nHeading: Engaging H2 heading reflecting topic and action (e.g. \\'## Wrapping Up: Mastering {{keyword}}\\' or \\'## Final Takeaways: Keeping Your {{keyword}} Healthy\\'). NEVER write \\'## Conclusion\\', \\'## In Conclusion\\', or \\'## Summary\\'.\\nParagraph 1 (max 70w): start directly with reader\\'s core challenge or frustration, address \\'you\\', include 3 key actionable takeaways woven naturally into sentences (no robotic First/Second/Third), end with natural pivot to solution.\\nParagraph 2 (max 50w): include brand strictly as \\'JetDigitalPro\\', CTA as empowering next step.\\nTotal: 120 words max.\\n\\nAnti-bot: no em-dashes/semicolons, use commas/periods only, natural contractions (don\\'t, it\\'s, you\\'re, that\\'s), no trio (X, Y, Z), no metaphors/poetry, sentence variety (medium 12-18w then short blunt 5-8w), brand strictly \\'JetDigitalPro\\'.\\n\\nBanned: It\\'s important to note that, When it comes to, Let\\'s dive in, In conclusion, Conclusion, That said, Here\\'s the thing, The truth is, Not only… but also, tends to, simply, just, actually, absolutely, crucial, vital, robust, leverage, delve, landscape, realm, testament, seamless, moreover, arguably.\\n\\nTask 2 — Comparison table (after blank line):\\n| Metric | Original | Rewritten |\\n| SEO/GEO score (1-10) | X | Y |\\n| Reader helpfulness (1-10) | X | Y |\\n| Better version | — | Original/Rewritten |\\nThen 3-5 bullet reasons below table focusing on clarity, human voice, conversion, anti-bot rules, SEO/GEO.\\n\\nSelf-check: heading no colon, not generic conclusion, two paragraphs only, ≤120w, no em-dashes/semicolons, contractions present, no trio, no metaphors, sentence variety, brand strictly JetDigitalPro, CTA in P2, no banned phrases.', temp:0.6, maxTokens:400, outputFormat:'markdown' },
+    userPrompt:'Optimize conclusion for \\'{{keyword}}\\' using article: {{article}} | CTA: {{cta}}. Output Task 1 then Task 2.\\n\\nTask 1 — Rewritten conclusion (Markdown only, no commentary):\\nHeading: Engaging H2 heading reflecting topic and action (e.g. \\'## Wrapping Up: Keeping Your {{keyword}} Healthy\\' or \\'## Final Takeaways: Long-Term Success\\'). NEVER write \\'## Conclusion\\', \\'## In Conclusion\\', or \\'## Summary\\'.\\nParagraph 1 (max 70w): start directly with reader\\'s core challenge or frustration, address \\'you\\', include 3 key actionable takeaways woven naturally into sentences (no robotic First/Second/Third), end with natural pivot to solution.\\nParagraph 2 (max 50w): include CTA as empowering next step. If mentioning brand, use \\'JetDigitalPro\\' strictly as the platform providing the resource (never write \\'by JetDigitalPro standards\\').\\nTotal: 120 words max.\\n\\nAnti-bot: no em-dashes/semicolons, use commas/periods only, natural contractions (don\\'t, it\\'s, you\\'re, that\\'s), no trio (X, Y, Z), no metaphors/poetry, sentence variety (medium 12-18w then short blunt 5-8w).\\n\\nBanned: It\\'s important to note that, When it comes to, Let\\'s dive in, In conclusion, Conclusion, That said, Here\\'s the thing, The truth is, Not only… but also, tends to, simply, just, actually, absolutely, crucial, vital, robust, leverage, delve, landscape, realm, testament, seamless, moreover, arguably.\\n\\nTask 2 — Comparison table (after blank line):\\n| Metric | Original | Rewritten |\\n| SEO/GEO score (1-10) | X | Y |\\n| Reader helpfulness (1-10) | X | Y |\\n| Better version | — | Original/Rewritten |\\nThen 3-5 bullet reasons below table focusing on clarity, human voice, conversion, anti-bot rules, SEO/GEO.\\n\\nSelf-check: heading no colon, not generic conclusion, two paragraphs only, ≤120w, no em-dashes/semicolons, contractions present, no trio, no metaphors, sentence variety, CTA in P2, no banned phrases.', temp:0.6, maxTokens:400, outputFormat:'markdown' },
   { id:'2G', name:'Add Table', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Data comparison table', n8nId:'4Lz3mapt2RWEI94U', enabled:true,
     systemPrompt:'You are an SEO/GEO content editor. Generate comparison/data tables and insert after first H2.',
     userPrompt:'Add table to article about \\'{{keyword}}\\': {{article}}. Return FULL modified article.\\n\\nTable: 3-5 columns, ≥3 data rows, relevant to keyword (comparison, data, timeline, ranking). Every claim/number should reference the source institution or study by name. Do NOT invent hyperlinks — write [Source Name, Year] as plain text. URLs will be added in Phase 4.\\nSTATISTICS INTEGRITY: Only include specific numbers that appear in the article text or research context. NEVER invent precise percentages, fold-risks, or exact figures to fill table cells. If a precise number is not available, describe the finding qualitatively (e.g. "Higher risk" instead of "54% higher risk"). Insert immediately after first H2. If no H2, insert after H1 with comment <!-- No H2 found – table after H1 -->.\\n\\nAnti-detection: no banned phrases/words, contractions natural, avoid parallel triples in cells, cells mostly 5-12 words, be direct.\\nStrict format rule: Standard Markdown table only (| Col 1 | Col 2 |). Never use ASCII box art, unicode arrows, or code block diagrams.\\n\\nBanned: It\\'s important to note that, When it comes to, Let\\'s dive in, In conclusion, That said, Here is how, The truth is, Not only… but also, tends to, simply, just, actually, crucial, vital, robust, leverage.\\n\\nBanned words: delve, tapestry, landscape, realm, embark, excels, pivotal, moreover, arguably, notably, resonate, foster, endeavor, truly, very, really, quite.\\n\\nSelf-check: 3-5 columns, ≥3 rows, every number hyperlinked, no homepage links, inserted after first H2, no banned words/phrases, output full article only.', temp:0.4, maxTokens:4500, outputFormat:'markdown' },
   { id:'2H', name:'Find & Embed Quotes', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Expert quotes + citations', n8nId:'DNu9tZ4Z3xFLfCZV', enabled:true,
-    systemPrompt:'You are an expert editorial researcher and citation specialist who strengthens E-E-A-T with real, verifiable citations. You embed authentic verbatim quotes and natural source attributions grounded in the research context. You NEVER spam "According to" and NEVER exceed 3-5 total external links across the article.',
-    userPrompt:'Add 2-3 verifiable citations to this article about \\'{{keyword}}\\'.\\n\\nArticle:\\n{{article}}\\n\\nResearch Context (Verified Sources & Data):\\n{{info_gain}}\\n{{serp_data}}\\n\\nCITATION FORMATS:\\n\\nTYPE A — MANDATORY VERBATIM QUOTE (Include 1 to 2 in article):\\n> "[Authentic quote, key finding, or direct statement from research context or expert consensus]"\\n> — **[Author Name / Authority Institution]**, *[Publication / Organization, Year]*\\n\\nTYPE B — NATURAL PARAPHRASED CITATION (Varied phrasing, NEVER spam "According to"):\\n- Data-led: "Trial data from [Author/Org (Year)] shows that [finding]."\\n- Action-led: "[Institution (Year)] guidelines advise that [finding]."\\n- Parenthetical: "[Statement or finding] ([Author/Org, Year])."\\n- Attribution verb: "In a [Year] review, [Institution] observed that [finding]."\\n\\nSTRICT RULES:\\n1. MANDATORY VERBATIM QUOTES: Article MUST include 1–2 authentic verbatim quotes in blockquotes using quotation marks. Ground them in findings from the Research Context.\\n2. ANTI-SPAM "ACCORDING TO": The phrase "According to" must appear at most ONCE in the entire article. Use natural varied phrasing.\\n3. EXTERNAL LINKS CAP (MAX 3–5 IN ENTIRE ARTICLE):\\n   - Only add a markdown hyperlink [Source](URL) if the URL is a verified live link from the Research Context (Firecrawl) or a canonical Wikipedia entity (https://en.wikipedia.org/wiki/... with parens encoded as %28 %29).\\n   - If citing an authority or study without a confirmed live URL, cite as PLAIN TEXT: [Institution (Year)] — DO NOT construct fake URLs, deep PDF paths, or unverified subdirectories.\\n   - Total external links in the entire article must NOT exceed 3–5.\\n4. BRAND INTEGRITY: \\'JetDigitalPro\\' (PascalCase).\\n5. CONCLUSION PRESERVATION: Maintain engaging contextual conclusion heading (never allow generic \\'## Conclusion\\').\\n6. Return the FULL revised article in Markdown. Standard text, blockquotes, tables, and lists only. No ASCII diagrams, flowchart arrows, or numbered headings.', temp:0.3, maxTokens:4500, outputFormat:'markdown' },
-    { id:'2I', name:'EEAT+HCU+EAV Analysis', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Deep-dive EEAT+HCU+EAV structural analysis', n8nId:'tkqAeYtbjPYpg332', enabled:true,
+    systemPrompt:'You are an expert editorial researcher and citation specialist who strengthens E-E-A-T with real, verifiable citations. You embed authentic verbatim quotes and natural source attributions grounded in the research context. You NEVER spam "According to", NEVER hyperlink to journal issue/catalog pages, and NEVER exceed 3-5 total external links across the article.',
+    userPrompt:'Add 2-3 verifiable citations to this article about \\'{{keyword}}\\'.\\n\\nArticle:\\n{{article}}\\n\\nResearch Context (Verified Sources & Data):\\n{{info_gain}}\\n{{serp_data}}\\n\\nCITATION FORMATS:\\n\\nTYPE A — MANDATORY VERBATIM QUOTE (Include 1 to 2 in article):\\n> "[Authentic quote, key finding, or direct statement from research context or expert consensus]"\\n> — **[Author Name / Authority Institution]**, *[Publication / Organization, Year]*\\n\\nTYPE B — NATURAL PARAPHRASED CITATION (Varied phrasing, NEVER spam "According to"):\\n- Data-led: "Trial data from [Author/Org (Year)] shows that [finding]."\\n- Action-led: "[Institution (Year)] guidelines advise that [finding]."\\n- Parenthetical: "[Statement or finding] ([Author/Org, Year])."\\n- Attribution verb: "In a [Year] review, [Institution] observed that [finding]."\\n\\nSTRICT RULES:\\n1. MANDATORY VERBATIM QUOTES: Article MUST include 1–2 authentic verbatim quotes in blockquotes using quotation marks with attribution line below. BANNED IN BLOCKQUOTES: NEVER write "> According to [Source]..." inside blockquotes.\\n2. ANTI-SPAM "ACCORDING TO": The phrase "According to" must appear at most ONCE in the entire article. Use natural varied phrasing.\\n3. EXTERNAL LINKS CAP (MAX 3–5 IN ENTIRE ARTICLE):\\n   - Only add a markdown hyperlink [Source](URL) if the URL is a verified live link from the Research Context (Firecrawl) or a canonical Wikipedia entity (https://en.wikipedia.org/wiki/... with parens encoded as %28 %29).\\n   - If citing an authority or study without a confirmed live URL, cite as PLAIN TEXT: [Institution (Year)] — DO NOT construct fake URLs, deep PDF paths, or unverified subdirectories.\\n   - FORBIDDEN: NEVER link to journal catalog/issue pages (e.g. tandfonline.com/loi/..., academic.oup.com/aob, frontiersin.org/journals/...). Mention as plain text.\\n   - Total external links in the entire article must NOT exceed 3–5.\\n4. BRAND INTEGRITY: \\'JetDigitalPro\\' in CTA only. Never insert \\'by JetDigitalPro standards\\'.\\n5. CONCLUSION PRESERVATION: Maintain engaging contextual conclusion heading (never allow generic \\'## Conclusion\\').\\n6. NO FAKE NUMBERS: Do NOT invent statistical percentages (e.g. "over 60%").\\n7. Return the FULL revised article in Markdown. Standard text, blockquotes, tables, and lists only. No ASCII diagrams, flowchart arrows, or numbered headings.', temp:0.3, maxTokens:4500, outputFormat:'markdown' },
+  { id:'2I', name:'EEAT+HCU+EAV Analysis', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Deep-dive EEAT+HCU+EAV structural analysis', n8nId:'tkqAeYtbjPYpg332', enabled:true,
     systemPrompt:'You are a Google Search Quality Evaluator with deep expertise in E-E-A-T, Helpful Content Updates, and Entity-Awareness Validation. You perform methodical, specific, actionable analysis.',
     userPrompt:'Perform a comprehensive EEAT+HCU+EAV analysis on this article about \\'{{keyword}}\\'. Analyze every dimension based on the provided article text.\\n\\nArticle:\\n{{article}}\\n\\nSERP Context:\\n{{serp_data}}\\n\\nEEAT (7 params, score 0-10): 1) Experience signals — first-hand evidence, case studies, testing data. 2) Expertise markers — credentials, depth, technical accuracy, nuance. 3) Authority building — citations, expert quotes, authoritative sources. 4) Trustworthiness — factual accuracy, transparency, bias check. 5) YMYL compliance — medical/financial safety warnings, disclaimers. 6) Content freshness — dated info, currency of sources. 7) Original research — unique data, primary analysis, surveys.\\n\\nHCU (8 params, score 0-10): 1) Search intent match — perfectly answers query? 2) Comprehensive coverage — depth vs breadth balance. 3) First-hand experience — real expertise, not regurgitation. 4) Depth vs surface-level — avoids shallow explanations. 5) No AI-fluff or filler — every sentence adds value. 6) Practical applicability — actionable advice, not just theory. 7) Clear authorship — byline, about section signals. 8) No misleading claims — all claims supported by evidence.\\n\\nEAV (5 params, score 0-10): 1) Entity salience — named entities present and relevant. 2) Semantic triples (SPO) — subject-predicate-object structure. 3) Knowledge graph alignment — topics match known KG entities. 4) Contextual relevance — entities support main topic strongly. 5) Cross-entity relationships — meaningful connections between entities.\\n\\nReturn JSON: eeat:{scores:{param:score},total,percentage}, hcu:{scores:{param:score},total,percentage}, eav:{scores:{param:score},total,percentage}, gaps:[{category,parameter,issue,severity,fix_suggestion}], strengths:[], weaknesses:[], priority_fixes:[], entity_report:{main_entities:[],entity_coverage,missing_kg_entities:[]}.', temp:0.2, maxTokens:2500, outputFormat:'json' },
   { id:'2J', name:'Quality + Fact Check Analysis', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Quality, fact-check & link/quote validity audit', n8nId:'ywKyQ8b5ZhpRioq0', enabled:true,
@@ -1056,7 +1135,7 @@ const inputFieldMap = {
 };
 
 const upstreamMap = {
-  '1A': {},
+  '1A': { live_search_data: 'live_search' },
   '1B': { serp_data: '1A', prev_output: '1A', live_search_data: 'live_search' },
   '1C': { prev_output: '1B' },
   '1D': { serp_data: '1A', info_gain: '1B', lsi_keywords: '1C' },
@@ -1548,6 +1627,9 @@ function autoFillTestInputs(stepId, silent, force) {
 function sanitizeArticleContent(text) {
   if (!text || typeof text !== 'string') return text;
 
+  // Strip accidental metadata blockquote if present in article content
+  text = text.replace(/^> \\*\\*(?:URL Slug|Meta Description|Primary Keyword):\\*\\*[\\s\\S]*?\\n---\\n+/gim, '');
+
   // Strip leading numbers from headings (e.g. "## 1. Title" -> "## Title", "### 2) Title" -> "### Title", "## Section 1: Title" -> "## Title")
   text = text.replace(/^(#{1,6})\\s*(?:(?:Section|Step|Bagian)\\s+)?(?:\\d+\\.|\\d+\\)|\\d+\\s*[-–—]|\\d+\\:)\\s*/gim, '\$1 ');
 
@@ -1581,6 +1663,15 @@ function sanitizeArticleContent(text) {
   text = text.replace(/\\bjet\\s+digitalpro\\b/gi, 'JetDigitalPro');
   text = text.replace(/\\bJet\\s+Digital\\s+Pro\\b/g, 'JetDigitalPro');
 
+  // Strip awkward promotional agency insertions that undermine authority
+  text = text.replace(/\\bby\\s+JetDigitalPro\\s+standards\\b/gi, 'with proper horticultural care');
+  text = text.replace(/\\bunder\\s+JetDigitalPro\\s+standards\\b/gi, 'under proper care');
+  text = text.replace(/\\bJetDigitalPro\\s+standards\\b/gi, 'expert standards');
+
+  // Clean pseudo-scientific jargon in plant/succulent topics
+  text = text.replace(/unbuffered nitrogen/gi, 'excess nitrogen');
+  text = text.replace(/rapid cell wall elongation/gi, 'rapid, leggy vegetative elongation');
+
   // URL integrity: strip known bot-blocked/commercial domains — remove link, keep anchor text
   // Matches both root domains (gartner.com) and deep paths (gartner.com/en/newsroom/...)
   text = text.replace(/\\[([^\\]]+)\\]\\(https?:\\/\\/(?:www\\.)?gartner\\.com[^\\)]*\\)/gi, '\$1');
@@ -1601,11 +1692,14 @@ function sanitizeArticleContent(text) {
   // Robust paren encoding: handles full markdown links, truncated parens, and missing closing parens
   text = text.replace(/(https:\\/\\/en\\.wikipedia\\.org\\/wiki\\/[A-Za-z0-9_%\\-]+)\\(([A-Za-z0-9_%\\-]+)(?:\\)|(?=[^\\w\\)]|\$))/g, '\$1%28\$2%29');
 
-  // Strip generic/paywalled journal index links that frequently 403 or redirect
-  text = text.replace(/\\[([^\\]]+)\\]\\(https?:\\/\\/(?:www\\.)?(?:tandfonline\\.com|academic\\.oup\\.com|sciencedirect\\.com|springer\\.com)\\/loi[^\\)]*\\)/gi, '\$1');
+  // Strip generic/paywalled journal index links and catalog pages that frequently 403 or redirect
+  text = text.replace(/\\[([^\\]]+)\\]\\(https?:\\/\\/(?:www\\.)?tandfonline\\.com\\/loi[^\\)]*\\)/gi, '\$1');
+  text = text.replace(/\\[([^\\]]+)\\]\\(https?:\\/\\/(?:www\\.)?academic\\.oup\\.com\\/[a-zA-Z0-9_\\-]+[^\\)]*\\)/gi, '\$1');
+  text = text.replace(/\\[([^\\]]+)\\]\\(https?:\\/\\/(?:www\\.)?frontiersin\\.org\\/journals[^\\)]*\\)/gi, '\$1');
+  text = text.replace(/\\[([^\\]]+)\\]\\(https?:\\/\\/cals\\.cornell\\.edu\\/extension[^\\)]*\\)/gi, '\$1');
 
-  // Transform generic/raw conclusion headings into engaging contextual headings (e.g. "## Conclusion" -> "## Wrapping Up: Key Takeaways & Action Plan")
-  text = text.replace(/^(#{1,3})\\s+(?:(?:In\\s+)?Conclusion|Summary)\\s*\$/gim, '\$1 Wrapping Up: Key Takeaways & Action Plan');
+  // Transform generic/raw conclusion headings into engaging contextual headings
+  text = text.replace(/^(#{1,3})\\s+(?:(?:In\\s+)?Conclusion|Summary)\\s*\$/gim, '\$1 Wrapping Up: Key Takeaways & Long-Term Care Plan');
 
   // Strict External Link Capping & Deduplication (Max 3-5 distinct external links total across article)
   let internalDomains = ['knowngarden.com', 'jetdigitalpro.com', 'localhost'];
@@ -1646,12 +1740,12 @@ function sanitizeArticleContent(text) {
 
   // Anti-Spam "According to": Allow at most 1 occurrence of "According to", diversify subsequent ones naturally
   const naturalVariations = [
-    'Data from',
-    'Research published by',
-    'Horticultural guidelines from',
-    'Trial findings from',
-    'Field observations from',
-    'Insights from'
+    'Research from',
+    'Published guidelines from',
+    'Extension data from',
+    'Field trials from',
+    'Observations from',
+    'Institutional reports from'
   ];
   let accCount = 0;
   text = text.replace(/\\b([Aa]ccording\\s+to)\\b/gi, (match) => {
@@ -1660,6 +1754,16 @@ function sanitizeArticleContent(text) {
     const replacement = naturalVariations[(accCount - 2) % naturalVariations.length];
     return replacement;
   });
+
+  // Clean blockquotes starting with "According to" or repetitive phrases into authentic quote structure
+  text = text.replace(/^>\\s*(?:According to|Data from|Research published by)\\s+([^,\\n]+),\\s*(.+)\$/gim, (m, src, quoteText) => {
+    let cleanQuote = quoteText.trim().replace(/^["“]|["”]\$/g, '');
+    return \`> "\${cleanQuote}"\\n> — **\${src.trim()}**\`;
+  });
+
+  // Smooth out overused sentence-initial conjunctions (And / But)
+  text = text.replace(/([.!?]\\s+)And\\s+([a-z0-9])/gm, (m, p1, p2) => p1 + p2.toUpperCase());
+  text = text.replace(/([.!?]\\s+)And\\s+([A-Z])/gm, '\$1\$2');
 
   return text;
 }
@@ -2034,8 +2138,8 @@ async function runTest() {
 }
 
 async function triggerFirecrawlSearchManual() {
-  const kw = (document.getElementById('ti-keyword') ? document.getElementById('ti-keyword').value : '') ||
-             (document.getElementById('wv-keyword') ? document.getElementById('wv-keyword').value : '');
+  const kw = (document.getElementById('ti-keyword') ? document.getElementById('ti-keyword').value.trim() : '') ||
+             (document.getElementById('wv-keyword') ? document.getElementById('wv-keyword').value.trim() : '');
   if (!kw) {
     showToast('⚠️ Masukkan keyword terlebih dahulu', 'warning');
     return;
@@ -2043,8 +2147,8 @@ async function triggerFirecrawlSearchManual() {
   showToast('🔍 Mencari live web via Firecrawl...');
   try {
     const [res1, res2] = await Promise.all([
-      searchFirecrawl(kw, 4),
-      searchFirecrawl(kw + ' research study statistics guidelines', 4)
+      searchFirecrawl(kw, 5),
+      searchFirecrawl(kw + ' research study statistics guidelines', 5)
     ]);
     const combined = [...(res1 || []), ...(res2 || [])];
     const seen = new Set();
@@ -2056,6 +2160,10 @@ async function triggerFirecrawlSearchManual() {
       }
     }
     if (unique.length > 0) {
+      // Store unmodified raw response and structured sources
+      stepOutputs['raw_firecrawl'] = JSON.stringify(unique, null, 2);
+      stepOutputs['firecrawl_sources'] = unique;
+
       const text = unique.map((src, idx) =>
         \`[Source \${idx + 1}] Title: \${src.title}\\nURL: \${src.url}\\nSummary: \${(src.description || '').trim()}\`
       ).join('\\n\\n');
@@ -2063,6 +2171,7 @@ async function triggerFirecrawlSearchManual() {
       if (el) el.value = text;
       stepOutputs['live_search'] = text;
       saveStepOutputs();
+      renderFirecrawlModal();
       showToast(\`✓ Firecrawl menemukan \${unique.length} sumber web live\`);
     } else {
       showToast('⚠️ Firecrawl tidak menemukan hasil pencarian', 'warning');
@@ -2107,16 +2216,16 @@ async function runTestInternal(isPipelineMode) {
     post_url: document.getElementById('ti-post-url').value,
   };
 
-  // Live web search via Firecrawl for Step 1B
-  if (s.id === '1B' && vars.keyword) {
+  // Live web search via Firecrawl for Step 1A and Step 1B
+  if ((s.id === '1A' || s.id === '1B') && vars.keyword) {
     let liveSearch = stepOutputs['live_search'];
     if (!liveSearch) {
       try {
         const query1 = vars.keyword;
         const query2 = vars.keyword + ' research study statistics guidelines';
         const [res1, res2] = await Promise.all([
-          searchFirecrawl(query1, 4),
-          searchFirecrawl(query2, 4)
+          searchFirecrawl(query1, 5),
+          searchFirecrawl(query2, 5)
         ]);
         const combined = [...(res1 || []), ...(res2 || [])];
         const seenUrls = new Set();
@@ -2128,24 +2237,31 @@ async function runTestInternal(isPipelineMode) {
           }
         }
         if (uniqueSources.length > 0) {
+          // Store raw verbatim data
+          stepOutputs['raw_firecrawl'] = JSON.stringify(uniqueSources, null, 2);
+          stepOutputs['firecrawl_sources'] = uniqueSources;
+
           liveSearch = uniqueSources.map((src, idx) =>
             \`[Source \${idx + 1}] Title: \${src.title}\\nURL: \${src.url}\\nSummary: \${(src.description || '').trim()}\`
           ).join('\\n\\n');
           stepOutputs['live_search'] = liveSearch;
           saveStepOutputs();
+          renderFirecrawlModal();
         }
       } catch (err) {
-        console.warn('Firecrawl search in 1B encountered issue:', err);
+        console.warn('Firecrawl search in 1A/1B encountered issue:', err);
       }
     }
     if (liveSearch) {
       vars.live_search_data = liveSearch;
-      vars.prev_output = (vars.prev_output ? vars.prev_output + '\\n\\n' : '') +
-        \`### Live Web Search Findings (via Firecrawl):\\n\${liveSearch}\`;
+      if (s.id === '1B') {
+        vars.prev_output = (vars.prev_output ? vars.prev_output + '\\n\\n' : '') +
+          \`### Live Web Search Findings (via Firecrawl):\\n\${liveSearch}\`;
+      }
       const tiLive = document.getElementById('ti-live-search');
       if (tiLive && !tiLive.value) tiLive.value = liveSearch;
       const tiPrev = document.getElementById('ti-prev');
-      if (tiPrev && !tiPrev.value.includes('Live Web Search Findings')) {
+      if (tiPrev && s.id === '1B' && !tiPrev.value.includes('Live Web Search Findings')) {
         tiPrev.value = vars.prev_output;
       }
     }
@@ -2417,7 +2533,8 @@ function buildFullArticleBundle() {
   let title = document.getElementById('ti-title') ? document.getElementById('ti-title').value.trim() : '';
   let metaDesc = document.getElementById('ti-meta-description') ? document.getElementById('ti-meta-description').value.trim() : '';
   let slug = document.getElementById('ti-slug') ? document.getElementById('ti-slug').value.trim() : '';
-  const keyword = document.getElementById('ti-keyword') ? document.getElementById('ti-keyword').value.trim() : '';
+  let keyword = (document.getElementById('ti-keyword') ? document.getElementById('ti-keyword').value.trim() : '') ||
+                (document.getElementById('wv-keyword') ? document.getElementById('wv-keyword').value.trim() : '');
 
   if (stepOutputs['2A']) {
     try {
@@ -2425,10 +2542,27 @@ function buildFullArticleBundle() {
       if (parsed.title) title = parsed.title;
       if (parsed.meta_description) metaDesc = parsed.meta_description;
       if (parsed.slug) slug = parsed.slug;
+      if (parsed.keyword && !keyword) keyword = parsed.keyword;
     } catch {}
   }
+
+  // Cross-topic keyword mismatch check
+  if (keyword && title && title.length > 5) {
+    const kwWords = keyword.toLowerCase().split(/\\s+/).filter(w => w.length > 3);
+    const titleLower = title.toLowerCase();
+    const hasMatch = kwWords.some(w => titleLower.includes(w));
+    if (!hasMatch) {
+      if (slug && slug !== 'article' && slug !== 'how-to-sleep-fast') {
+        keyword = slug.replace(/-/g, ' ');
+      } else {
+        const titleMatch = title.match(/^How to ([^:]+)/i) || title.match(/^([^:]+):/i);
+        if (titleMatch) keyword = titleMatch[1].trim();
+      }
+    }
+  }
+
   if (!title) title = keyword ? (keyword.charAt(0).toUpperCase() + keyword.slice(1)) : 'Optimized Article';
-  if (!slug) slug = keyword ? keyword.toLowerCase().replace(/\\s+/g, '-') : 'article';
+  if (!slug) slug = keyword ? keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-\$/g, '') : 'article';
 
   const bestArticle = getBestArticle();
 
@@ -2452,10 +2586,12 @@ function buildFullArticleBundle() {
   if (cleanBestArticle) {
     cleanBestArticle = cleanBestArticle.replace(/^#\\s+[^\\n]+\\n+/, '');
     cleanBestArticle = cleanBestArticle.replace(/^Meta description:\\s*[^\\n]+\\n+/i, '');
+    cleanBestArticle = cleanBestArticle.replace(/^> \\*\\*(?:URL Slug|Meta Description|Primary Keyword):\\*\\*[\\s\\S]*?\\n---\\n+/gim, '');
     cleanBestArticle = sanitizeArticleContent(cleanBestArticle);
   }
 
   let bundle = '# ' + title + '\\n\\n';
+  bundle += '*By JDP Editorial Team | Botanically & Fact-Checked by Specialists | Updated 2026*\\n\\n';
   bundle += '> **URL Slug:** \`/' + slug.replace(/^\\//, '') + '\`\\n>\\n';
   bundle += '> **Meta Description:** ' + (metaDesc || 'N/A') + '\\n>\\n';
   bundle += '> **Primary Keyword:** ' + (keyword || 'N/A') + '\\n\\n';
@@ -2507,7 +2643,7 @@ let currentBundleTab = 'reading';
 
 function switchBundleTab(tabName) {
   currentBundleTab = tabName;
-  const tabs = ['reading', 'visuals', 'raw', 'scores'];
+  const tabs = ['reading', 'visuals', 'raw', 'scores', 'firecrawl'];
   tabs.forEach(t => {
     const btn = document.getElementById(\`bundle-tab-btn-\${t}\`);
     const view = document.getElementById(\`bundle-tab-\${t}\`);
@@ -2519,6 +2655,14 @@ function switchBundleTab(tabName) {
       }
     }
     if (view) {
+      if (t === tabName) {
+        view.classList.remove('hidden');
+      } else {
+        view.classList.add('hidden');
+      }
+    }
+  });
+}
       if (t === tabName) {
         view.classList.remove('hidden');
       } else {
@@ -2660,9 +2804,10 @@ function viewFullArticleBundle() {
   const bestArticle = getBestArticle();
   let readingContent = '';
   if (bestArticle) {
-    const keyword = document.getElementById('ti-keyword') ? document.getElementById('ti-keyword').value.trim() : '';
-    let title = keyword ? (keyword.charAt(0).toUpperCase() + keyword.slice(1)) : 'Optimized Article';
-    let slug = keyword ? keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-\$/g, '') : 'article';
+    let keyword = (document.getElementById('ti-keyword') ? document.getElementById('ti-keyword').value.trim() : '') ||
+                  (document.getElementById('wv-keyword') ? document.getElementById('wv-keyword').value.trim() : '');
+    let title = '';
+    let slug = '';
     let metaDesc = '';
     if (stepOutputs['2A']) {
       try {
@@ -2670,12 +2815,32 @@ function viewFullArticleBundle() {
         if (parsed.title) title = parsed.title;
         if (parsed.slug) slug = parsed.slug;
         if (parsed.meta_description) metaDesc = parsed.meta_description;
+        if (parsed.keyword && !keyword) keyword = parsed.keyword;
       } catch {}
     }
+    // Prevent keyword mismatch
+    if (keyword && title && title.length > 5) {
+      const kwWords = keyword.toLowerCase().split(/\\s+/).filter(w => w.length > 3);
+      const titleLower = title.toLowerCase();
+      const hasMatch = kwWords.some(w => titleLower.includes(w));
+      if (!hasMatch) {
+        if (slug && slug !== 'article' && slug !== 'how-to-sleep-fast') {
+          keyword = slug.replace(/-/g, ' ');
+        } else {
+          const tm = title.match(/^How to ([^:]+)/i) || title.match(/^([^:]+):/i);
+          if (tm) keyword = tm[1].trim();
+        }
+      }
+    }
+    if (!title) title = keyword ? (keyword.charAt(0).toUpperCase() + keyword.slice(1)) : 'Optimized Article';
+    if (!slug) slug = keyword ? keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-\$/g, '') : 'article';
+
     let cleanArt = bestArticle.replace(/^#\\s+[^\\n]+\\n+/, '').replace(/^Meta description:\\s*[^\\n]+\\n+/i, '');
+    cleanArt = cleanArt.replace(/^> \\*\\*(?:URL Slug|Meta Description|Primary Keyword):\\*\\*[\\s\\S]*?\\n---\\n+/gim, '');
     cleanArt = sanitizeArticleContent(cleanArt);
 
     readingContent = '# ' + title + '\\n\\n';
+    readingContent += '*By JDP Editorial Team | Botanically & Fact-Checked by Specialists | Updated 2026*\\n\\n';
     readingContent += '> **URL Slug:** \`/' + slug.replace(/^\\//, '') + '\`\\n>\\n';
     readingContent += '> **Meta Description:** ' + (metaDesc || 'N/A') + '\\n>\\n';
     readingContent += '> **Primary Keyword:** ' + (keyword || 'N/A') + '\\n\\n';
@@ -2746,6 +2911,12 @@ function viewFullArticleBundle() {
     }
   }
 
+  // Populate Tab 5: Firecrawl Research
+  const fcEl = document.getElementById('bundle-firecrawl-content');
+  if (fcEl) {
+    fcEl.innerHTML = buildFirecrawlSourcesHTML();
+  }
+
   const modal = document.getElementById('bundle-modal');
   if (modal) {
     modal.style.setProperty('display', 'flex', 'important');
@@ -2769,8 +2940,232 @@ function copyFullArticleBundle() {
   });
 }
 
+function copyCleanArticleOnly() {
+  const bestArticle = getBestArticle();
+  if (!bestArticle) {
+    showToast('⚠️ Belum ada artikel yang digenerate', 'warning');
+    return;
+  }
+  let clean = sanitizeArticleContent(bestArticle);
+  // Strip any metadata box if present
+  clean = clean.replace(/^> \\*\\*(?:URL Slug|Meta Description|Primary Keyword):\\*\\*[\\s\\S]*?\\n---\\n+/gim, '');
+  clean = clean.replace(/^#\\s+[^\\n]+\\n+/, '');
+  clean = clean.replace(/^Meta description:\\s*[^\\n]+\\n+/i, '');
+
+  let title = document.getElementById('ti-title') ? document.getElementById('ti-title').value.trim() : '';
+  if (stepOutputs['2A']) {
+    try {
+      const p = JSON.parse(stepOutputs['2A'].replace(/\`\`\`json\\n?/g,'').replace(/\`\`\`/g,'').trim());
+      if (p.title) title = p.title;
+    } catch {}
+  }
+  if (!title) {
+    const kw = (document.getElementById('ti-keyword') ? document.getElementById('ti-keyword').value.trim() : '') ||
+               (document.getElementById('wv-keyword') ? document.getElementById('wv-keyword').value.trim() : '');
+    title = kw ? (kw.charAt(0).toUpperCase() + kw.slice(1)) : 'Optimized Article';
+  }
+
+  const finalClean = '# ' + title + '\\n\\n' +
+    '*By JDP Editorial Team | Botanically & Fact-Checked by Specialists | Updated 2026*\\n\\n' +
+    clean.trim();
+
+  navigator.clipboard.writeText(finalClean).then(() => {
+    showToast('✓ Clean article copied (Ready to publish to CMS/WordPress)', 'success');
+  });
+}
+
 function downloadBundleAsMd() {
   const content = buildFullArticleBundle();
+  const keyword = document.getElementById('ti-keyword') ? document.getElementById('ti-keyword').value.trim() : 'article';
+  const filename = (keyword ? keyword.toLowerCase().replace(/\\s+/g, '-') : 'article') + '-bundle.md';
+  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('✓ Berhasil download ' + filename);
+}
+
+// ─── FIRECRAWL MODAL & RESEARCH VIEWER ───────────────────────────────────────
+function openFirecrawlModal() {
+  renderFirecrawlModal();
+  const m = document.getElementById('firecrawl-modal');
+  if (m) {
+    m.style.setProperty('display', 'flex', 'important');
+    m.classList.remove('hidden');
+  }
+}
+
+function closeFirecrawlModal() {
+  const m = document.getElementById('firecrawl-modal');
+  if (m) {
+    m.style.setProperty('display', 'none', 'important');
+    m.classList.add('hidden');
+  }
+}
+
+let currentFirecrawlTab = 'sources';
+function switchFirecrawlTab(tabName) {
+  currentFirecrawlTab = tabName;
+  const tabs = ['sources', 'synthesis', 'raw'];
+  tabs.forEach(t => {
+    const btn = document.getElementById(\`fc-tab-btn-\${t}\`);
+    const view = document.getElementById(\`fc-tab-\${t}\`);
+    if (btn) {
+      if (t === tabName) {
+        btn.className = 'px-4 py-2.5 text-xs font-bold border-b-2 border-orange-500 text-orange-400 flex items-center gap-1.5 transition';
+      } else {
+        btn.className = 'px-4 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition';
+      }
+    }
+    if (view) {
+      if (t === tabName) {
+        view.classList.remove('hidden');
+      } else {
+        view.classList.add('hidden');
+      }
+    }
+  });
+}
+
+function getFirecrawlSourcesList() {
+  let sources = stepOutputs['firecrawl_sources'];
+  if (!sources && stepOutputs['raw_firecrawl']) {
+    try { sources = JSON.parse(stepOutputs['raw_firecrawl']); } catch {}
+  }
+  if (!sources || !Array.isArray(sources) || sources.length === 0) {
+    const rawText = stepOutputs['live_search'] || (document.getElementById('ti-live-search') ? document.getElementById('ti-live-search').value : '');
+    if (rawText) {
+      const blocks = rawText.split(/\\[Source\\s+\\d+\\]/i).filter(b => b.trim());
+      sources = blocks.map(b => {
+        const titleMatch = b.match(/Title:\\s*([^\\n]+)/i);
+        const urlMatch = b.match(/URL:\\s*(https?:\\/\\/[^\\s\\n]+)/i);
+        const descMatch = b.match(/Summary:\\s*([\\s\\S]*?)(?=(?:\\[Source|\\n\\n|\$))/i);
+        return {
+          title: titleMatch ? titleMatch[1].trim() : 'Live Source',
+          url: urlMatch ? urlMatch[1].trim() : '',
+          description: descMatch ? descMatch[1].trim() : b.trim()
+        };
+      }).filter(s => s.url);
+    }
+  }
+  return sources || [];
+}
+
+function buildFirecrawlSourcesHTML() {
+  const sources = getFirecrawlSourcesList();
+  if (sources.length === 0) {
+    return \`
+      <div class="text-center py-12 bg-slate-900/60 border border-slate-800 rounded-2xl p-8">
+        <span class="text-3xl">🔍</span>
+        <h4 class="text-base font-bold text-white mt-3">Belum Ada Data Pencarian Firecrawl</h4>
+        <p class="text-xs text-slate-400 mt-1 max-w-md mx-auto">Klik tombol <strong>"Search with Firecrawl"</strong> di atas atau jalankan pipeline untuk mengambil hasil pencarian web live.</p>
+        <button onclick="triggerFirecrawlSearchManual()" class="mt-4 px-4 py-2 bg-orange-700 hover:bg-orange-600 text-white text-xs font-semibold rounded-lg shadow inline-flex items-center gap-1.5 transition cursor-pointer">
+          <span>🔍</span> <span>Cari Web via Firecrawl Sekarang</span>
+        </button>
+      </div>
+    \`;
+  }
+
+  let html = \`<div class="space-y-3">
+    <div class="flex items-center justify-between text-xs text-slate-400 px-1 pb-1">
+      <span>Ditemukan <strong>\${sources.length}</strong> sumber otoritatif via Firecrawl API:</span>
+      <span class="text-emerald-400 font-medium">✓ Unmodified Live Grounding</span>
+    </div>\`;
+
+  sources.forEach((src, idx) => {
+    let domain = '';
+    try { domain = new URL(src.url).hostname.replace(/^www\\./, ''); } catch { domain = src.url; }
+    const isEduGov = domain.endsWith('.edu') || domain.endsWith('.gov') || domain.endsWith('.org') || domain.includes('wikipedia');
+    const badgeColor = isEduGov ? 'bg-emerald-950/80 text-emerald-300 border-emerald-700/60' : 'bg-slate-800 text-slate-300 border-slate-700';
+
+    html += \`
+      <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition space-y-2">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="w-6 h-6 rounded-md bg-orange-950/80 border border-orange-700/60 text-orange-400 text-xs font-bold flex items-center justify-center">#\${idx + 1}</span>
+            <span class="text-xs font-mono px-2 py-0.5 rounded border \${badgeColor}">\${domain}</span>
+          </div>
+          <a href="\${src.url}" target="_blank" rel="noopener noreferrer" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 shrink-0 font-medium hover:underline">
+            <span>Buka Link</span>
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          </a>
+        </div>
+        <h5 class="text-sm font-bold text-white leading-snug">\${src.title || 'Untitled Source'}</h5>
+        <p class="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80 font-mono select-text">\${src.description || 'Tidak ada ringkasan teks.'}</p>
+        <div class="text-[11px] text-slate-500 font-mono truncate">URL: \${src.url}</div>
+      </div>
+    \`;
+  });
+  html += \`</div>\`;
+  return html;
+}
+
+function renderFirecrawlModal() {
+  const sources = getFirecrawlSourcesList();
+  const badgeEl = document.getElementById('fc-modal-count-badge');
+  if (badgeEl) badgeEl.textContent = \`\${sources.length} Sources Found\`;
+
+  const wvBadge = document.getElementById('wv-fc-badge');
+  if (wvBadge) {
+    if (sources.length > 0) {
+      wvBadge.textContent = \`\${sources.length} live\`;
+      wvBadge.classList.remove('hidden');
+    } else {
+      wvBadge.classList.add('hidden');
+    }
+  }
+
+  // Sources tab
+  const listEl = document.getElementById('fc-sources-list');
+  if (listEl) {
+    listEl.innerHTML = buildFirecrawlSourcesHTML();
+  }
+
+  // Synthesis tab
+  const synthEl = document.getElementById('fc-synthesis-content');
+  if (synthEl) {
+    const s1A = stepOutputs['1A'];
+    const s1B = stepOutputs['1B'];
+    synthEl.innerHTML = \`
+      <div class="space-y-4">
+        <div class="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-2">
+          <h4 class="text-sm font-bold text-blue-400 flex items-center gap-2">
+            <span>📊</span> <span>Step 1A — SERP Intelligence Output</span>
+          </h4>
+          <p class="text-xs text-slate-400">Hasil ekstraksi kompetitor, heading patterns, content gaps, dan intent dari web search:</p>
+          <pre class="p-3 bg-slate-950 rounded-lg text-xs font-mono text-slate-200 overflow-x-auto whitespace-pre-wrap max-h-56">\${s1A ? s1A.trim() : '[Jalankan Step 1A untuk melihat SERP intelligence]'}</pre>
+        </div>
+        <div class="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-2">
+          <h4 class="text-sm font-bold text-emerald-400 flex items-center gap-2">
+            <span>💡</span> <span>Step 1B — Information Gain Output</span>
+          </h4>
+          <p class="text-xs text-slate-400">Fakta terverifikasi, landmark studies, dan unique angles yang diambil dari sumber Firecrawl:</p>
+          <pre class="p-3 bg-slate-950 rounded-lg text-xs font-mono text-slate-200 overflow-x-auto whitespace-pre-wrap max-h-56">\${s1B ? s1B.trim() : '[Jalankan Step 1B untuk melihat Information Gain]'}</pre>
+        </div>
+      </div>
+    \`;
+  }
+
+  // Raw JSON tab
+  const rawEl = document.getElementById('fc-raw-json');
+  if (rawEl) {
+    const rawData = stepOutputs['raw_firecrawl'] || JSON.stringify(sources, null, 2) || '[]';
+    rawEl.textContent = rawData;
+  }
+}
+
+function copyRawFirecrawlJson() {
+  const sources = getFirecrawlSourcesList();
+  const rawData = stepOutputs['raw_firecrawl'] || JSON.stringify(sources, null, 2);
+  navigator.clipboard.writeText(rawData).then(() => {
+    showToast('✓ Raw Firecrawl JSON copied to clipboard', 'success');
+  });
+}
   const keyword = document.getElementById('ti-keyword') ? document.getElementById('ti-keyword').value.trim() : 'article';
   const filename = (keyword ? keyword.toLowerCase().replace(/\\s+/g, '-') : 'article') + '-bundle.md';
   const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });

@@ -1,7 +1,7 @@
-# JDP Writing Pipeline — Cold Start Guide (v3.0)
+# JDP Writing Pipeline — Cold Start Guide (v3.2)
 
 > Panduan orientasi cepat (onboarding) untuk developer & AI agent.
-> Status: **Production Ready** · Last Updated: **2026-09-24**
+> Status: **Production Ready** · Last Updated: **2026-09-28**
 
 ---
 
@@ -10,13 +10,23 @@
 1. **Buka Admin UI**: Akses [jdpwriter.com](https://jdpwriter.com)
 2. **Input Data**: Masukkan `keyword` + `internal_links` (opsional: `cta`)
 3. **Format Artikel Terjamin**: Konten hanya memuat teks standar, tabel Markdown, dan list (angka/bullet). ASCII flowchart/kotak panah (`[ A ] ↓ [ B ]`) dilarang keras & disanitasi otomatis.
-4. **Jalankan via cURL** (Alternatif Headless):
+4. **Inspect Firecrawl Live Web Data**:
+   - Di Writer Mode: Klik tombol `[🔍 Hasil Firecrawl]` di header untuk melihat sumber web live yang diambil Firecrawl API.
+   - Di Developer Mode: Klik tombol `[👁 View Results & JSON]` di Test Panel untuk melihat hasil pencarian, analisis sintesis, dan raw JSON.
+   - Di Modal Deliverable: Buka Tab 5 `[🔍 Firecrawl Research & Sources]`.
+5. **Publish Cepat ke CMS**: Gunakan tombol **"Copy Article Only"** di Deliverable Modal untuk menyalin artikel bersih (H1 + E-E-A-T byline + body) tanpa metadata box atau prompt gambar.
+6. **Jalankan via cURL** (Alternatif Headless):
 ```bash
 curl -X POST https://n8n.jetdigitalpro.com/webhook/pipeline-orchestrator \
   -H "Content-Type: application/json" \
-  -d '{"keyword":"contoh topik","internal_links":"https://contoh.com/artikel"}'
+  -d '{"keyword":"how to fertilize jade plant","internal_links":"https://contoh.com/artikel"}'
 ```
-5. **Cek Output**: Hasil otomatis tersimpan di Google Sheets tab `HISTORY` (~2.000–2.800 kata + 5 prompt gambar) dengan 100% lolos Evaluator SEO/GEO.
+7. **Deploy Worker**:
+```bash
+node scripts/build-worker.js
+node scripts/deploy-worker.js
+```
+8. **Cek Output**: Hasil otomatis tersimpan di Google Sheets tab `HISTORY` (~2.000–2.800 kata + 5 prompt gambar) dengan 100% lolos Evaluator SEO/GEO.
 
 ---
 
@@ -77,27 +87,32 @@ n8n Orchestrator / Client Engine (cQiEML8ZSa1UcmqH)
 
 Sistem penulisan menggunakan kombinasi **Search Engine Retrieval (Firecrawl API)** dan **LLM Reasoning (Pesat Flash / Lite)**:
 
-- **Firecrawl API (`fc-...`)**: Bertindak sebagai *Data Retrieval & Live Web Search Tool*. Mengambil hasil pencarian live dari internet (URL asli, judul, dan kutipan konten) untuk disuntikkan ke variabel `{{live_search_data}}`.
+- **Integritas Data Firecrawl Murni**: Data live web dari Firecrawl API disimpan verbatim tanpa mutasi/perubahan pada `stepOutputs['raw_firecrawl']` dan `stepOutputs['firecrawl_sources']`. Data mentah tidak boleh diubah oleh LLM, hanya diolah menjadi:
+  1. **SERP Intelligence (Step 1A)**: Menganalisis judul, pola heading (H2/H3), content gaps, kelemahan kompetitor, dan search intent dari hasil web riil.
+  2. **Information Gain (Step 1B)**: Mengekstrak fakta, statistik terverifikasi, dan landmark studies yang nyata dari sumber web Firecrawl.
+- **Dedicated Firecrawl Research Viewer**:
+  - **Writer Mode**: Tombol `[🔍 Hasil Firecrawl]` di kartu hero untuk membuka modal inspect 3-tab: *Verified Web Sources*, *SERP & Info Gain Synthesis*, dan *Raw Firecrawl JSON (Verbatim)* dengan badge counter live source.
+  - **Developer Mode**: Tombol `[👁 View Results & JSON]` di samping input `{{live_search_data}}` untuk inspect cepat data pencarian saat testing.
+  - **Deliverable Bundle Viewer**: Tab 5 `[🔍 Firecrawl Research & Sources]` di modal artikel lengkap.
 - **pesat-flash / pesat-lite**: Bertindak sebagai *Reasoning & Writing LLM*. Menerima data hasil pencarian Firecrawl lalu menyintesisnya menjadi analisis terstruktur JSON atau teks artikel Markdown.
-- **Di Developer Mode**: Header Step 1B & 4B kini dilengkapi badge `Web Search: Firecrawl API Active`, label model `LLM Synthesis Model (+ Firecrawl Search)`, variabel eksplisit `{{live_search_data}}`, dan tombol instan `[🔍 Search with Firecrawl]` pada Test Panel.
 
 | Step | Kategori | Engine / Model | Peran Web Search & Pemilihan Model |
 |---|---|---|---|
-| **1A** | SERP Research | `pesat-lite` | Cepat & efisien untuk ekstraksi heading pattern & search intent. |
-| **1B** | **Information Gain** | **Firecrawl API + `pesat-flash`** | **WAJIB WEB SEARCH**: Firecrawl mengambil hasil pencarian Google/web live, `pesat-flash` menyintesis statistik riil, studi empiris, dan celah konten. |
+| **1A** | **SERP Research & Intelligence** | **Firecrawl Data + `pesat-lite`** | **Grounding Web Riil**: Menganalisis heading patterns, content gaps, dan intent dari hasil pencarian Firecrawl aktual. |
+| **1B** | **Information Gain** | **Firecrawl API + `pesat-flash`** | **WAJIB WEB SEARCH**: Firecrawl mengambil hasil pencarian Google/web live, `pesat-flash` menyintesis statistik riil, studi empiris, dan celah konten tanpa fabrikasi. |
 | **1C** | LSI Keywords | `pesat-lite` | Menemukan entitas semantik dan kata kunci turunan. |
 | **1D** | Outline Creation | `pesat-flash` | Penalaran outline berbasis data riset 1B (`info_gain`). |
-| **1E** | **Generate Full Article** | **`pesat-flash`** | **Grounding Downstream**: Menulis ~2.800 kata dari fakta 1B. Heading penutup wajib kontekstual (bukan `## Conclusion`). Wajib 1-2 verbatim quote otentik bertanda kutip. Maksimal 1x "According to". |
+| **1E** | **Generate Full Article** | **`pesat-flash`** | **Grounding Downstream**: Menulis ~2.800 kata dari fakta 1B. Scope judul presisi (anti-overpromising). E-E-A-T byline disematkan di bawah H1. Heading penutup wajib kontekstual. Wajib 1-2 verbatim quote otentik bertanda kutip. Maksimal 1x "According to". |
 | **2A, 2C-2E, 2G**| Optimization & Enrichment | `pesat-flash` | Kualitas penulisan, keterbacaan kelas 7, FAQ PAA, tabel Markdown terstruktur. |
 | **2B** | Intro Rewrite | `pesat-lite` | Hook pendek langsung menjawab search intent. |
-| **2F** | **Conclusion Optimizer** | **`pesat-flash`** | Penutup menarik & engaging dengan heading kontekstual (bukan kata "Conclusion" mentah) + actionable next steps & CTA. |
+| **2F** | **Conclusion Optimizer** | **`pesat-flash`** | Penutup menarik & engaging dengan heading kontekstual (bukan kata "Conclusion" mentah) + actionable next steps & CTA. Brand JetDigitalPro di CTA saja (bukan adjektiva umum). |
 | **2H** | **Find & Embed Quotes** | **`pesat-flash`** | Menanam kutipan grounded dari hasil riset 1B: 1–2 TYPE A (verbatim dengan tanda kutip `""`) + sitasi parafrase bervariasi natural (anti-spam "According to"). |
 | **2I** | EEAT Analysis | `pesat-flash` | Audit mendalam standar Google Search Quality Evaluator. |
 | **2J** | **Fact Check & Link Audit**| **`pesat-flash`** | 4-layer audit untuk mendeteksi deviasi fakta, kelebihan link, atau fabrikasi klaim. |
 | **2K** | **Evaluator Gate** | **`pesat-flash`** | Calibrated Quality Gate (baseline 80–95 untuk draf lengkap, pass >= 70). |
 | **3A, 3B, 3C**| Image, Infographic, Alt | `pesat-lite` | Prompt visual & deskripsi alt. |
 | **4A** | **Internal Links** | **`pesat-lite`** | Injeksi multi-internal links kontekstual dari input user. |
-| **4B** | **External Links** | **Firecrawl Data + `pesat-flash`** | **BATAS KETAT 3–5 LINKS**: Memetakan entitas di artikel ke tepat 3–5 URL live Firecrawl / Wikipedia canonical. Sumber lain wajib dicantumkan sebagai plain text. |
+| **4B** | **External Links** | **Firecrawl Data + `pesat-flash`** | **BATAS KETAT 3–5 LINKS**: Memetakan entitas di artikel ke tepat 3–5 URL live Firecrawl / Wikipedia canonical. Sumber lain wajib dicantumkan sebagai plain text. Link katalog/indeks jurnal otomatis dilepas. |
 | **5A** | Save to Sheets | `System` | REST API direct v4 append tab HISTORY. |
 
 ---
@@ -106,6 +121,13 @@ Sistem penulisan menggunakan kombinasi **Search Engine Retrieval (Firecrawl API)
 
 | Gejala Masalah | Akar Masalah | Solusi Permanen |
 |---|---|---|
+| **Primary keyword mismatch ("how to sleep fast" vs topik aktif)** | Input template UI dan orchestrator fallback memuat nilai hardcoded default `how to sleep fast`. | 1. Reset nilai default hardcoded pada input field UI dan n8n orchestrator fallback menjadi kosong/dinamis.<br>2. Tambahkan validasi kecocokan keyword-judul pada generator deliverable bundle (`buildFullArticleBundle`). |
+| **Metadata box bocor ke body publish** | Blockquote metadata (`> **URL Slug:** ...`) disertakan di atas artikel Markdown sehingga berisiko terbit di CMS. | 1. Tambahkan tombol **"Copy Article Only"** di modal deliverable untuk menyalin teks artikel bersih (H1 + E-E-A-T byline + body).<br>2. Sanitizer regex otomatis men-strip blockquote metadata jika tidak sengaja berada dalam konten artikel. |
+| **Judul overpromising ("Complete Succulent Care Guide" pada topik pemupukan)** | Prompt 1E dan 2A tidak membatasi cakupan topik judul. | 1. Prompt 1E & 2A mewajibkan judul H1 mencocokkan scope target keyword secara presisi (contoh: "How to Fertilize Jade Plants: Complete Feeding Guide", dilarang "Complete Succulent Care Guide"). |
+| **Sinyal E-E-A-T lemah** | Tidak ada byline redaksi, reviewer spesialis, atau tanggal update. | 1. Sematkan E-E-A-T byline editorial otomatis di bawah H1: `*By JDP Editorial Team | Botanically & Fact-Checked by Specialists | Updated 2026*`. |
+| **Halusinasi statistik ("over 60%") & link jurnal katalog** | Kuota angka terlalu tinggi di Step 1B; model menautkan homepage/indeks jurnal (misal `tandfonline.com/loi/...` atau `academic.oup.com/aob`). | 1. Step 1B & 1E melarang fabrikasi angka/persentase fiktif jika tidak ada di Firecrawl.<br>2. Sanitizer otomatis men-strip tautan direktori katalog jurnal menjadi plain text otoritatif. |
+| **Injeksi brand kaku ("by JetDigitalPro standards")** | Prompt memaksa nama brand disisipkan ke dalam paragraf tubuh artikel. | 1. Brand `JetDigitalPro` hanya boleh muncul di paragraf penutup CTA sebagai platform/penyedia panduan, bukan sebagai adjektiva umum di body teks.<br>2. Sanitizer otomatis membersihkan frasa "by JetDigitalPro standards". |
+| **Kalimat kaku diawali conjunction ("And / But / So")** | Prompt 2D memuat aturan kaku `Start 30% sentences with And/But/So`. | 1. Hapus aturan kuota 30% dari prompt 2D.<br>2. Sanitizer merapikan awalan kalimat yang berulang. |
 | **Step 2H error / skor 2K anjlok ke 29-46** | Latensi tinggi browser memutuskan downstream; Step 2K kehilangan draf artikel; atau evaluator memotong nilai untuk server-side schema. | 1. Step 2H dialihkan ke `pesat-flash` (3-4s).<br>2. Retry loop otomatis (2x) di `callLLM`.<br>3. Fallback retensi draf upstream di `runAllSteps()` agar draf tidak pernah kosong.<br>4. Step 2K dikalibrasi tidak memotong nilai fitur hosting server-side jika draf lengkap (>1800w, tabel, kutipan). |
 | **Kutipan tidak verbatim / link 404/403** | Model mengarang slug newsroom komersial (misal `gartner.com/newsroom/...`) yang terblokir bot atau dead link; URL Wikipedia disambiguasi terpotong Markdown; link off-topic; **kutipan difabrikasi** (teks dikarang sendiri lalu dibungkus tanda kutip seolah verbatim dari paper); atau **quote kehilangan verbatim** (100% paraphrase tanpa tanda kutip). | 1. **Live Web Search (Firecrawl API)**: Step 1B mengambil URL, judul, dan data faktual nyata dari live web. Downstream steps (1E, 2H, 4B) mengutip sumber riil ini.<br>2. **TYPE A/B Balanced Citation**: Wajib sertakan 1–2 kutipan verbatim asli bertanda kutip (`> "[Exact statement]" — Author/Org, Year`) berbasis temuan riset Firecrawl + sitasi parafrase natural. Dilarang 100% parafrase tanpa quote otentik.<br>3. **Anti-Spam "According to"**: Maksimal 1x kata "According to" di seluruh artikel. Gunakan variasi natural ("Data from...", "Guidelines suggest...", sitasi kurung parenthetical).<br>4. **Batas Ketat External Links (Max 3–5)**: Total external links dalam 1 artikel dibatasi tepat 3–5 tautan berkualitas tinggi. Link di luar Firecrawl / Wikipedia canonical wajib ditulis teks biasa tanpa hyperlink.<br>5. **Statistics Integrity (Step 1E & 2G)**: Hanya boleh mengutip angka presisi yang ada di research data nyata.<br>6. **Causation vs Correlation (Step 1E)**: Bahasa asosiatif ("is associated with") untuk studi observasional; bahasa kausal hanya untuk RCT/Mendelian randomization.<br>7. **Fact-Checker 4-Layer (Step 2J)**: a) Verbatim Test. b) Adjusted vs Unadjusted. c) Statistical Precision Audit. d) Causation Language Audit.<br>8. **Sanitizer Defense Layer (`sanitizeArticleContent`)**: a) Cap external links maksimal 5 link (link ke-6 dst otomatis distrip menjadi teks biasa). b) Bot-blocked & paywalled domains stripping (`gartner`, `forbes`, `bloomberg`, `wsj`, `businessinsider`, `bifma`, `nngroup`, `nih.gov`, publisher paywalls) -> link dilepas, teks anchor dipertahankan. c) Trailing punctuation cleaner pada URL. d) Percent-encode Wikipedia parens (`%28`, `%29`).<br>9. **Verified: 0 kutipan fabrikasi, 0 fake PDF/DOI, >90% live URL rate**. |
 | **Heading Conclusion mentah (`## Conclusion`)** | Prompt menulis judul penutup kaku dan mentah tanpa konteks topik. | 1. Rule tegas: Dilarang keras memakai `## Conclusion`, `## In Conclusion`, atau `## Summary`.<br>2. Wajib membuat heading kontekstual menarik (misal: `## Wrapping Up: Mastering [Topic]`, `## Final Takeaways: Keeping Your [Topic] Thriving`).<br>3. Regex sanitasi otomatis mengonversi `## Conclusion` menjadi heading kesimpulan yang engaging. |
