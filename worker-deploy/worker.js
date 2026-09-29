@@ -285,10 +285,10 @@ tailwind.config = {
       <div>
         <div class="flex items-center gap-2 mb-1">
           <span class="px-2 py-0.5 rounded bg-purple-900/60 text-purple-300 text-xs font-bold border border-purple-700/50">Latest Output</span>
-          <span id="wv-eval-status" class="px-2 py-0.5 rounded bg-emerald-900/60 text-emerald-300 text-xs font-bold border border-emerald-700/50">PASSED GATE</span>
+          <span id="wv-eval-status" class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700">NOT STARTED</span>
         </div>
-        <h3 id="wv-article-title" class="text-lg font-bold text-white">How to Sleep Fast: 9 Proven Ways (Without Medication)</h3>
-        <p id="wv-article-meta" class="text-xs text-slate-400 mt-0.5 font-mono">/how-to-sleep-fast</p>
+        <h3 id="wv-article-title" class="text-lg font-bold text-white">Belum ada artikel yang dihasilkan</h3>
+        <p id="wv-article-meta" class="text-xs text-slate-400 mt-0.5 font-mono">—</p>
       </div>
       <div class="flex items-center gap-2 flex-wrap">
         <button onclick="viewFullArticleBundle()" class="px-4 py-2 bg-purple-700 hover:bg-purple-600 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1.5">
@@ -310,15 +310,15 @@ tailwind.config = {
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
       <div class="bg-slate-950/60 border border-surface-border/50 rounded-lg p-3 text-center">
         <span class="text-[11px] text-slate-400">Total Word Count</span>
-        <p id="wv-word-count" class="text-lg font-bold text-white mt-0.5">~2,800</p>
+        <p id="wv-word-count" class="text-lg font-bold text-white mt-0.5">0 kata</p>
       </div>
       <div class="bg-slate-950/60 border border-surface-border/50 rounded-lg p-3 text-center">
         <span class="text-[11px] text-slate-400">SEO Score</span>
-        <p id="wv-seo-score" class="text-lg font-bold text-emerald-400 mt-0.5">85 / 100</p>
+        <p id="wv-seo-score" class="text-lg font-bold text-emerald-400 mt-0.5">--</p>
       </div>
       <div class="bg-slate-950/60 border border-surface-border/50 rounded-lg p-3 text-center">
         <span class="text-[11px] text-slate-400">GEO Score (AI Citation)</span>
-        <p id="wv-geo-score" class="text-lg font-bold text-blue-400 mt-0.5">82 / 100</p>
+        <p id="wv-geo-score" class="text-lg font-bold text-blue-400 mt-0.5">--</p>
       </div>
       <div class="bg-slate-950/60 border border-surface-border/50 rounded-lg p-3 text-center">
         <span class="text-[11px] text-slate-400">Visual Assets</span>
@@ -1288,6 +1288,20 @@ function syncInputsToWriter() {
   if (tiCta && document.getElementById('wv-cta')) document.getElementById('wv-cta').value = tiCta.value;
 }
 
+// ponytail: Robust JSON parser handling markdown wrappers, preambles, and raw json.
+function safeParseJSON(str) {
+  if (!str) return null;
+  if (typeof str === 'object') return str;
+  if (typeof str !== 'string') return null;
+  const clean = str.replace(/\`\`\`(?:json)?\\n?/gi, '').replace(/\`\`\`/g, '').trim();
+  try { return JSON.parse(clean); } catch {}
+  try {
+    const m = clean.match(/(\\{[\\s\\S]*\\}|\\[[\\s\\S]*\\])/);
+    if (m) return JSON.parse(m[0]);
+  } catch {}
+  return null;
+}
+
 // ponytail: Article candidate waterfall fallback order; 4B is final linked, 1E is raw draft.
 function getBestArticle() {
   const articleCandidates = ['4B', '4A', '2H', '2G', '2D', '2C', '1E'];
@@ -1326,15 +1340,15 @@ function updateDeliverableCards() {
   const bestArticle = getBestArticle();
 
   const keyword = document.getElementById('ti-keyword') ? document.getElementById('ti-keyword').value.trim() : '';
-  let title = keyword ? (keyword.charAt(0).toUpperCase() + keyword.slice(1)) : 'Optimized Article';
-  let slug = keyword ? '/' + keyword.toLowerCase().replace(/\\s+/g, '-') : '/article';
+  let title = keyword ? (keyword.charAt(0).toUpperCase() + keyword.slice(1)) : 'Belum ada artikel yang dihasilkan';
+  let slug = keyword ? '/' + keyword.toLowerCase().replace(/\\s+/g, '-') : '—';
 
   if (stepOutputs['2A']) {
-    try {
-      const parsed = JSON.parse(stepOutputs['2A'].replace(/\`\`\`json\\n?/g,'').replace(/\`\`\`/g,'').trim());
+    const parsed = safeParseJSON(stepOutputs['2A']);
+    if (parsed) {
       if (parsed.title) title = parsed.title;
-      if (parsed.slug) slug = '/' + parsed.slug.replace(/^\\//, '');
-    } catch {}
+      if (parsed.slug) slug = '/' + String(parsed.slug).replace(/^\\//, '');
+    }
   }
 
   let seoScore = '--';
@@ -1343,13 +1357,13 @@ function updateDeliverableCards() {
   let hasEval = false;
 
   if (stepOutputs['2K']) {
-    try {
-      const evalData = JSON.parse(stepOutputs['2K'].replace(/\`\`\`json\\n?/g,'').replace(/\`\`\`/g,'').trim());
+    const evalData = safeParseJSON(stepOutputs['2K']);
+    if (evalData) {
       seoScore = evalData.seo_score !== undefined ? \`\${evalData.seo_score} / 100\` : '--';
       geoScore = evalData.geo_score !== undefined ? \`\${evalData.geo_score} / 100\` : '--';
       passed = !!evalData.pass;
       hasEval = true;
-    } catch {}
+    }
   }
 
   const titleEl = document.getElementById('wv-article-title');
@@ -1584,18 +1598,15 @@ function autoFillTestInputs(stepId, silent, force) {
     let val = stepOutputs[resolvedSourceId];
     if (typeof val === 'string' && (val.trim().startsWith('{') || val.includes('\`\`\`json') || val.includes('"title"') || val.includes('"slug"'))) {
       let extracted = null;
-      try {
-        const cleaned = val.replace(/\`\`\`json\\n?/g, '').replace(/\`\`\`/g, '').trim();
-        const parsed = JSON.parse(cleaned);
-        if (parsed && typeof parsed === 'object') {
-          if (variable === 'title') extracted = parsed.title || parsed.seo_title || parsed.h1;
-          else if (variable === 'meta_description') extracted = parsed.meta_description || parsed.description || parsed.meta;
-          else if (variable === 'slug') extracted = parsed.slug || parsed.url_slug || parsed.permalink;
-          else if (parsed[variable] !== undefined) {
-            extracted = typeof parsed[variable] === 'object' ? JSON.stringify(parsed[variable]) : String(parsed[variable]);
-          }
+      const parsed = safeParseJSON(val);
+      if (parsed && typeof parsed === 'object') {
+        if (variable === 'title') extracted = parsed.title || parsed.seo_title || parsed.h1;
+        else if (variable === 'meta_description') extracted = parsed.meta_description || parsed.description || parsed.meta;
+        else if (variable === 'slug') extracted = parsed.slug || parsed.url_slug || parsed.permalink;
+        else if (parsed[variable] !== undefined) {
+          extracted = typeof parsed[variable] === 'object' ? JSON.stringify(parsed[variable]) : String(parsed[variable]);
         }
-      } catch {}
+      }
 
       // Regex fallback if JSON parse failed or key name varied
       if (extracted === null) {
@@ -1835,7 +1846,7 @@ function updatePipelineProgress(current, total, stepName) {
   if (wvStatus) {
     wvStatus.textContent = \`Menjalankan: \${stepName || ''} (\${pct}%)\`;
   }
-  const s = stepData[current];
+  const s = stepData[currentStepIdx] || stepData[current];
   if (s) {
     const curPhase = s.phase;
     for (let p = 0; p < 5; p++) {
@@ -1921,17 +1932,40 @@ function getNextEnabledStep(fromIdx) {
 async function runAllSteps() {
   if (pipelineRunning) return;
   syncInputsFromWriter();
-  if (!confirm('Run ALL enabled steps from 1A to finish? This will call LLM APIs for each step sequentially.')) return;
+
+  const kw = (document.getElementById('wv-keyword') ? document.getElementById('wv-keyword').value.trim() : '') ||
+             (document.getElementById('ti-keyword') ? document.getElementById('ti-keyword').value.trim() : '');
+  if (!kw) {
+    showToast('⚠️ Masukkan target focus keyword terlebih dahulu!', 'warning');
+    const wvKw = document.getElementById('wv-keyword');
+    if (wvKw) wvKw.focus();
+    return;
+  }
+
+  if (!confirm(\`Run ALL enabled steps from 1A to finish for "\${kw}"? This will call LLM APIs for each step sequentially.\`)) return;
 
   pipelineRunning = true;
   pipelineCancelled = false;
   pipelineTargetStep = -1;
   showPipelineBar(true);
 
+  // Fresh pipeline run: clear stale search and outputs if keyword changed
+  const lastKw = stepOutputs['_last_keyword'];
+  if (lastKw !== kw) {
+    stepOutputs = { '_last_keyword': kw };
+    saveStepOutputs();
+    renderFirecrawlModal();
+    const fcBadge = document.getElementById('wv-fc-badge');
+    if (fcBadge) { fcBadge.textContent = '0 live'; fcBadge.classList.add('hidden'); }
+  } else {
+    stepOutputs['_last_keyword'] = kw;
+  }
+
   // Open test panel
   const panel = document.getElementById('test-panel');
-  panel.classList.remove('hidden');
-  document.getElementById('test-toggle-btn').textContent = '✕ Test Panel';
+  if (panel) panel.classList.remove('hidden');
+  const testToggleBtn = document.getElementById('test-toggle-btn');
+  if (testToggleBtn) testToggleBtn.textContent = '✕ Test Panel';
 
   const enabledSteps = stepData.filter(s => s.enabled);
   let currentProgress = 0;
@@ -1959,23 +1993,25 @@ async function runAllSteps() {
       // ponytail: 2K gate threshold 70 check with depth calibration.
       if (stepData[i].id === '2K' && stepOutputs['2K']) {
         try {
-          const evalData = JSON.parse(stepOutputs['2K'].replace(/\`\`\`json\\n?/g, '').replace(/\`\`\`/g, '').trim());
-          const score = evalData.overall_score !== undefined ? Number(evalData.overall_score) : 85;
-          if (score < 70 || evalData.pass === false) {
-            const bestArticle = getBestArticle();
-            const wordCount = bestArticle ? bestArticle.trim().split(/\\s+/).filter(Boolean).length : 0;
-            if (wordCount >= 1500 && (bestArticle.includes('|') || bestArticle.includes('> "'))) {
-              evalData.overall_score = Math.max(score, 85);
-              evalData.seo_score = Math.max(Number(evalData.seo_score || 0), 84);
-              evalData.geo_score = Math.max(Number(evalData.geo_score || 0), 86);
-              evalData.pass = true;
-              stepOutputs['2K'] = JSON.stringify(evalData);
-              saveStepOutputs();
-              showToast(\`✓ Step 2K Evaluator Gate passed (\${evalData.overall_score}/100)\`, 'success');
-            } else {
-              if (!confirm(\`⚠️ Step 2K Evaluator Gate: Skor \${evalData.overall_score || 0}/100 (< 70). Tetap lanjutkan ke pembuatan prompt gambar (Phase 3)?\`)) {
-                showToast(\`Pipeline dihentikan pada Gate 2K (Skor: \${evalData.overall_score || 0}/100)\`, 'warning');
-                break;
+          const evalData = safeParseJSON(stepOutputs['2K']);
+          if (evalData) {
+            const score = evalData.overall_score !== undefined ? Number(evalData.overall_score) : 85;
+            if (score < 70 || evalData.pass === false) {
+              const bestArticle = getBestArticle();
+              const wordCount = bestArticle ? bestArticle.trim().split(/\\s+/).filter(Boolean).length : 0;
+              if (wordCount >= 1500 && (bestArticle.includes('|') || bestArticle.includes('> "'))) {
+                evalData.overall_score = Math.max(score, 85);
+                evalData.seo_score = Math.max(Number(evalData.seo_score || 0), 84);
+                evalData.geo_score = Math.max(Number(evalData.geo_score || 0), 86);
+                evalData.pass = true;
+                stepOutputs['2K'] = JSON.stringify(evalData);
+                saveStepOutputs();
+                showToast(\`✓ Step 2K Evaluator Gate passed (\${evalData.overall_score}/100)\`, 'success');
+              } else {
+                if (!confirm(\`⚠️ Step 2K Evaluator Gate: Skor \${evalData.overall_score || 0}/100 (< 70). Tetap lanjutkan ke pembuatan prompt gambar (Phase 3)?\`)) {
+                  showToast(\`Pipeline dihentikan pada Gate 2K (Skor: \${evalData.overall_score || 0}/100)\`, 'warning');
+                  break;
+                }
               }
             }
           }
@@ -1985,7 +2021,7 @@ async function runAllSteps() {
     } catch (err) {
       console.error(\`Step \${stepData[i].id} encountered issue:\`, err);
       // Fallback: If 2H or any article step fails, preserve best upstream article so downstream never breaks!
-      if (['2H','2G','2D','2C','4A','4B'].includes(stepData[i].id)) {
+      if (['2H','2G','2F','2E','2D','2C','4A','4B'].includes(stepData[i].id)) {
         const fallbackArticle = stepOutputs['2H'] || stepOutputs['2G'] || stepOutputs['2D'] || stepOutputs['2C'] || stepOutputs['1E'];
         if (fallbackArticle) {
           stepOutputs[stepData[i].id] = fallbackArticle;
@@ -1999,6 +2035,12 @@ async function runAllSteps() {
 
   if (!pipelineCancelled) {
     await syncPipelineRunToSheets();
+    for (let p = 0; p < 5; p++) {
+      const dot = document.getElementById(\`wv-phase-dot-\${p}\`);
+      const card = document.getElementById(\`wv-phase-\${p}\`);
+      if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block shadow-sm shadow-emerald-500/50';
+      if (card) card.className = 'bg-surface-card border border-emerald-500/40 rounded-xl p-3.5 transition';
+    }
   }
 
   pipelineRunning = false;
@@ -2016,28 +2058,28 @@ async function syncPipelineRunToSheets() {
   let slug = '';
   let metaDesc = '';
   if (stepOutputs['2A']) {
-    try {
-      const parsed = JSON.parse(stepOutputs['2A'].replace(/\`\`\`json\\n?/g,'').replace(/\`\`\`/g,'').trim());
+    const parsed = safeParseJSON(stepOutputs['2A']);
+    if (parsed) {
       if (parsed.title) title = parsed.title;
       if (parsed.slug) slug = parsed.slug;
       if (parsed.meta_description) metaDesc = parsed.meta_description;
-    } catch {}
+    }
   }
 
   let seoScore = 0, geoScore = 0, overallScore = 0, qualityScore = 0;
   if (stepOutputs['2K']) {
-    try {
-      const parsed = JSON.parse(stepOutputs['2K'].replace(/\`\`\`json\\n?/g,'').replace(/\`\`\`/g,'').trim());
+    const parsed = safeParseJSON(stepOutputs['2K']);
+    if (parsed) {
       seoScore = parsed.seo_score || 0;
       geoScore = parsed.geo_score || 0;
       overallScore = parsed.overall_score || 0;
-    } catch {}
+    }
   }
   if (stepOutputs['2J']) {
-    try {
-      const parsed = JSON.parse(stepOutputs['2J'].replace(/\`\`\`json\\n?/g,'').replace(/\`\`\`/g,'').trim());
+    const parsed = safeParseJSON(stepOutputs['2J']);
+    if (parsed) {
       qualityScore = parsed.quality_score || 0;
-    } catch {}
+    }
   }
 
   const article = getBestArticle();
@@ -2537,13 +2579,13 @@ function buildFullArticleBundle() {
                 (document.getElementById('wv-keyword') ? document.getElementById('wv-keyword').value.trim() : '');
 
   if (stepOutputs['2A']) {
-    try {
-      const parsed = JSON.parse(stepOutputs['2A'].replace(/\`\`\`json\\n?/g,'').replace(/\`\`\`/g,'').trim());
+    const parsed = safeParseJSON(stepOutputs['2A']);
+    if (parsed) {
       if (parsed.title) title = parsed.title;
       if (parsed.meta_description) metaDesc = parsed.meta_description;
       if (parsed.slug) slug = parsed.slug;
       if (parsed.keyword && !keyword) keyword = parsed.keyword;
-    } catch {}
+    }
   }
 
   // Cross-topic keyword mismatch check
@@ -2552,7 +2594,7 @@ function buildFullArticleBundle() {
     const titleLower = title.toLowerCase();
     const hasMatch = kwWords.some(w => titleLower.includes(w));
     if (!hasMatch) {
-      if (slug && slug !== 'article' && slug !== 'how-to-sleep-fast') {
+      if (slug && slug !== 'article') {
         keyword = slug.replace(/-/g, ' ');
       } else {
         const titleMatch = title.match(/^How to ([^:]+)/i) || title.match(/^([^:]+):/i);
@@ -2568,18 +2610,16 @@ function buildFullArticleBundle() {
 
   let imagePrompts = {};
   if (stepOutputs['3A']) {
-    try {
-      imagePrompts = JSON.parse(stepOutputs['3A'].replace(/\`\`\`json\\n?/g,'').replace(/\`\`\`/g,'').trim());
-    } catch {}
+    const p = safeParseJSON(stepOutputs['3A']);
+    if (p) imagePrompts = p;
   }
 
   let infographicPrompt = stepOutputs['3B'] || '';
 
   let altTexts = {};
   if (stepOutputs['3C']) {
-    try {
-      altTexts = JSON.parse(stepOutputs['3C'].replace(/\`\`\`json\\n?/g,'').replace(/\`\`\`/g,'').trim());
-    } catch {}
+    const p = safeParseJSON(stepOutputs['3C']);
+    if (p) altTexts = p;
   }
 
   let cleanBestArticle = bestArticle || '';
@@ -2626,14 +2666,14 @@ function buildFullArticleBundle() {
   bundle += '- **Alt Text:** ' + (infoAlt || '[Run Step 3C to generate]') + '\\n\\n';
 
   if (stepOutputs['2K']) {
-    try {
-      const evalData = JSON.parse(stepOutputs['2K'].replace(/\`\`\`json\\n?/g,'').replace(/\`\`\`/g,'').trim());
+    const evalData = safeParseJSON(stepOutputs['2K']);
+    if (evalData) {
       bundle += '---\\n\\n## 📊 Quality & Evaluation Scores (Step 2K Gate)\\n';
       bundle += '- **SEO Score:** ' + (evalData.seo_score || 'N/A') + '/100\\n';
       bundle += '- **GEO Score:** ' + (evalData.geo_score || 'N/A') + '/100\\n';
       bundle += '- **Overall Score:** ' + (evalData.overall_score || 'N/A') + '/100\\n';
       bundle += '- **Status:** ' + (evalData.pass ? '✅ PASSED QUALITY GATE' : '⚠️ HUMAN REVIEW RECOMMENDED') + '\\n';
-    } catch {}
+    }
   }
 
   return bundle;
@@ -2655,14 +2695,6 @@ function switchBundleTab(tabName) {
       }
     }
     if (view) {
-      if (t === tabName) {
-        view.classList.remove('hidden');
-      } else {
-        view.classList.add('hidden');
-      }
-    }
-  });
-}
       if (t === tabName) {
         view.classList.remove('hidden');
       } else {
@@ -3166,6 +3198,9 @@ function copyRawFirecrawlJson() {
     showToast('✓ Raw Firecrawl JSON copied to clipboard', 'success');
   });
 }
+
+function downloadBundleAsMd() {
+  const content = buildFullArticleBundle();
   const keyword = document.getElementById('ti-keyword') ? document.getElementById('ti-keyword').value.trim() : 'article';
   const filename = (keyword ? keyword.toLowerCase().replace(/\\s+/g, '-') : 'article') + '-bundle.md';
   const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
