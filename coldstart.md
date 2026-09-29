@@ -182,8 +182,18 @@ Berdasarkan audit evaluasi kualitas editorial, diterapkan 4 pilar standar baru d
 - **Deteksi Otomatis Brand (Zero-Config)**: Nama brand otomatis diinferensi dari hostname `internal_links` (misal: `https://knowngarden.com/...` -> `KnownGarden`).
 - **Input Kustom Fleksibel**: Jika link internal belum dimasukkan, user dapat menginput nama brand di Writer Mode (`wv-brand`) atau Dev Mode (`ti-brand`).
 - **Byline Editorial E-E-A-T Dinamis**: Byline di bawah H1 otomatis menyesuaikan brand: `*By [Brand] Editorial Team | Botanically & Fact-Checked by Specialists | Updated 2026*`.
-- **Integrasi Tautan Internal ke Frasa Alami**: Tautan internal ditenun ke kata/frasa kontekstual dari slug URL (contoh: `[saving a dying jade plant](url)`, `[succulent propagation methods](url)`, `[propagating tropical foliage](url)`).
+- **Integrasi Tautan Internal Parsial & Zero-Referral**:
+  - **Partial Keywords Anchor**: Ekstrak kata kunci parsial/inti dari slug URL (contoh: `how to fertilize jade plants` -> `fertilize`, `fertilizing jade plants`; `how to save a dying jade plant` -> `[saving a dying jade plant](url)`). Dilarang memakai slug mentah atau frasa mekanis panjang.
+  - **Zero Meta/Referral Language (BANNED)**: Dilarang keras memakai kata `guide`, `resource`, `article`, atau pola percakapan `check this guide on [X]`, `see our guide on [X]`, `resources on [X]`, `if you need more details check [X]`, `as emphasized on this article`.
+  - **Natural Declarative Grammar**: Tautan wajib menjadi bagian tata bahasa alami kalimat deklaratif (subjek/predikat/objek):
+    * *GOOD:* "When root decay is caught early, [saving a dying jade plant](url) requires trimming blackened tissue before repotting."
+    * *GOOD:* "Successful [jade plant propagation](url) depends on letting raw stem cuttings dry thoroughly in shade before potting."
+    * *GOOD:* "Unlike [propagating a philodendron](url) where cuttings root in plain water, succulent stems rot if submerged."
+    * *BANNED:* "If your jade is sick, check this guide on [how to save a dying jade plant] for tips."
 - **Hard Protection Layer (Step 4B & Sanitizer)**: Batas kuota 3-5 external link HANYA berlaku untuk sitasi web eksternal (Wikipedia/riset). Seluruh link internal ke domain brand (`{{brand_domain}}`) diproteksi 100% dan tidak pernah dilucuti menjadi teks biasa.
+- **Standar Akurasi Faktual & Botani**:
+  - Rasio pupuk sukulen standar industri: **2-7-7** (seperti Schultz Cactus Plus) atau **10-10-10** cair terencerkan. Rasio semu seperti 2-4-3 dilarang keras & disanitasi otomatis.
+  - Pemupukan musim dingin: Hanya direkomendasikan jika tanaman aktif mengeluarkan pertumbuhan daun baru yang tampak (*visible active new growth*). Jika tidak ada tunas baru, wajib puasa pupuk total (Oktober–Februari).
 
 ---
 
