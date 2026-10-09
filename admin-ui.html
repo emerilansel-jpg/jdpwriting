@@ -125,6 +125,11 @@ tailwind.config = {
     </div>
 
     <!-- Settings & Lock -->
+    <button onclick="openHistoryModal()" class="px-2.5 py-1 text-xs bg-indigo-950/70 hover:bg-indigo-900 border border-indigo-700/60 text-indigo-300 rounded-lg font-semibold flex items-center gap-1.5 transition cursor-pointer" title="Riwayat Pembuatan Artikel (Minimal 10 Artikel Terakhir)">
+      <span>📜</span>
+      <span class="hidden sm:inline">History</span>
+      <span id="header-history-badge" class="px-1.5 py-0.2 rounded-full text-[10px] bg-indigo-900/90 text-indigo-200 border border-indigo-500/40">0</span>
+    </button>
     <button onclick="openSettings()" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition" title="API Keys & Settings">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
     </button>
@@ -170,6 +175,15 @@ tailwind.config = {
           <span class="w-2 h-2 rounded-full bg-orange-400 inline-block animate-pulse"></span>
           <span>Web Search: Firecrawl</span>
           <span class="text-[10px] text-orange-400 bg-orange-900/70 px-1.5 py-0.5 rounded border border-orange-600/40">API Key</span>
+        </button>
+        <span id="wv-pesat-jev-badge" class="px-3 py-1 bg-purple-950/60 border border-purple-700/50 text-purple-300 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-sm" title="Model pesat-x-jev khusus fact check/fix (Testing token limit)">
+          <span class="w-2 h-2 rounded-full bg-purple-400 inline-block animate-pulse"></span>
+          <span>pesat-x-jev: 0 / 4,000 tok</span>
+        </span>
+        <button onclick="openHistoryModal()" class="px-3 py-1 bg-indigo-950/70 hover:bg-indigo-900 border border-indigo-700/60 text-indigo-300 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer" title="Lihat riwayat pembuatan artikel">
+          <span>📜</span>
+          <span>History</span>
+          <span id="wv-history-badge" class="text-[10px] text-indigo-200 bg-indigo-900/90 px-1.5 py-0.5 rounded border border-indigo-500/40">0</span>
         </button>
         <span class="px-3 py-1 bg-emerald-950/60 border border-emerald-700/50 text-emerald-400 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-sm">
           <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> Pesat Flash + Lite
@@ -327,6 +341,35 @@ tailwind.config = {
       </div>
     </div>
   </div>
+
+  <!-- History Card: Last >= 10 Articles Generated -->
+  <div id="wv-history-card" class="bg-surface-card border border-surface-border rounded-2xl p-6 shadow-xl space-y-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-surface-border/60 pb-4">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="px-2 py-0.5 rounded bg-indigo-950/80 text-indigo-300 text-xs font-bold border border-indigo-700/50">Local Archive</span>
+          <span id="wv-history-count-badge" class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-xs font-bold border border-slate-700">0 artikel</span>
+        </div>
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <span>📜</span> <span>Riwayat Pembuatan Artikel</span>
+        </h3>
+        <p class="text-xs text-slate-400 mt-0.5">Menyimpan otomatis minimal 10 artikel terakhir. Anda dapat memuat kembali (restore), menyalin, atau mengunduh artikel lampau kapan saja.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="openHistoryModal()" class="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white font-semibold flex items-center gap-1.5 shadow transition cursor-pointer">
+          <span>🔍</span> <span>Buka Arsip Lengkap</span>
+        </button>
+        <button onclick="clearAllArticleHistory()" class="px-2.5 py-1.5 text-xs bg-slate-800 hover:bg-rose-950/60 text-slate-400 hover:text-rose-300 border border-slate-700 hover:border-rose-800/60 rounded-lg font-semibold transition cursor-pointer" title="Bersihkan riwayat artikel">
+          <span>🗑️</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- History Quick Table / List Container -->
+    <div id="wv-history-list" class="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
+      <div class="text-center py-8 text-slate-500 text-xs font-mono">Belum ada riwayat artikel tersimpan. Jalankan pipeline untuk membuat artikel pertama.</div>
+    </div>
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════ DEVELOPER MODE VIEW ═══ -->
@@ -401,6 +444,7 @@ tailwind.config = {
               <option value="pesat-lite">pesat-lite (Fast / Cheap)</option>
               <option value="pesat-flash">pesat-flash (High Quality / Fast)</option>
               <option value="pesat-pro">pesat-pro (Deep Reasoning & Eval)</option>
+              <option value="pesat-x-jev">pesat-x-jev (Fact-Check & Fix)</option>
             </optgroup>
             <optgroup label="OpenAI">
               <option value="gpt-4o">gpt-4o</option>
@@ -998,6 +1042,11 @@ tailwind.config = {
         <input type="password" id="key-firecrawl" class="w-full bg-surface-input border border-orange-500/60 rounded px-3 py-2 text-sm text-white font-mono" placeholder="fc-...">
       </div>
       <div>
+        <label class="block text-xs text-purple-400 font-semibold mb-1">pesat-x-jev Testing Token Limit / Article</label>
+        <input type="number" id="limit-pesat-x-jev" class="w-full bg-surface-input border border-purple-500/60 rounded px-3 py-2 text-sm text-white font-mono" placeholder="4000" value="4000">
+        <p class="text-[11px] text-slate-500 mt-0.5">Batas token pesat-x-jev per pembuatan artikel untuk testing fact-check/fix.</p>
+      </div>
+      <div>
         <label class="block text-xs text-slate-400 mb-1">OpenAI API Key (Optional)</label>
         <input type="password" id="key-openai" class="w-full bg-surface-input border border-surface-border rounded px-3 py-2 text-sm text-white font-mono" placeholder="sk-...">
       </div>
@@ -1021,6 +1070,46 @@ tailwind.config = {
   </div>
 </div>
 
+<!-- ARTICLE HISTORY MODAL -->
+<div id="history-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-3 md:p-6">
+  <div class="bg-surface-card border border-surface-border rounded-2xl flex flex-col w-[1000px] max-w-full max-h-[90vh] overflow-hidden shadow-2xl">
+    <div class="px-6 py-4 border-b border-surface-border flex items-center justify-between bg-slate-900/90">
+      <div class="flex items-center gap-3">
+        <span class="text-xl">📜</span>
+        <div>
+          <h2 class="font-bold text-white text-base">Riwayat Pembuatan Artikel (Arsip Minimal 10 Artikel)</h2>
+          <p class="text-xs text-slate-400">Daftar artikel tersimpan lengkap dengan skor SEO/GEO, metrik token, dan opsi muat ulang ke modal deliverable.</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="clearAllArticleHistory()" class="px-3 py-1.5 text-xs bg-rose-950/60 hover:bg-rose-900/80 border border-rose-800/60 rounded-lg text-rose-300 font-semibold flex items-center gap-1.5 transition cursor-pointer" title="Hapus semua riwayat">
+          <span>🗑️</span> <span>Hapus Semua</span>
+        </button>
+        <button onclick="closeHistoryModal()" class="text-slate-400 hover:text-white text-2xl ml-2 leading-none cursor-pointer">✕</button>
+      </div>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <div class="px-6 py-3 border-b border-surface-border bg-slate-900/50 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="relative w-full sm:w-80">
+        <input type="text" id="history-search-input" oninput="filterHistoryList()" placeholder="Cari keyword atau judul..." class="w-full bg-surface-input border border-surface-border rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 outline-none">
+        <span class="absolute right-2.5 top-2 text-xs text-slate-500">🔍</span>
+      </div>
+      <div class="text-xs text-slate-400 font-mono">
+        Total Tersimpan: <span id="modal-history-count" class="text-indigo-400 font-bold">0</span> artikel
+      </div>
+    </div>
+
+    <!-- Modal History List Container -->
+    <div id="modal-history-table-container" class="p-6 overflow-y-auto flex-1 bg-slate-950/70">
+      <div id="modal-history-empty" class="text-center py-16 text-slate-500 text-sm font-mono">
+        Belum ada riwayat artikel tersimpan.
+      </div>
+      <div id="modal-history-items" class="space-y-3"></div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbycRCScQD0PW1zDTQjoG5MXRQ7c22f3AQQaJGylkL3TSktwKmKYg3EiWpJeWZ1k27K-fg/exec?secret=jdp-pipeline-2026';
@@ -1028,6 +1117,10 @@ const API_SECRET = 'jdp-pipeline-2026';
 
 // ─── TOKEN PRICING (per 1k tokens, USD) ───────────────────────────────────────
 const PRICING = {
+  'pesat-lite':        { in: 0.0001, out: 0.0002 },
+  'pesat-flash':       { in: 0.0002, out: 0.0004 },
+  'pesat-pro':         { in: 0.0010, out: 0.0030 },
+  'pesat-x-jev':       { in: 0.0003, out: 0.0006 },
   'gpt-4o':            { in: 0.005, out: 0.015 },
   'gpt-4o-mini':       { in: 0.000150, out: 0.000600 },
   'o1-preview':        { in: 0.015, out: 0.060 },
@@ -1095,7 +1188,7 @@ const STEPS = [
   { id:'2I', name:'EEAT+HCU+EAV Analysis', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Deep-dive EEAT+HCU+EAV structural analysis', n8nId:'tkqAeYtbjPYpg332', enabled:true,
     systemPrompt:'You are a Google Search Quality Evaluator with deep expertise in E-E-A-T, Helpful Content Updates, and Entity-Awareness Validation. You perform methodical, specific, actionable analysis.',
     userPrompt:'Perform a comprehensive EEAT+HCU+EAV analysis on this article about \'{{keyword}}\'. Analyze every dimension based on the provided article text.\n\nArticle:\n{{article}}\n\nSERP Context:\n{{serp_data}}\n\nEEAT (7 params, score 0-10): 1) Experience signals — first-hand evidence, case studies, testing data. 2) Expertise markers — credentials, depth, technical accuracy, nuance. 3) Authority building — citations, expert quotes, authoritative sources. 4) Trustworthiness — factual accuracy, transparency, bias check. 5) YMYL compliance — medical/financial safety warnings, disclaimers. 6) Content freshness — dated info, currency of sources. 7) Original research — unique data, primary analysis, surveys.\n\nHCU (8 params, score 0-10): 1) Search intent match — perfectly answers query? 2) Comprehensive coverage — depth vs breadth balance. 3) First-hand experience — real expertise, not regurgitation. 4) Depth vs surface-level — avoids shallow explanations. 5) No AI-fluff or filler — every sentence adds value. 6) Practical applicability — actionable advice, not just theory. 7) Clear authorship — byline, about section signals. 8) No misleading claims — all claims supported by evidence.\n\nEAV (5 params, score 0-10): 1) Entity salience — named entities present and relevant. 2) Semantic triples (SPO) — subject-predicate-object structure. 3) Knowledge graph alignment — topics match known KG entities. 4) Contextual relevance — entities support main topic strongly. 5) Cross-entity relationships — meaningful connections between entities.\n\nReturn JSON: eeat:{scores:{param:score},total,percentage}, hcu:{scores:{param:score},total,percentage}, eav:{scores:{param:score},total,percentage}, gaps:[{category,parameter,issue,severity,fix_suggestion}], strengths:[], weaknesses:[], priority_fixes:[], entity_report:{main_entities:[],entity_coverage,missing_kg_entities:[]}.', temp:0.2, maxTokens:2500, outputFormat:'json' },
-  { id:'2J', name:'Quality + Fact Check Analysis', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Quality, fact-check & link/quote validity audit', n8nId:'ywKyQ8b5ZhpRioq0', enabled:true,
+  { id:'2J', name:'Quality + Fact Check Analysis', phase:1, model:'pesat-x-jev', provider:'pesat', desc:'Phase 2 — Quality, fact-check & link/quote validity audit', n8nId:'ywKyQ8b5ZhpRioq0', enabled:true,
     systemPrompt:'You are a senior copy editor, fact-checker, and citation verifier. You evaluate writing quality AND rigorously audit every factual claim, quote, and external link for accuracy and live web existence.',
     userPrompt:'Analyze this article about \'{{keyword}}\' for writing quality, factual accuracy, and citation/link validity.\n\nArticle:\n{{article}}\n\nResearch Context & Verified Data:\n{{info_gain}}\n\nEEAT Analysis Context:\n{{eeat_hcu_eav_analysis}}\n\nPART 1 — Quality: grammar & mechanics, readability (Flesch-Kincaid grade level, sentence length variation, paragraph structure), tone consistency, passive voice percentage, transition quality, redundancy score, formatting consistency.\n\nPART 2 — Fact & Quote Verification:\n- Audit all quotes using these SPECIFIC CHECKS:\n  a) VERBATIM TEST: Does the text inside quotation marks read like authentic published academic prose (formal, precise, cautious)? Or does it read like AI-generated paraphrase (casual, definitive, promotional)? Flag any quote that uses casual language, makes absolute claims, or contains phrases like "directly influences", "is essential for" — real papers use hedged language.\n  b) ATTRIBUTION TEST: Is the attributed author a real, named researcher who published in the cited journal and year? Flag any vague attribution (e.g. "European Heart Journal, 2021" without a specific author name that can be verified).\n  c) PARAPHRASE DETECTION: If quotation marks wrap text that looks like a summary rather than exact copied text, flag it as LIKELY FABRICATED and recommend converting to paraphrase citation format (no quotation marks).\n  d) ADJUSTED vs UNADJUSTED: For any cited risk ratio or hazard ratio, check whether the article specifies if it is the adjusted or unadjusted figure. Flag any unadjusted risk presented without context as misleading.\n- Audit all external URLs: verify that every URL follows valid web standards (.gov, .edu, doi.org, pubmed, wikipedia, official domains) and is not a hallucinated fake slug.\n- Audit TOPICAL RELEVANCE of each external link: verify that every linked source is directly related to the article\'s subject matter (\'{{keyword}}\'). Flag any off-topic link (e.g. medical link in a gardening article, or random tech link in a health article) as a critical issue.\n- Audit brand naming: verify that brand is correctly written as \'{{brand_name}}\' (PascalCase).\n- Audit internal links for referral phrasing: Flag any internal link sentence using meta-referral wording like "check this guide on", "see our guide", "resources on", or words like "guide/resource" attached to links.\n- UNIVERSAL DOMAIN-AGNOSTIC FACT CHECK (ALL TOPICS):\n  * PARAMETER & METRIC FIDELITY: Audit every technical parameter, chemical/fertilizer ratio, software command/syntax, financial metric, medical/health claim, dosage, temperature, or measurement against established industry standards and provided Research Context ({{info_gain}}). Flag any non-standard, invented, or unverified figures as critical factual risks.\n  * CONDITIONAL TRUTH AUDIT: Flag any blanket advice that ignores critical preconditions (e.g. winter feeding recommendations without active growth; software commands without prerequisite dependencies; financial tips without risk disclosures).\n  * DOMAIN STANDARDS AUDIT: For botanical topics, verify ratios match standard 2-7-7 or 10-10-10 (flag unverified ratios like 2-4-3) and winter feeding requires visible active growth. For tech/finance/other topics, verify exact CLI syntax, parameter limits, version flags, and benchmark numbers against real documentation.\n- Extract all factual claims with confidence scores (high/medium/low). Flag any unsupported assertions or weasel words without dates or citations.\n- STATISTICAL PRECISION AUDIT: For every specific number (percentage, fold-risk, exact count), verify it appears in the Research Context data. Flag any precise statistic not traceable to provided research data as UNVERIFIABLE. Check whether risk ratios are adjusted or unadjusted — flag unadjusted ratios presented as definitive causal claims.\n- CAUSATION LANGUAGE AUDIT: Flag any sentence that uses causal language ("causes", "raises risk", "leads to") for findings from observational/cohort studies. These should use associative language ("is associated with", "is linked to").\n\nPART 3 — Web Search Verification Needs:\nFor each medium/low confidence claim or unverified link, provide: suggested_search_query, expected_authoritative_source, verification_priority (critical/important/nice-to-have).\n\nReturn JSON: quality_score (0-100), readability:{grade_level,flesch_score,sentence_avg_length,sentence_variation_score}, tone_assessment:{consistent,issues:[]}, passive_voice_pct, redundancy_score (0-100), quotes_validity:{verified_count,issues:[]}, links_validity:{verified_count,issues:[]}, claims:[{claim_text,category,confidence,needs_verification,suggested_search_query,expected_authoritative_source,verification_priority}], critical_flags:[], improvement_recommendations:[], overall_verdict:{quality,fact_risk}.', temp:0.2, maxTokens:3000, outputFormat:'json' },
   { id:'2K', name:'SEO/GEO Evaluator', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — FINAL GATE: SEO+GEO scoring with pass/fail', n8nId:'QW8Jq667xvGKj0Yl', enabled:true,
@@ -1127,6 +1220,7 @@ const STEPS = [
 let currentStepIdx = 0;
 let isDirty = false;
 let stepOutputs = {};
+function getStepOutputs() { return stepOutputs; }
 const stepData = STEPS.map(s => ({...s}));
 
 const inputFieldMap = {
@@ -1546,6 +1640,339 @@ function updateDeliverableCards() {
   }
 }
 
+// ─── PESAT-X-JEV TESTING TOKEN LIMITER & ARTICLE HISTORY ─────────────────────
+// ponytail: Pesat-x-jev testing token limit per article. Default 4000. Upgrade to dynamic server quota when out of testing.
+let pesatXJevTokensCurrentArticle = 0;
+
+function getPesatXJevLimit() {
+  const saved = parseInt(localStorage.getItem('jdp_pesat_x_jev_limit'), 10);
+  return isNaN(saved) || saved <= 0 ? 4000 : saved;
+}
+
+function setPesatXJevLimit(val) {
+  const num = parseInt(val, 10);
+  if (!isNaN(num) && num > 0) {
+    localStorage.setItem('jdp_pesat_x_jev_limit', num);
+  }
+}
+
+function updatePesatXJevTokenUI() {
+  const badge = document.getElementById('wv-pesat-jev-badge');
+  const limit = getPesatXJevLimit();
+  if (badge) {
+    badge.innerHTML = `<span class="w-2 h-2 rounded-full ${pesatXJevTokensCurrentArticle >= limit ? 'bg-rose-400' : 'bg-purple-400 animate-pulse'} inline-block"></span> <span>pesat-x-jev: ${pesatXJevTokensCurrentArticle.toLocaleString()} / ${limit.toLocaleString()} tok</span>`;
+    if (pesatXJevTokensCurrentArticle >= limit) {
+      badge.className = 'px-3 py-1 bg-rose-950/80 border border-rose-700/60 text-rose-300 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-sm';
+    } else {
+      badge.className = 'px-3 py-1 bg-purple-950/60 border border-purple-700/50 text-purple-300 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-sm';
+    }
+  }
+}
+
+function escapeHtml(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ponytail: Local storage ring-buffer for article history. Cap: 20 items (guarantees >= 10 articles). Upgrade to indexedDB/remote API if payload > 5MB.
+const ARTICLE_HISTORY_KEY = 'jdp_article_history';
+const MAX_ARTICLE_HISTORY = 20;
+
+function loadArticleHistory() {
+  try {
+    const raw = localStorage.getItem(ARTICLE_HISTORY_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveArticleToHistory(entry) {
+  try {
+    let hist = loadArticleHistory();
+    hist.unshift(entry);
+    if (hist.length > MAX_ARTICLE_HISTORY) {
+      hist = hist.slice(0, MAX_ARTICLE_HISTORY);
+    }
+    localStorage.setItem(ARTICLE_HISTORY_KEY, JSON.stringify(hist));
+    renderArticleHistoryUI();
+  } catch (e) {
+    console.warn('Failed to save article history to localStorage:', e);
+  }
+}
+
+function saveCurrentArticleToHistory() {
+  const article = getBestArticle();
+  if (!article || article.trim().length < 100) return;
+
+  const keyword = (document.getElementById('ti-keyword') ? document.getElementById('ti-keyword').value.trim() : '') ||
+                  (document.getElementById('wv-keyword') ? document.getElementById('wv-keyword').value.trim() : '');
+  if (!keyword && !stepOutputs['1E']) return;
+
+  let title = keyword ? (keyword.charAt(0).toUpperCase() + keyword.slice(1)) : 'Untitled Article';
+  let slug = '';
+  let metaDesc = '';
+  if (stepOutputs['2A']) {
+    const parsed = safeParseJSON(stepOutputs['2A']);
+    if (parsed) {
+      if (parsed.title) title = parsed.title;
+      if (parsed.slug) slug = parsed.slug;
+      if (parsed.meta_description) metaDesc = parsed.meta_description;
+    }
+  }
+
+  let seoScore = 0, geoScore = 0, overallScore = 0, qualityScore = 0;
+  if (stepOutputs['2K']) {
+    const parsed = safeParseJSON(stepOutputs['2K']);
+    if (parsed) {
+      seoScore = parsed.seo_score || 0;
+      geoScore = parsed.geo_score || 0;
+      overallScore = parsed.overall_score || 0;
+    }
+  }
+  if (stepOutputs['2J']) {
+    const parsed = safeParseJSON(stepOutputs['2J']);
+    if (parsed) qualityScore = parsed.quality_score || 0;
+  }
+
+  const wordCount = article.trim().split(/\s+/).filter(Boolean).length;
+  const brand = getActiveBrand();
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' }) + ' ' +
+                  now.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+
+  const entry = {
+    id: 'art_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+    timestamp: now.toISOString(),
+    dateStr: dateStr,
+    keyword: keyword || 'N/A',
+    brand: brand || 'Default',
+    title: title,
+    slug: slug,
+    meta_description: metaDesc,
+    word_count: wordCount,
+    seo_score: seoScore,
+    geo_score: geoScore,
+    overall_score: overallScore,
+    quality_score: qualityScore,
+    pesat_x_jev_tokens: pesatXJevTokensCurrentArticle,
+    status: overallScore >= 70 ? 'Passed' : 'Completed',
+    article: article,
+    step_outputs: { ...stepOutputs }
+  };
+
+  saveArticleToHistory(entry);
+}
+
+function renderArticleHistoryUI(filterQuery = '') {
+  const hist = loadArticleHistory();
+  const query = (filterQuery || '').toLowerCase().trim();
+  const filtered = query ? hist.filter(h => (h.keyword && h.keyword.toLowerCase().includes(query)) || (h.title && h.title.toLowerCase().includes(query)) || (h.brand && h.brand.toLowerCase().includes(query))) : hist;
+
+  // Badges update
+  const hBadge = document.getElementById('header-history-badge');
+  if (hBadge) hBadge.textContent = hist.length;
+  const wvBadge = document.getElementById('wv-history-badge');
+  if (wvBadge) wvBadge.textContent = hist.length;
+  const wvCountBadge = document.getElementById('wv-history-count-badge');
+  if (wvCountBadge) wvCountBadge.textContent = `${hist.length} artikel`;
+  const modalCount = document.getElementById('modal-history-count');
+  if (modalCount) modalCount.textContent = hist.length;
+
+  // Render Writer Mode list
+  const wvList = document.getElementById('wv-history-list');
+  if (wvList) {
+    if (hist.length === 0) {
+      wvList.innerHTML = '<div class="text-center py-8 text-slate-500 text-xs font-mono">Belum ada riwayat artikel tersimpan. Jalankan pipeline untuk membuat artikel pertama.</div>';
+    } else {
+      wvList.innerHTML = hist.slice(0, 10).map(item => `
+        <div class="bg-slate-950/70 border border-surface-border/70 hover:border-indigo-500/50 rounded-xl p-3.5 transition flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1 flex-wrap">
+              <span class="text-[10px] font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">${escapeHtml(item.dateStr)}</span>
+              <span class="text-[10px] font-bold text-indigo-300 bg-indigo-950/80 px-2 py-0.5 rounded border border-indigo-700/50">${escapeHtml(item.brand || 'Brand')}</span>
+              <span class="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-700/50">SEO ${item.seo_score || 0} / GEO ${item.geo_score || 0}</span>
+              ${item.pesat_x_jev_tokens > 0 ? `<span class="text-[10px] font-bold text-purple-300 bg-purple-950/80 px-2 py-0.5 rounded border border-purple-700/50">pesat-x-jev: ${item.pesat_x_jev_tokens.toLocaleString()} tok</span>` : ''}
+              <span class="text-[10px] text-slate-400 font-mono">${(item.word_count || 0).toLocaleString()} kata</span>
+            </div>
+            <h4 class="text-sm font-bold text-white truncate hover:text-indigo-300 cursor-pointer" onclick="restoreArticleFromHistory('${item.id}')" title="Klik untuk muat artikel">${escapeHtml(item.title || item.keyword)}</h4>
+            <p class="text-xs text-slate-400 truncate mt-0.5 font-mono">Keyword: <span class="text-blue-300 font-semibold">${escapeHtml(item.keyword)}</span> &bull; Slug: ${escapeHtml(item.slug || '—')}</p>
+          </div>
+          <div class="flex items-center gap-1.5 flex-shrink-0">
+            <button onclick="restoreArticleFromHistory('${item.id}')" class="px-2.5 py-1 text-xs bg-indigo-900/60 hover:bg-indigo-800 text-indigo-200 border border-indigo-700/50 rounded-lg font-semibold flex items-center gap-1 transition cursor-pointer" title="Muat artikel ini ke Deliverable Modal">
+              <span>👁</span> <span>Lihat</span>
+            </button>
+            <button onclick="copyHistoryArticle('${item.id}')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-lg font-semibold flex items-center gap-1 transition cursor-pointer" title="Salin teks artikel">
+              <span>📋</span> <span>Copy</span>
+            </button>
+            <button onclick="downloadHistoryArticleMd('${item.id}')" class="px-2.5 py-1 text-xs bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 border border-emerald-700/50 rounded-lg font-semibold flex items-center gap-1 transition cursor-pointer" title="Download file .md">
+              <span>⬇️</span> <span>.md</span>
+            </button>
+            <button onclick="deleteArticleFromHistory('${item.id}')" class="px-2 py-1 text-xs bg-slate-900 hover:bg-rose-950/80 text-slate-400 hover:text-rose-300 border border-slate-800 hover:border-rose-700/50 rounded-lg transition cursor-pointer" title="Hapus dari riwayat">
+              <span>🗑️</span>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  // Render Modal list
+  const modalEmpty = document.getElementById('modal-history-empty');
+  const modalItems = document.getElementById('modal-history-items');
+  if (modalEmpty && modalItems) {
+    if (filtered.length === 0) {
+      modalEmpty.classList.remove('hidden');
+      modalItems.innerHTML = '';
+    } else {
+      modalEmpty.classList.add('hidden');
+      modalItems.innerHTML = filtered.map(item => `
+        <div class="bg-slate-900/90 border border-surface-border hover:border-indigo-500/60 rounded-xl p-4 transition flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-lg">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+              <span class="text-xs font-mono text-slate-400 bg-slate-950 px-2.5 py-0.5 rounded border border-slate-800">${escapeHtml(item.dateStr)}</span>
+              <span class="text-xs font-bold text-indigo-300 bg-indigo-950/90 px-2 py-0.5 rounded border border-indigo-700/60">${escapeHtml(item.brand || 'Brand')}</span>
+              <span class="text-xs font-bold text-emerald-400 bg-emerald-950/90 px-2 py-0.5 rounded border border-emerald-700/60">SEO ${item.seo_score || 0} / GEO ${item.geo_score || 0}</span>
+              ${item.pesat_x_jev_tokens > 0 ? `<span class="text-xs font-bold text-purple-300 bg-purple-950/90 px-2 py-0.5 rounded border border-purple-700/60">pesat-x-jev: ${item.pesat_x_jev_tokens.toLocaleString()} tok</span>` : ''}
+              <span class="text-xs text-slate-400 font-mono">${(item.word_count || 0).toLocaleString()} kata</span>
+            </div>
+            <h4 class="text-base font-bold text-white hover:text-indigo-300 cursor-pointer" onclick="restoreArticleFromHistory('${item.id}')">${escapeHtml(item.title || item.keyword)}</h4>
+            <p class="text-xs text-slate-400 mt-1 font-mono">Keyword: <span class="text-blue-300 font-semibold">${escapeHtml(item.keyword)}</span> &bull; Slug: ${escapeHtml(item.slug || '—')}</p>
+            ${item.meta_description ? `<p class="text-xs text-slate-400 line-clamp-1 mt-1 italic">"${escapeHtml(item.meta_description)}"</p>` : ''}
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <button onclick="restoreArticleFromHistory('${item.id}')" class="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-semibold flex items-center gap-1.5 shadow transition cursor-pointer" title="Muat artikel ini ke Deliverable Modal">
+              <span>👁</span> <span>Lihat Deliverable</span>
+            </button>
+            <button onclick="copyHistoryArticle('${item.id}')" class="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-lg font-semibold flex items-center gap-1 transition cursor-pointer" title="Salin teks artikel bersih">
+              <span>📋</span> <span>Copy</span>
+            </button>
+            <button onclick="downloadHistoryArticleMd('${item.id}')" class="px-3 py-1.5 text-xs bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg font-semibold flex items-center gap-1 transition cursor-pointer" title="Download .md">
+              <span>⬇️</span> <span>.md</span>
+            </button>
+            <button onclick="deleteArticleFromHistory('${item.id}')" class="px-2.5 py-1.5 text-xs bg-slate-900 hover:bg-rose-950/80 text-slate-400 hover:text-rose-300 border border-slate-800 hover:border-rose-700/50 rounded-lg transition cursor-pointer" title="Hapus dari riwayat">
+              <span>🗑️</span>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+}
+
+function restoreArticleFromHistory(id) {
+  const hist = loadArticleHistory();
+  const item = hist.find(h => h.id === id);
+  if (!item) {
+    showToast('Artikel riwayat tidak ditemukan', 'error');
+    return;
+  }
+
+  // Restore step outputs
+  if (item.step_outputs && typeof item.step_outputs === 'object') {
+    stepOutputs = { ...item.step_outputs };
+  } else {
+    stepOutputs = {};
+    if (item.article) stepOutputs['4B'] = item.article;
+  }
+  stepOutputs['_last_keyword'] = item.keyword;
+  saveStepOutputs();
+
+  // Restore input values
+  const wvKw = document.getElementById('wv-keyword');
+  if (wvKw) wvKw.value = item.keyword || '';
+  const tiKw = document.getElementById('ti-keyword');
+  if (tiKw) tiKw.value = item.keyword || '';
+  const wvBrand = document.getElementById('wv-brand');
+  if (wvBrand && item.brand) wvBrand.value = item.brand;
+  const tiBrand = document.getElementById('ti-brand');
+  if (tiBrand && item.brand) tiBrand.value = item.brand;
+
+  // Restore pesat-x-jev tokens count
+  pesatXJevTokensCurrentArticle = item.pesat_x_jev_tokens || 0;
+  updatePesatXJevTokenUI();
+
+  // Update UI and open Deliverable Modal
+  updateDeliverableCards();
+  closeHistoryModal();
+  showToast(`✓ Riwayat artikel "${item.keyword}" dimuat kembali!`, 'success');
+  viewFullArticleBundle();
+}
+
+function copyHistoryArticle(id) {
+  const hist = loadArticleHistory();
+  const item = hist.find(h => h.id === id);
+  if (!item || !item.article) {
+    showToast('Konten artikel tidak ditemukan', 'error');
+    return;
+  }
+  navigator.clipboard.writeText(item.article).then(() => {
+    showToast('✓ Teks artikel berhasil disalin ke clipboard!', 'success');
+  }).catch(() => {
+    showToast('Gagal menyalin artikel ke clipboard', 'error');
+  });
+}
+
+function downloadHistoryArticleMd(id) {
+  const hist = loadArticleHistory();
+  const item = hist.find(h => h.id === id);
+  if (!item || !item.article) {
+    showToast('Konten artikel tidak ditemukan', 'error');
+    return;
+  }
+  const kw = item.keyword || 'article';
+  const cleanKw = kw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const filename = `${cleanKw || 'article'}-bundle.md`;
+  const blob = new Blob([item.article], { type: 'text/markdown;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+  showToast(`✓ Berhasil mendownload ${filename}`, 'success');
+}
+
+function deleteArticleFromHistory(id) {
+  if (typeof confirm === 'function' && !confirm('Hapus artikel ini dari riwayat lokal?')) return;
+  let hist = loadArticleHistory();
+  hist = hist.filter(h => h.id !== id);
+  localStorage.setItem(ARTICLE_HISTORY_KEY, JSON.stringify(hist));
+  renderArticleHistoryUI();
+  showToast('✓ Artikel dihapus dari riwayat.');
+}
+
+function clearAllArticleHistory() {
+  if (typeof confirm === 'function' && !confirm('Hapus seluruh riwayat artikel (minimal 10 artikel tersimpan)? Tindakan ini tidak dapat dibatalkan.')) return;
+  localStorage.removeItem(ARTICLE_HISTORY_KEY);
+  renderArticleHistoryUI();
+  showToast('✓ Seluruh riwayat artikel telah dibersihkan.');
+}
+
+function openHistoryModal() {
+  renderArticleHistoryUI();
+  const m = document.getElementById('history-modal');
+  if (m) {
+    m.style.setProperty('display', 'flex', 'important');
+    m.classList.remove('hidden');
+  }
+}
+
+function closeHistoryModal() {
+  const m = document.getElementById('history-modal');
+  if (m) {
+    m.style.setProperty('display', 'none', 'important');
+    m.classList.add('hidden');
+  }
+}
+
+function filterHistoryList() {
+  const q = (document.getElementById('history-search-input')?.value || '').toLowerCase().trim();
+  renderArticleHistoryUI(q);
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function init() {
   checkAuth();
@@ -1555,6 +1982,8 @@ function init() {
   loadStep(0);
   switchUIMode(currentUIMode);
   updateDeliverableCards();
+  renderArticleHistoryUI();
+  updatePesatXJevTokenUI();
 }
 
 // ─── STEP LIST & ACCORDION ───────────────────────────────────────────────────
@@ -2130,6 +2559,10 @@ async function runAllSteps() {
   pipelineTargetStep = -1;
   showPipelineBar(true);
 
+  // Reset pesat-x-jev testing tokens for new article generation
+  pesatXJevTokensCurrentArticle = 0;
+  updatePesatXJevTokenUI();
+
   // Fresh pipeline run: clear stale search and outputs if keyword changed
   const lastKw = stepOutputs['_last_keyword'];
   if (lastKw !== kw) {
@@ -2215,6 +2648,7 @@ async function runAllSteps() {
   }
 
   if (!pipelineCancelled) {
+    saveCurrentArticleToHistory();
     await syncPipelineRunToSheets();
     for (let p = 0; p < 5; p++) {
       const dot = document.getElementById(`wv-phase-dot-${p}`);
@@ -2633,7 +3067,9 @@ async function callLLM(model, systemPrompt, userPrompt, temp, maxTokens) {
 
   // Model mapping to PesatRouter
   let targetModel = model;
-  if (model === 'pesat-pro' || model.endsWith('-pro')) {
+  if (model === 'pesat-x-jev') {
+    targetModel = 'pesat-x-jev';
+  } else if (model === 'pesat-pro' || model.endsWith('-pro')) {
     targetModel = 'pesat-pro';
   } else if (model.includes('deepseek') || model.includes('gpt-4o') || model.includes('claude') || model.includes('gemini')) {
     if (model.includes('mini') || model.includes('haiku') || model.includes('lite')) {
@@ -2645,10 +3081,26 @@ async function callLLM(model, systemPrompt, userPrompt, temp, maxTokens) {
     targetModel = 'pesat-flash';
   }
 
+  // ponytail: Testing token budget limiter for pesat-x-jev. Fallback to pesat-flash if cap reached.
+  let effectiveMaxTokens = maxTokens;
+  if (targetModel === 'pesat-x-jev') {
+    const limit = getPesatXJevLimit();
+    const remaining = limit - pesatXJevTokensCurrentArticle;
+    if (remaining <= 0) {
+      console.warn(`[callLLM] pesat-x-jev testing limit reached (${pesatXJevTokensCurrentArticle}/${limit}). Falling back to pesat-flash.`);
+      if (typeof showToast === 'function') {
+        showToast(`⚠️ Token testing pesat-x-jev mencapai batas (${limit}). Dialihkan ke pesat-flash.`, 'warning');
+      }
+      targetModel = 'pesat-flash';
+    } else {
+      effectiveMaxTokens = Math.min(maxTokens, remaining);
+    }
+  }
+
   const key = keys.pesat || 'sk-pesat-3c2f89bd9a72302375f8e10ef9eba726891a81513f907dfb';
 
-  // Robust retry loop with model fallback (pesat-pro -> pesat-flash)
-  const modelsToTry = targetModel === 'pesat-pro' ? ['pesat-pro', 'pesat-flash'] : [targetModel];
+  // Robust retry loop with model fallback (pesat-x-jev -> pesat-flash, pesat-pro -> pesat-flash)
+  const modelsToTry = targetModel === 'pesat-x-jev' ? ['pesat-x-jev', 'pesat-flash'] : (targetModel === 'pesat-pro' ? ['pesat-pro', 'pesat-flash'] : [targetModel]);
   let lastError = null;
 
   for (const currentModel of modelsToTry) {
@@ -2657,7 +3109,7 @@ async function callLLM(model, systemPrompt, userPrompt, temp, maxTokens) {
         const body = {
           model: currentModel,
           temperature: temp,
-          max_tokens: maxTokens,
+          max_tokens: currentModel === 'pesat-x-jev' ? effectiveMaxTokens : maxTokens,
           messages: [
             ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
             { role: 'user', content: userPrompt }
@@ -2683,10 +3135,18 @@ async function callLLM(model, systemPrompt, userPrompt, temp, maxTokens) {
           throw new Error('Empty response choices from PesatRouter');
         }
 
+        const inTok = data.usage?.prompt_tokens || 0;
+        const outTok = data.usage?.completion_tokens || 0;
+        const totTok = data.usage?.total_tokens || (inTok + outTok);
+        if (currentModel === 'pesat-x-jev') {
+          pesatXJevTokensCurrentArticle += totTok;
+          updatePesatXJevTokenUI();
+        }
+
         return {
           output: data.choices[0].message.content,
-          inputTokens: data.usage?.prompt_tokens || 0,
-          outputTokens: data.usage?.completion_tokens || 0
+          inputTokens: inTok,
+          outputTokens: outTok
         };
       } catch (err) {
         lastError = err;
@@ -3436,6 +3896,7 @@ function loadKeys() {
   const k = getKeys();
   if (document.getElementById('key-pesat')) document.getElementById('key-pesat').value = k.pesat;
   if (document.getElementById('key-firecrawl')) document.getElementById('key-firecrawl').value = k.firecrawl;
+  if (document.getElementById('limit-pesat-x-jev')) document.getElementById('limit-pesat-x-jev').value = getPesatXJevLimit();
   document.getElementById('key-openai').value = k.openai;
   document.getElementById('key-anthropic').value = k.anthropic;
   document.getElementById('key-deepseek').value = k.deepseek;
@@ -3444,12 +3905,16 @@ function loadKeys() {
 function saveKeys() {
   if (document.getElementById("key-pesat")) localStorage.setItem("jdp_key_pesat", document.getElementById("key-pesat").value);
   if (document.getElementById("key-firecrawl")) localStorage.setItem("jdp_key_firecrawl", document.getElementById("key-firecrawl").value);
+  if (document.getElementById("limit-pesat-x-jev")) {
+    setPesatXJevLimit(document.getElementById("limit-pesat-x-jev").value);
+    updatePesatXJevTokenUI();
+  }
   localStorage.setItem('jdp_key_openai', document.getElementById('key-openai').value);
   localStorage.setItem('jdp_key_anthropic', document.getElementById('key-anthropic').value);
   localStorage.setItem('jdp_key_deepseek', document.getElementById('key-deepseek').value);
   localStorage.setItem('jdp_key_gemini', document.getElementById('key-gemini').value);
   closeSettings();
-  showToast('✓ API keys saved');
+  showToast('✓ API keys & limits saved');
 }
 
 async function searchFirecrawl(query, limit = 5) {

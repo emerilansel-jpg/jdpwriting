@@ -108,7 +108,7 @@ Sistem penulisan menggunakan kombinasi **Search Engine Retrieval (Firecrawl API)
 | **2F** | **Conclusion Optimizer** | **`pesat-flash`** | Penutup menarik & engaging dengan heading kontekstual (bukan kata "Conclusion" mentah) + actionable next steps & CTA. Brand JetDigitalPro di CTA saja (bukan adjektiva umum). |
 | **2H** | **Find & Embed Quotes** | **`pesat-flash`** | Menanam kutipan grounded dari hasil riset 1B: 1–2 TYPE A (verbatim dengan tanda kutip `""`) + sitasi parafrase bervariasi natural (anti-spam "According to"). |
 | **2I** | EEAT Analysis | `pesat-flash` | Audit mendalam standar Google Search Quality Evaluator. |
-| **2J** | **Fact Check & Link Audit**| **`pesat-flash`** | 4-layer audit untuk mendeteksi deviasi fakta, kelebihan link, atau fabrikasi klaim. |
+| **2J** | **Fact Check & Link Audit**| **`pesat-x-jev`** | **Model Khusus Fact-Check & Fix**: 4-layer audit untuk deviasi fakta, integritas kutipan verbatim, fidelitas metrik/parameter teknis, dan audit link live web. Dilengkapi token budget limiter testing per artikel (default 4.000 tokens) dengan fallback otomatis ke `pesat-flash`. |
 | **2K** | **Evaluator Gate** | **`pesat-flash`** | Calibrated Quality Gate (baseline 80–95 untuk draf lengkap, pass >= 70). |
 | **3A, 3B, 3C**| Image, Infographic, Alt | `pesat-lite` | Prompt visual & deskripsi alt. |
 | **4A** | **Internal Links** | **`pesat-lite`** | Injeksi multi-internal links kontekstual dari input user. |
@@ -200,6 +200,19 @@ Fact-checking dan validasi akurasi teknis di pipeline **TIDAK TERBATAS PADA TOPI
 - **Kebenaran Bersyarat & Nuansa**: Dilarang membuat klaim tanpa batas kondisi jika di dunia nyata terdapat prasyarat mutlak (contoh: pemupukan musim dingin hanya jika ada pertumbuhan daun aktif; overclocking membutuhkan ruang termal; leverage finansial membutuhkan mitigasi stop-loss).
 - **Bahasa Kausal vs Asosiatif**: Data observasional wajib menggunakan bahasa asosiatif ("berkorelasi dengan", "berhubungan dengan"); bahasa kausalitas langsung ("menyebabkan") hanya untuk eksperimen ilmiah/RCT terkontrol.
 - **Universal E-E-A-T Byline**: Byline editorial menggunakan frasa agnostik-domain: `*By [Brand] Editorial Team | Independently Fact-Checked by Subject Specialists | Updated 2026*`.
+
+### 7. Integrasi Model `pesat-x-jev` & Token Budget Limiter (Testing)
+- **Fokus Eksklusif (Solely Fact-Check & Fix)**: Model `pesat-x-jev` diintegrasikan khusus untuk Step 2J (`Quality + Fact Check Analysis`) guna mengaudit validitas klaim, rasio teknis, kepatuhan kutipan verbatim, dan integritas link.
+- **Token Budget Limiter per Artikel**: Untuk tahap pengujian (testing), konsumsi token `pesat-x-jev` dibatasi secara ketat per proses pembuatan artikel (default: 4.000 tokens). Batas ini dapat dikonfigurasi langsung via Settings Modal.
+- **Fail-Safe Fallback**: Jika kuota token testing tercapai saat eksekusi pipeline berlangsung, sistem otomatis mengalihkan proses audit ke `pesat-flash` tanpa memutus jalannya pipeline.
+
+### 8. Fitur Histori Pembuatan Artikel (Minimal 10 Artikel Terakhir)
+- **Penyimpanan Lokal Persisten**: Menyimpan riwayat artikel yang dibuat ke `localStorage` (ring buffer hingga 20 artikel, menjamin ketersediaan minimal 10 artikel lampau).
+- **Akses & Restorasi Cepat**:
+  - Tombol **[📜 History (N)]** di header navigasi dan Writer Mode membuka modal arsip lengkap.
+  - Kartu **Riwayat Pembuatan Artikel** di Writer Mode menampilkan tanggal, keyword, brand, jumlah kata, skor SEO/GEO, serta pemakaian token `pesat-x-jev`.
+  - Fitur **Restore**: Tombol `[👁 Lihat]` langsung memuat ulang seluruh snapshot artikel lampau ke dalam Deliverable Modal / Reader View untuk peninjauan instan.
+  - Fitur **Copy & Download**: Salin naskah Markdown bersih (`[📋 Copy]`) atau unduh file bundle (`[⬇️ .md]`) langsung dari kartu riwayat tanpa harus meregenerasi artikel.
 
 ---
 

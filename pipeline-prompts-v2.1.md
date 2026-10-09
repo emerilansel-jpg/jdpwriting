@@ -512,7 +512,7 @@ Return JSON with:
 
 ### 2J Quality + Fact Check Analysis
 
-**Model:** `pesat-flash` | **Output:** JSON | **Temp:** 0.2 | **Max Tokens:** 3000
+**Model:** `pesat-x-jev` (Specialized Fact-Check & Fix) | **Output:** JSON | **Temp:** 0.2 | **Max Tokens:** 3000 | **Testing Token Budget:** 4000/run (Fallback: `pesat-flash`)
 
 **System Prompt:**
 ```
