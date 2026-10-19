@@ -178,6 +178,7 @@ Requirements:
 - Plan for CTA placement: {{cta}}
 - Target 1500-2500 words total
 - Each section should have a clear purpose and estimated word count
+- Headings Question Ratio (Balanced 60/40 Rule): Target roughly 60% of H2/H3 headings in question format (ending with '?') to capture voice search and PAA intent. The remaining ~40% MUST be declarative/topical statements (e.g. "Seasonal Protocol: Feeding Cadence and NPK Guidelines"). HARD NEGATIVE CONSTRAINT: NEVER make all headings end with question marks (strictly forbid 100% question mark headings; maintain minimum 40% declarative topical titles).
 - CRITICAL HEADING RULE: Do NOT number any headings or section titles (never write "1.", "2.", "Section 1:", etc. in headings). All headings (H2, H3) must be unnumbered topical titles or questions.
 - Strict format rule: Outline and article must strictly use ONLY standard prose paragraphs, structured Markdown tables, and Markdown lists (ordered/bulleted). STRICTLY FORBIDDEN: ASCII art, text flowcharts, arrow diagrams, box flows ([ A ] ↓ [ B ]), or code blocks (```) used for formatting. Any process or workflow must be outlined strictly as numbered steps or comparison tables.
 
@@ -535,14 +536,19 @@ EEAT Analysis Context:
 PART 1 — Quality: grammar & mechanics, readability (Flesch-Kincaid grade level, sentence length variation, paragraph structure), tone consistency, passive voice percentage, transition quality, redundancy score, formatting consistency.
 
 PART 2 — Fact & Quote Verification:
-- Audit all quotes: verify that quotes are genuine statements from real experts/institutions and not fabricated.
+- Audit all quotes: verify that quotes are genuine statements from real experts/institutions and not fabricated. Use Verbatim Test and Attribution Test.
 - Audit all external URLs: verify that every URL follows valid web standards (.gov, .edu, doi.org, pubmed, wikipedia, official domains) and is not a hallucinated fake slug.
 - Extract all factual claims with confidence scores (high/medium/low). Flag any unsupported assertions or weasel words without dates or citations.
+- Universal Domain-Agnostic Fact Check: audit parameter fidelity (NPK ratios, CLI commands, finance metrics, dosages, temperatures) against Research Context {{info_gain}} or established domain standards.
+- Causation vs Correlation: flag causal claims derived from observational data.
 
 PART 3 — Web Search Verification Needs:
 For each medium/low confidence claim or unverified link, provide: suggested_search_query, expected_authoritative_source, verification_priority (critical/important/nice-to-have).
 
-Return JSON: quality_score (0-100), readability:{grade_level,flesch_score,sentence_avg_length,sentence_variation_score}, tone_assessment:{consistent,issues:[]}, passive_voice_pct, redundancy_score (0-100), quotes_validity:{verified_count,issues:[]}, links_validity:{verified_count,issues:[]}, claims:[{claim_text,category,confidence,needs_verification,suggested_search_query,expected_authoritative_source,verification_priority}], critical_flags:[], improvement_recommendations:[], overall_verdict:{quality,fact_risk}.
+PART 4 — AUTO-FIX REPLACEMENTS (CRITICAL FOR FACT CORRECTION):
+For EVERY factual deviation, ungrounded statistic, fabricated quote, causal claim on observational data, unverified non-standard parameter/ratio (e.g. 2-4-3 instead of 2-7-7), or broken/off-topic URL identified: provide an exact search-and-replace pair in replacements: [{ "original": "EXACT verbatim sentence from article containing error", "fixed": "factually accurate, grounded replacement sentence (using Research Context {{info_gain}} data or standard domain consensus; replace fabricated numbers with qualitative statements)", "reason": "why" }].
+
+Return JSON: quality_score (0-100), readability:{grade_level,flesch_score,sentence_avg_length,sentence_variation_score}, tone_assessment:{consistent,issues:[]}, passive_voice_pct, redundancy_score (0-100), quotes_validity:{verified_count,issues:[]}, links_validity:{verified_count,issues:[]}, claims:[{claim_text,category,confidence,needs_verification,suggested_search_query,expected_authoritative_source,verification_priority}], replacements:[{original,fixed,reason}], critical_flags:[], improvement_recommendations:[], overall_verdict:{quality,fact_risk}.
 ```
 
 **n8n Implementation Notes:**
