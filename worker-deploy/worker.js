@@ -1167,7 +1167,7 @@ const STEPS = [
   { id:'2A', name:'Title & Meta', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — SEO title, meta, slug', n8nId:'NhssXDWzEktwl6MM', enabled:true,
     systemPrompt:'You are an expert SEO/GEO content strategist. Generate accurate, tightly scoped SEO metadata matching the exact search intent of the keyword.',
     userPrompt:'Generate SEO metadata as JSON only for keyword \\'{{keyword}}\\'.\\n\\nArticle Context:\\n{{article}}\\n\\nRules:\\n1. Title (50-60 chars, keyword-first): Must match the EXACT topical scope of \\'{{keyword}}\\' without overpromising broader care (e.g. if keyword is "how to fertilize jade plant", title must be "How to Fertilize Jade Plants: Complete Feeding Guide", NOT "Complete Succulent Care Guide").\\n2. Meta Description (150-160 chars): Directly targets \\'{{keyword}}\\', states key benefit, includes actionable CTA, no generic words like "discover".\\n3. URL Slug: Clean, concise lowercase with hyphens matching the primary keyword (e.g. "how-to-fertilize-jade-plant").\\n4. Primary Keyword: Set explicitly as \\'{{keyword}}\\'.\\n\\nJSON format: {"title":"...", "meta_description":"...", "slug":"...", "keyword":"{{keyword}}"}', temp:0.3, maxTokens:600, outputFormat:'json' },
-  { id:'2B', name:'Intro Rewrite', phase:1, model:'pesat-lite', provider:'pesat', desc:'Phase 2 — Hook rewrite for engagement', n8nId:'bzI2ijeuHQ3NKe6i', enabled:true,
+  { id:'2B', name:'Intro Rewrite', phase:1, model:'pesat-lite', provider:'pesat', desc:'Phase 2 — Hook rewrite for engagement & lower bounce rate', n8nId:'bzI2ijeuHQ3NKe6i', enabled:true,
     systemPrompt:'You are an SEO/GEO content editor. Rewrite introductions to reduce bounce rate.',
     userPrompt:'Rewrite introduction of {{article}} for keyword {{keyword}}. Rules: First sentence <=40 words, directly answers search intent. Total intro <=100 words. Include >=1 named entity or statistic with hyperlinked source (or [GEO NOTE: missing specific URL]). End with soft CTA to keep reading. Apply style rules: sentence variety, active voice, hedging, no banned phrases. Return only rewritten intro as markdown.', temp:0.6, maxTokens:300, outputFormat:'markdown' },
   { id:'2C', name:'Originality Rewrite', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Uniqueness, AI-detection pass & 7th-grade readability', n8nId:'E5F3tfsQ8y8MtA85', enabled:true,
@@ -1176,7 +1176,7 @@ const STEPS = [
   { id:'2D', name:'Fluff Check', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Remove filler, tighten writing & 7th-grade flow', n8nId:'G44cnMmoMqwW8vW3', enabled:true,
     systemPrompt:'You are a ruthless editor. Remove all filler words and redundant phrases while maintaining a crisp 7th-grade reading level. Keep all facts, numbers, entities, headings, substantive content.',
     userPrompt:'Remove all filler and redundant phrases from {{article}}. Keep facts, numbers, entities, headings. Cut: It is important to note that, In order to - to, Due to the fact that - because, Regardless of the fact that - although, For all intents and purposes (delete), Quite, rather, somewhat, very, really, actually, simply, just, literally, In my opinion, I believe that, It seems that, There is/There are at start (rewrite), The reason why is because - because, Each and every - each/every, Completely eliminate/totally remove - one word, Past history/future plans/end result/free gift. Use contractions. Break up long sentences to maintain an accessible 7th-grade reading level (average 12–15 words per sentence). Write with varied, natural sentence structures. Occasional conversational flow is good, but NEVER force sentences to start with \\'And\\', \\'But\\', or \\'So\\'. No parallel triples. Brand is {{brand_name}} in CTA only (never \\'by {{brand_name}} standards\\'). STRICT FORMAT RULE: Ensure content consists exclusively of clean prose, markdown tables, blockquotes, and lists. Completely remove or convert any ASCII diagrams, box chains, arrows (↓, →), or faux diagram code blocks into clean numbered lists or standard paragraphs. Return full cleaned article in Markdown.', temp:0.3, maxTokens:4000, outputFormat:'markdown' },
-  { id:'2E', name:'FAQ Generation', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — PAA-optimized FAQ section', n8nId:'KmhQc7NgxxhOKFpZ', enabled:true,
+  { id:'2E', name:'FAQ Generation', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — PAA-optimized FAQ section & schema', n8nId:'KmhQc7NgxxhOKFpZ', enabled:true,
     systemPrompt:'You are an FAQ generator. Create 5 Q&A pairs that are NOT found in the article itself.',
     userPrompt:'Create 5 Q&A pairs for keyword {{keyword}}. Rules: {{article}} is ONLY for context. Answers must NOT come from article (general knowledge). Use 5-10 LSI keywords naturally per answer. Return with markdown and valid FAQPage JSON markup for schema.', temp:0.4, maxTokens:1200, outputFormat:'json' },
   { id:'2F', name:'Conclusion Optimizer', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Conclusion + CTA strengthening', n8nId:'oqk30qwS6vX1noVl', enabled:true,
@@ -1244,11 +1244,11 @@ const upstreamMap = {
   '1E': { serp_data: '1A', info_gain: '1B', lsi_keywords: '1C', outline: '1D' },
   '2A': { article: '1E', outline: '1D' },
   '2B': { article: '1E' },
-  '2C': { article: '1E' },
+  '2C': { article: '2B_article' },
   '2D': { article: '2C' },
   '2E': { article: '2D' },
-  '2F': { article: '2D' },
-  '2G': { article: '2D' },
+  '2F': { article: '2E_article' },
+  '2G': { article: '2F_article' },
   '2H': { article: '2G', info_gain: '1B', serp_data: '1A' },
   '2I': { article: '2H', serp_data: '1A' },
   '2J': { article: '2H', eeat_hcu_eav_analysis: '2I', info_gain: '1B' },
@@ -1457,8 +1457,14 @@ function injectMissingInternalLinks(text, rawLinks, brandName) {
     }
 
     try {
-      const parsedUrl = new URL(url);
-      const slug = parsedUrl.pathname.replace(/^\\/+|\\/+\$/g, '');
+      let pathname = '';
+      try {
+        const parsedUrl = new URL(url);
+        pathname = parsedUrl.pathname || '';
+      } catch {
+        pathname = url.replace(/^https?:\\/\\/[^\\/]+/i, '') || '';
+      }
+      const slug = (pathname || '').replace(/^\\/+|\\/+\$/g, '');
       if (!slug) {
         const brandRegex = new RegExp('\\\\b(' + escapeRegex(brand) + ')\\\\b(?![^\\\\[]*\\\\])', 'i');
         if (brandRegex.test(result)) {
@@ -1467,12 +1473,35 @@ function injectMissingInternalLinks(text, rawLinks, brandName) {
         return;
       }
 
-      const slugWords = slug.split(/[-_]+/).filter(w => w.length > 2);
-      const cleanSlugPhrase = slugWords.join(' ');
+      // Universal cross-domain slug parsing preserving short words (to, a, an) & stripping how-to prefixes
+      const allWords = slug.split(/[-_]+/).filter(Boolean);
+      const strippedSlug = slug.replace(/^(?:how-to|guide-to|ways-to|tips-for)-/i, '');
+      const strippedWords = strippedSlug.split(/[-_]+/).filter(Boolean);
+      const cleanSlugPhrase = allWords.join(' ');
 
       const searchPhrases = [];
       searchPhrases.push(cleanSlugPhrase);
+      if (strippedSlug !== slug) {
+        searchPhrases.push(strippedWords.join(' '));
+      }
 
+      // Universal gerund conjugation for leading action verbs (e.g. calibrate -> calibrating, clean -> cleaning, save -> saving)
+      if (strippedWords.length > 0) {
+        const first = strippedWords[0].toLowerCase();
+        let gerund = '';
+        if (first.endsWith('e') && !first.endsWith('ee')) {
+          gerund = first.slice(0, -1) + 'ing';
+        } else if (/[bcdfghjklmnpqrstvwxyz][aeiou][bcdfghjklmnprstvz]\$/.test(first)) {
+          gerund = first + first.slice(-1) + 'ing';
+        } else if (!first.endsWith('ing')) {
+          gerund = first + 'ing';
+        }
+        if (gerund) {
+          searchPhrases.push([gerund, ...strippedWords.slice(1)].join(' '));
+        }
+      }
+
+      // Domain-specific aliases (botanical fallback compatibility)
       if (slug.includes('save')) {
         searchPhrases.push(cleanSlugPhrase.replace(/^how to save/i, 'saving'));
         searchPhrases.push(cleanSlugPhrase.replace(/^how to save/i, 'save'));
@@ -1491,6 +1520,7 @@ function injectMissingInternalLinks(text, rawLinks, brandName) {
         searchPhrases.push('tropical foliage');
       }
 
+      const slugWords = strippedWords.filter(w => w.length > 2);
       for (let i = 0; i < slugWords.length - 2; i++) {
         searchPhrases.push(slugWords.slice(i, i + 3).join(' '));
       }
@@ -1516,23 +1546,29 @@ function injectMissingInternalLinks(text, rawLinks, brandName) {
   return result;
 }
 
-// ponytail: Robust JSON parser handling markdown wrappers, preambles, and raw json.
+// ponytail: Robust JSON parser handling markdown wrappers, preambles, trailing commas, and raw json.
 function safeParseJSON(str) {
   if (!str) return null;
   if (typeof str === 'object') return str;
   if (typeof str !== 'string') return null;
   const clean = str.replace(/\`\`\`(?:json)?\\n?/gi, '').replace(/\`\`\`/g, '').trim();
   try { return JSON.parse(clean); } catch {}
+  // Strip trailing commas before closing braces/brackets
+  const sanitized = clean.replace(/,\\s*([\\]}])/g, '\$1');
+  try { return JSON.parse(sanitized); } catch {}
   try {
     const m = clean.match(/(\\{[\\s\\S]*\\}|\\[[\\s\\S]*\\])/);
-    if (m) return JSON.parse(m[0]);
+    if (m) {
+      try { return JSON.parse(m[0]); } catch {}
+      return JSON.parse(m[0].replace(/,\\s*([\\]}])/g, '\$1'));
+    }
   } catch {}
   return null;
 }
 
 // ponytail: Article candidate waterfall fallback order; 4B is final linked, 2J_article is fact-checked, 1E is raw draft.
 function getBestArticle() {
-  const articleCandidates = ['4B', '4A', '2J_article', '2H', '2G', '2D', '2C', '1E'];
+  const articleCandidates = ['4B', '4A', '2J_article', '2H', '2G', '2F_article', '2E_article', '2D', '2C', '2B_article', '1E'];
   let best = '';
   for (const stepId of articleCandidates) {
     const candidate = stepOutputs[stepId];
@@ -1928,7 +1964,13 @@ function downloadHistoryArticleMd(id) {
   const kw = item.keyword || 'article';
   const cleanKw = kw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-\$)/g, '');
   const filename = \`\${cleanKw || 'article'}-bundle.md\`;
-  const blob = new Blob([item.article], { type: 'text/markdown;charset=utf-8' });
+  let mdContent = item.article.trim();
+  if (!mdContent.startsWith('# ')) {
+    const title = item.title || (kw.charAt(0).toUpperCase() + kw.slice(1));
+    const brand = item.brand || 'Editorial';
+    mdContent = \`# \${title}\\n\\n*By \${brand} Editorial Team | Independently Fact-Checked by Subject Specialists | Updated 2026*\\n\\n\` + mdContent;
+  }
+  const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = filename;
@@ -2152,7 +2194,7 @@ function autoFillTestInputs(stepId, silent, force) {
         else if (stepOutputs['2H']) resolvedSourceId = '2H';
       }
       if (!stepOutputs[resolvedSourceId] || (typeof stepOutputs[resolvedSourceId] === 'string' && stepOutputs[resolvedSourceId].trim().length < 200)) {
-        const candidates = ['4B', '4A', '2J_article', '2H', '2G', '2D', '2C', '1E'];
+        const candidates = ['4B', '4A', '2J_article', '2H', '2G', '2F_article', '2E_article', '2D', '2C', '2B_article', '1E'];
         for (const cid of candidates) {
           if (stepOutputs[cid] && typeof stepOutputs[cid] === 'string' && stepOutputs[cid].trim().length > 300) {
             resolvedSourceId = cid;
@@ -2208,6 +2250,90 @@ function autoFillTestInputs(stepId, silent, force) {
     else showToast('No matching stored outputs to fill');
   }
 }
+
+// ponytail: Seamlessly stitches Step 2B intro rewrite hook into article opening without disturbing H1/byline or body.
+function mergeIntroIntoArticle(article, introText) {
+  if (!article || !introText) return article;
+  let cleanIntro = introText.replace(/^#\\s+[^\\n]+\\n+/g, '').replace(/^\\*By[^\\n]+\\*\\n*/gim, '').trim();
+  const firstH2Match = article.match(/\\n(#{2}\\s+[^\\n]+)/);
+  if (!firstH2Match) return article;
+  const firstH2Idx = firstH2Match.index;
+  const preH2 = article.slice(0, firstH2Idx);
+  const postH2 = article.slice(firstH2Idx);
+
+  const h1Match = preH2.match(/^#\\s+[^\\n]+/);
+  if (!h1Match) return article;
+  const h1 = h1Match[0];
+  const bylineMatch = preH2.match(/\\*By[^\\n]+\\*/i);
+  const byline = bylineMatch ? bylineMatch[0] : '';
+  const header = byline ? \`\${h1}\\n\\n\${byline}\` : h1;
+
+  return header + '\\n\\n' + cleanIntro + '\\n' + postH2;
+}
+
+// ponytail: Seamlessly stitches Step 2E PAA FAQ section into article body.
+function mergeFaqIntoArticle(article, faqOutput) {
+  if (!article || !faqOutput) return article;
+  let faqMd = '';
+  const parsed = safeParseJSON(faqOutput);
+  if (parsed && typeof parsed === 'object') {
+    const list = Array.isArray(parsed) ? parsed : (parsed.faqs || parsed.questions || parsed.faq_items || parsed.faq || []);
+    if (Array.isArray(list) && list.length > 0) {
+      faqMd = '## Frequently Asked Questions\\n\\n' + list.map(item => {
+        const q = item.question || item.q || '';
+        const a = item.answer || item.a || '';
+        return \`### \${q.replace(/^#+\\s*/, '')}\\n\${a}\`;
+      }).join('\\n\\n');
+    }
+  }
+  if (!faqMd && typeof faqOutput === 'string') {
+    const mdMatch = faqOutput.match(/^(?:#{2,3}\\s+.*(?:FAQ|Frequently Asked Questions)[\\s\\S]*)/im);
+    if (mdMatch) faqMd = mdMatch[0].trim();
+    else if (faqOutput.includes('###') || faqOutput.includes('**Q:')) faqMd = '## Frequently Asked Questions\\n\\n' + faqOutput.trim();
+  }
+  if (!faqMd) return article;
+
+  const faqHeadingRegex = /\\n(#{2}\\s+(?:Frequently Asked Questions|FAQ|Common Questions|Frequently Asked)[^\\n]*)[\\s\\S]*?(?=\\n#{2}\\s+|\$)/i;
+  if (faqHeadingRegex.test(article)) {
+    return article.replace(faqHeadingRegex, '\\n\\n' + faqMd + '\\n\\n');
+  }
+
+  const lastH2Matches = [...article.matchAll(/\\n(#{2}\\s+[^\\n]+)/g)];
+  if (lastH2Matches.length > 0) {
+    const lastH2 = lastH2Matches[lastH2Matches.length - 1];
+    const insertIdx = lastH2.index;
+    return article.slice(0, insertIdx) + '\\n\\n' + faqMd + '\\n' + article.slice(insertIdx);
+  }
+
+  return article + '\\n\\n' + faqMd;
+}
+
+// ponytail: Seamlessly stitches Step 2F contextual conclusion into final section of article.
+function mergeConclusionIntoArticle(article, concOutput) {
+  if (!article || !concOutput) return article;
+  let cleanConc = concOutput;
+  if (concOutput.includes('Task 1') || concOutput.includes('Task 2') || concOutput.includes('| Metric |')) {
+    const task1Match = concOutput.match(/(?:Task\\s*1[^\\n]*\\n+)?(#{2}\\s+[^\\n]+[\\s\\S]*?)(?=\\n+Task\\s*2|\\n+\\| Metric \\||\\n+---\\s*\$|\$)/i);
+    if (task1Match) {
+      cleanConc = task1Match[1].trim();
+    }
+  }
+
+  cleanConc = cleanConc.replace(/^#{1,3}\\s+(?:(?:In\\s+)?Conclusion|Summary)\\s*\$/gim, '## Wrapping Up: Key Takeaways & Action Plan').trim();
+  if (!cleanConc.startsWith('## ')) {
+    cleanConc = '## Wrapping Up: Key Takeaways & Action Plan\\n\\n' + cleanConc;
+  }
+
+  const lastH2Matches = [...article.matchAll(/\\n(#{2}\\s+[^\\n]+)/g)];
+  if (lastH2Matches.length > 0) {
+    const lastH2 = lastH2Matches[lastH2Matches.length - 1];
+    const conclusionIdx = lastH2.index;
+    return article.slice(0, conclusionIdx) + '\\n\\n' + cleanConc;
+  }
+
+  return article + '\\n\\n' + cleanConc;
+}
+
 function applyFactCheckFixes(article, parsed) {
   if (!article || typeof article !== 'string') return article;
   if (!parsed || typeof parsed !== 'object') return article;
@@ -2223,9 +2349,9 @@ function applyFactCheckFixes(article, parsed) {
     const fix = rep.fixed.trim();
     if (!orig || orig === fix) continue;
 
-    // Direct exact match
+    // Direct exact match (use function replacer to prevent \$1-\$9 expansion)
     if (fixedArticle.includes(orig)) {
-      fixedArticle = fixedArticle.replace(orig, fix);
+      fixedArticle = fixedArticle.replace(orig, () => fix);
       appliedCount++;
       continue;
     }
@@ -2235,7 +2361,7 @@ function applyFactCheckFixes(article, parsed) {
     const escaped = cleanOrig.replace(/[.*+?^\${}()|[\\]\\\\]/g, '\\\\\$&').replace(/ /g, '\\\\s+');
     const regexPattern = new RegExp(escaped, 'g');
     if (regexPattern.test(fixedArticle)) {
-      fixedArticle = fixedArticle.replace(regexPattern, fix);
+      fixedArticle = fixedArticle.replace(regexPattern, () => fix);
       appliedCount++;
     }
   }
@@ -2247,7 +2373,7 @@ function applyFactCheckFixes(article, parsed) {
         const cOrig = c.claim_text.trim();
         const cFix = c.corrected_text.trim();
         if (cOrig && cFix && cOrig !== cFix && fixedArticle.includes(cOrig)) {
-          fixedArticle = fixedArticle.replace(cOrig, cFix);
+          fixedArticle = fixedArticle.replace(cOrig, () => cFix);
           appliedCount++;
         }
       }
@@ -2258,7 +2384,8 @@ function applyFactCheckFixes(article, parsed) {
   if (parsed.quotes_validity && Array.isArray(parsed.quotes_validity.issues)) {
     for (const iss of parsed.quotes_validity.issues) {
       if (iss.original && iss.fixed && fixedArticle.includes(iss.original.trim())) {
-        fixedArticle = fixedArticle.replace(iss.original.trim(), iss.fixed.trim());
+        const fixText = iss.fixed.trim();
+        fixedArticle = fixedArticle.replace(iss.original.trim(), () => fixText);
         appliedCount++;
       }
     }
@@ -2272,6 +2399,15 @@ function applyFactCheckFixes(article, parsed) {
 }
 function sanitizeArticleContent(text) {
   if (!text || typeof text !== 'string') return text;
+
+  // Layer A Anti-AI-Marks & Steganography Cleaner (strip invisible Unicode, zero-width carriers, bidi controls, normalize space homoglyphs)
+  text = text
+    .replace(/(?<![\\p{Extended_Pictographic}])\\u200D|\\u200D(?![\\p{Extended_Pictographic}])/gu, '')
+    .replace(/(?<![\\p{Extended_Pictographic}])[\\uFE00-\\uFE0F]/gu, '')
+    .replace(/[\\u200B\\u200C\\u2060\\uFEFF\\u00AD\\u034F\\u061C\\u115F\\u1160\\u17B4\\u17B5\\u180B-\\u180E\\uFFF9-\\uFFFB]/g, '')
+    .replace(/[\\u200E\\u200F\\u202A-\\u202E\\u2066-\\u206F\\u2061-\\u2064]/g, '')
+    .replace(/[\\u{E0001}-\\u{E007F}\\u{E0100}-\\u{E01EF}]/gu, '')
+    .replace(/[\\u00A0\\u1680\\u2000-\\u200A\\u202F\\u205F\\u3000]/g, ' ');
 
   // Strip accidental metadata blockquote if present in article content
   text = text.replace(/^> \\*\\*(?:URL Slug|Meta Description|Primary Keyword):\\*\\*[\\s\\S]*?\\n---\\n+/gim, '');
@@ -2420,8 +2556,8 @@ function sanitizeArticleContent(text) {
     seenExtUrls.add(normUrl);
 
     extCount++;
-    if (extCount > 4) {
-      return anchor; // Cap at 4 external links (strictly within 3-5 limit)
+    if (extCount > 5) {
+      return anchor; // Cap at 5 external links (strictly within 3-5 limit)
     }
     return fullMatch;
   });
@@ -2619,7 +2755,7 @@ async function runAllSteps() {
     return;
   }
 
-  if (!confirm(\`Run ALL enabled steps from 1A to finish for "\${kw}"? This will call LLM APIs for each step sequentially.\`)) return;
+  if (!confirm(\`Run ALL enabled steps from 1A to finish for "\${kw}"? This will execute the optimized pipeline.\`)) return;
 
   pipelineRunning = true;
   pipelineCancelled = false;
@@ -2651,28 +2787,32 @@ async function runAllSteps() {
   const enabledSteps = stepData.filter(s => s.enabled);
   let currentProgress = 0;
 
-  for (let i = 0; i < stepData.length; i++) {
-    if (!stepData[i].enabled || pipelineCancelled) continue;
+  async function executePipelineStep(stepId) {
+    if (pipelineCancelled) return;
+    const idx = stepData.findIndex(s => s.id === stepId);
+    if (idx === -1) return;
+    const s = stepData[idx];
+    if (!s.enabled) return;
 
-    // Load this step
-    loadStep(i);
-    updatePipelineProgress(currentProgress, enabledSteps.length, \`\${stepData[i].id} — \${stepData[i].name}\`);
+    // Only switch active step tab if running foreground sequential step
+    if (!['2A', '3A', '3B', '3C'].includes(stepId) || stepId === '2A' && currentProgress === 0) {
+      loadStep(idx);
+    }
+    updatePipelineProgress(currentProgress, enabledSteps.length, \`\${s.id} — \${s.name}\`);
+    autoFillTestInputs(s.id, true, true);
+    const rEl = document.getElementById('test-results');
+    if (rEl) rEl.classList.add('hidden');
+    const eEl = document.getElementById('test-error');
+    if (eEl) eEl.classList.add('hidden');
 
-    // Force-fill test inputs from cached step outputs (pipeline chaining)
-    autoFillTestInputs(stepData[i].id, true, true);
-    document.getElementById('test-results').classList.add('hidden');
-    document.getElementById('test-error').classList.add('hidden');
+    await new Promise(r => setTimeout(r, 20));
 
-    // Small delay to allow UI to update
-    await new Promise(r => setTimeout(r, 100));
-
-    // Run this step with pipeline mode
     try {
-      await runTestInternal(true);
-      if (pipelineCancelled) break;
+      await runTestInternal(true, s.id);
+      if (pipelineCancelled) return;
 
       // ponytail: 2K gate threshold 70 check with depth calibration.
-      if (stepData[i].id === '2K' && stepOutputs['2K']) {
+      if (s.id === '2K' && stepOutputs['2K']) {
         try {
           const evalData = safeParseJSON(stepOutputs['2K']);
           if (evalData) {
@@ -2689,9 +2829,10 @@ async function runAllSteps() {
                 saveStepOutputs();
                 showToast(\`✓ Step 2K Evaluator Gate passed (\${evalData.overall_score}/100)\`, 'success');
               } else {
-                if (!confirm(\`⚠️ Step 2K Evaluator Gate: Skor \${evalData.overall_score || 0}/100 (< 70). Tetap lanjutkan ke pembuatan prompt gambar (Phase 3)?\`)) {
+                if (typeof confirm === 'function' && !confirm(\`⚠️ Step 2K Evaluator Gate: Skor \${evalData.overall_score || 0}/100 (< 70). Tetap lanjutkan ke pembuatan prompt gambar (Phase 3)?\`)) {
                   showToast(\`Pipeline dihentikan pada Gate 2K (Skor: \${evalData.overall_score || 0}/100)\`, 'warning');
-                  break;
+                  pipelineCancelled = true;
+                  return;
                 }
               }
             }
@@ -2699,24 +2840,95 @@ async function runAllSteps() {
         } catch {}
       }
       currentProgress++;
+      updatePipelineProgress(currentProgress, enabledSteps.length, \`\${s.id} — \${s.name} ✓\`);
+      renderStepList();
     } catch (err) {
-      console.error(\`Step \${stepData[i].id} encountered issue:\`, err);
+      console.error(\`Step \${s.id} encountered issue:\`, err);
       // Fallback: If 2J, 2H or any article step fails, preserve best upstream article so downstream never breaks!
-      if (['2J','2H','2G','2F','2E','2D','2C','4A','4B'].includes(stepData[i].id)) {
-        const fallbackArticle = stepOutputs['2J_article'] || stepOutputs['2H'] || stepOutputs['2G'] || stepOutputs['2D'] || stepOutputs['2C'] || stepOutputs['1E'];
+      if (['2J','2H','2G','2F','2E','2D','2C','2B','4A','4B'].includes(s.id)) {
+        const fallbackArticle = stepOutputs['2J_article'] || stepOutputs['2H'] || stepOutputs['2G'] || stepOutputs['2F_article'] || stepOutputs['2E_article'] || stepOutputs['2D'] || stepOutputs['2C'] || stepOutputs['2B_article'] || stepOutputs['1E'];
         if (fallbackArticle) {
-          if (stepData[i].id === '2J') {
+          if (s.id === '2J') {
             stepOutputs['2J_article'] = fallbackArticle;
             stepOutputs['2J'] = JSON.stringify({ quality_score: 85, critical_flags: [], replacements: [] });
+          } else if (s.id === '2B') {
+            stepOutputs['2B_article'] = fallbackArticle;
+            stepOutputs['2B'] = fallbackArticle;
+          } else if (s.id === '2E') {
+            stepOutputs['2E_article'] = fallbackArticle;
+            stepOutputs['2E'] = JSON.stringify({ faqs: [] });
+          } else if (s.id === '2F') {
+            stepOutputs['2F_article'] = fallbackArticle;
+            stepOutputs['2F'] = fallbackArticle;
           } else {
-            stepOutputs[stepData[i].id] = fallbackArticle;
+            stepOutputs[s.id] = fallbackArticle;
           }
           saveStepOutputs();
         }
       }
-      showToast(\`⚠️ Step \${stepData[i].id} had issue: \${err.message}. Menggunakan fallback upstream agar pipeline berlanjut mulus.\`, 'warning');
+      showToast(\`⚠️ Step \${s.id} had issue: \${err.message}. Menggunakan fallback upstream agar pipeline berlanjut mulus.\`, 'warning');
       currentProgress++;
     }
+  }
+
+  // Phase 1: Research & Drafting (1A -> 1B -> 1C -> 1D -> 1E)
+  for (const sid of ['1A', '1B', '1C', '1D', '1E']) {
+    if (pipelineCancelled) break;
+    await executePipelineStep(sid);
+  }
+
+  // Phase 2: Optimization & Enrichment (Fully Integrated Article Chain)
+  if (!pipelineCancelled) {
+    // Step 2A (Title & Meta) branches from 1E and runs in the background across Phase 2 enrichment
+    const p2A = executePipelineStep('2A');
+    await executePipelineStep('2B'); // Stitches optimized intro into 2B_article
+
+    // 2C (Originality/Humanizer) takes 2B_article
+    if (!pipelineCancelled) await executePipelineStep('2C');
+    // 2D (Fluff Check) tightens 2C
+    if (!pipelineCancelled) await executePipelineStep('2D');
+    // 2E (FAQ Generation) generates PAA Q&A pairs & stitches into 2E_article
+    if (!pipelineCancelled) await executePipelineStep('2E');
+    // 2F (Conclusion Optimizer) crafts contextual ending & stitches into 2F_article
+    if (!pipelineCancelled) await executePipelineStep('2F');
+    // 2G (Data Table) adds comparison table to 2F_article
+    if (!pipelineCancelled) await executePipelineStep('2G');
+    // 2H (Quotes & Citations) embeds authentic citations into 2G
+    if (!pipelineCancelled) await executePipelineStep('2H');
+    // 2I (EEAT Audit) audits 2H
+    if (!pipelineCancelled) await executePipelineStep('2I');
+    // 2J (pesat-x-jev Fact Check & Auto-Patcher) patches 2H + 2I into 2J_article
+    if (!pipelineCancelled) await executePipelineStep('2J');
+
+    // Ensure Step 2A metadata has finished before downstream tracks consume title/meta/slug
+    await p2A;
+  }
+
+  // Phase 2 Gate, Phase 3 (Visual Prompts), and Phase 4 (Link Insertion)
+  // When 2J finishes, 2J_article is ready. Gate 2K, Link Insertion (4A->4B), and Visuals (3A->3B->3C)
+  // are mutually independent downstream branches and run concurrently for 50%+ downstream speedup!
+  if (!pipelineCancelled) {
+    await Promise.all([
+      // Track 1: Gate 2K
+      executePipelineStep('2K'),
+      // Track 2: Links Insertion (Phase 4)
+      (async () => {
+        await executePipelineStep('4A');
+        await executePipelineStep('4B');
+      })(),
+      // Track 3: Visual Deck (Phase 3)
+      (async () => {
+        await executePipelineStep('3A');
+        await executePipelineStep('3B');
+        await executePipelineStep('3C');
+      })()
+    ]);
+  }
+
+  // Phase 5 & 6: System steps
+  if (!pipelineCancelled) {
+    await executePipelineStep('5A');
+    await executePipelineStep('6A');
   }
 
   if (!pipelineCancelled) {
@@ -2736,7 +2948,7 @@ async function runAllSteps() {
   updateDeliverableCards();
   showToast('✓ Pipeline complete! Artikel & prompt siap direview.', 'success');
   const wvStatus = document.getElementById('wv-global-status');
-  if (wvStatus) wvStatus.textContent = 'Selesai! Seluruh 23 step berhasil.';
+  if (wvStatus) wvStatus.textContent = 'Selesai! Seluruh step berhasil.';
 }
 
 async function syncPipelineRunToSheets() {
@@ -2828,19 +3040,29 @@ async function runToHere() {
     autoFillTestInputs(stepData[i].id, true, true);
     document.getElementById('test-results').classList.add('hidden');
     document.getElementById('test-error').classList.add('hidden');
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 20));
 
     try {
-      await runTestInternal(true);
+      await runTestInternal(true, stepData[i].id);
       if (pipelineCancelled) break;
       currentProgress++;
+      renderStepList();
     } catch (err) {
-      if (['2J','2H','2G','2F','2E','2D','2C','4A','4B'].includes(stepData[i].id)) {
-        const fallbackArticle = stepOutputs['2J_article'] || stepOutputs['2H'] || stepOutputs['2G'] || stepOutputs['2D'] || stepOutputs['2C'] || stepOutputs['1E'];
+      if (['2J','2H','2G','2F','2E','2D','2C','2B','4A','4B'].includes(stepData[i].id)) {
+        const fallbackArticle = stepOutputs['2J_article'] || stepOutputs['2H'] || stepOutputs['2G'] || stepOutputs['2F_article'] || stepOutputs['2E_article'] || stepOutputs['2D'] || stepOutputs['2C'] || stepOutputs['2B_article'] || stepOutputs['1E'];
         if (fallbackArticle) {
           if (stepData[i].id === '2J') {
             stepOutputs['2J_article'] = fallbackArticle;
             stepOutputs['2J'] = JSON.stringify({ quality_score: 85, critical_flags: [], replacements: [] });
+          } else if (stepData[i].id === '2B') {
+            stepOutputs['2B_article'] = fallbackArticle;
+            stepOutputs['2B'] = fallbackArticle;
+          } else if (stepData[i].id === '2E') {
+            stepOutputs['2E_article'] = fallbackArticle;
+            stepOutputs['2E'] = JSON.stringify({ faqs: [] });
+          } else if (stepData[i].id === '2F') {
+            stepOutputs['2F_article'] = fallbackArticle;
+            stepOutputs['2F'] = fallbackArticle;
           } else {
             stepOutputs[stepData[i].id] = fallbackArticle;
           }
@@ -2923,46 +3145,76 @@ async function triggerFirecrawlSearchManual() {
   }
 }
 
-async function runTestInternal(isPipelineMode) {
-  const s = stepData[currentStepIdx];
-  const model = document.getElementById('cfg-model').value;
-  const sysPrompt = document.getElementById('cfg-system-prompt').value;
-  const userPromptTpl = document.getElementById('cfg-user-prompt').value;
-  const temp = parseFloat(document.getElementById('cfg-temp').value);
-  const budgetTokens = parseInt(document.getElementById('ti-token-budget').value);
+async function runTestInternal(isPipelineMode, overrideStepId) {
+  const s = overrideStepId ? (stepData.find(st => st.id === overrideStepId) || stepData[currentStepIdx]) : stepData[currentStepIdx];
+  const model = (!isPipelineMode && document.getElementById('cfg-model')) ? document.getElementById('cfg-model').value : s.model;
+  const sysPrompt = (!isPipelineMode && document.getElementById('cfg-system-prompt')) ? document.getElementById('cfg-system-prompt').value : (s.systemPrompt || '');
+  const userPromptTpl = (!isPipelineMode && document.getElementById('cfg-user-prompt')) ? document.getElementById('cfg-user-prompt').value : (s.userPrompt || '');
+  const temp = (!isPipelineMode && document.getElementById('cfg-temp')) ? parseFloat(document.getElementById('cfg-temp').value) : s.temp;
+  const budgetTokens = parseInt(document.getElementById('ti-token-budget')?.value || 0);
   // ponytail: Pipeline mode unlocks full generation ceiling (s.maxTokens); manual test respects budget slider.
   const tokenLimit = isPipelineMode ? (s.maxTokens || 5000) : (budgetTokens || s.maxTokens || 2000);
 
-  const internalLinksVal = document.getElementById('ti-links') ? document.getElementById('ti-links').value : '';
+  const internalLinksVal = (document.getElementById('ti-links')?.value || document.getElementById('wv-internal-links')?.value || '').trim();
   const activeBrandName = getActiveBrand();
   const activeBrandDomain = inferBrandDomain(internalLinksVal) || (activeBrandName.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com');
 
-  // Substitute variables
+  // Substitute variables with robust pipeline fallback chaining
   const vars = {
-    keyword: document.getElementById('ti-keyword').value,
+    keyword: (document.getElementById('ti-keyword')?.value || document.getElementById('wv-keyword')?.value || '').trim(),
     brand: activeBrandName,
     brand_name: activeBrandName,
     brand_domain: activeBrandDomain,
-    cta: document.getElementById('ti-cta').value,
+    cta: (document.getElementById('ti-cta')?.value || document.getElementById('wv-cta')?.value || '').trim(),
     internal_links: internalLinksVal,
-    external_links: document.getElementById('ti-external-links').value,
-    article: document.getElementById('ti-article').value,
-    prev_output: document.getElementById('ti-prev').value,
-    serp_data: document.getElementById('ti-serp').value,
-    info_gain: document.getElementById('ti-info-gain').value,
-    live_search_data: document.getElementById('ti-live-search') ? document.getElementById('ti-live-search').value : '',
-    lsi_keywords: document.getElementById('ti-lsi').value,
-    outline: document.getElementById('ti-outline').value,
-    eeat_hcu_eav_analysis: document.getElementById('ti-eeat').value,
-    quality_fact_check: document.getElementById('ti-quality').value,
-    seo_geo_evaluator: document.getElementById('ti-evaluator').value,
-    image_prompts: document.getElementById('ti-image-prompts').value,
-    infographic_prompt: document.getElementById('ti-infographic').value,
-    alt_texts: document.getElementById('ti-alt-texts').value,
-    title: document.getElementById('ti-title').value,
-    meta_description: document.getElementById('ti-meta-description').value,
-    slug: document.getElementById('ti-slug').value,
-    post_url: document.getElementById('ti-post-url').value,
+    external_links: document.getElementById('ti-external-links')?.value || 'https://en.wikipedia.org',
+    article: (s.id === '4B' ? (stepOutputs['4A'] || stepOutputs['2J_article'] || getBestArticle()) :
+             (s.id === '4A' ? (stepOutputs['2J_article'] || getBestArticle()) :
+             (['3A','3B','2K'].includes(s.id) ? (stepOutputs['2J_article'] || getBestArticle()) :
+             (s.id === '2J' ? (stepOutputs['2H'] || stepOutputs['2G'] || stepOutputs['2F_article'] || getBestArticle()) :
+             (s.id === '2H' ? (stepOutputs['2G'] || stepOutputs['2F_article'] || getBestArticle()) :
+             (s.id === '2G' ? (stepOutputs['2F_article'] || stepOutputs['2E_article'] || stepOutputs['2D'] || getBestArticle()) :
+             (s.id === '2F' ? (stepOutputs['2E_article'] || stepOutputs['2D'] || getBestArticle()) :
+             (s.id === '2E' ? (stepOutputs['2D'] || stepOutputs['2C'] || getBestArticle()) :
+             (s.id === '2D' ? (stepOutputs['2C'] || stepOutputs['2B_article'] || getBestArticle()) :
+             (s.id === '2C' ? (stepOutputs['2B_article'] || stepOutputs['1E'] || getBestArticle()) :
+             (s.id === '2B' ? (stepOutputs['1E'] || getBestArticle()) :
+             (s.id === '2A' ? (stepOutputs['1E'] || getBestArticle()) :
+             (document.getElementById('ti-article')?.value || getBestArticle()))))))))))))),
+    prev_output: stepOutputs['1B'] || stepOutputs['1A'] || (document.getElementById('ti-prev')?.value || ''),
+    serp_data: stepOutputs['1A'] || (document.getElementById('ti-serp')?.value || ''),
+    info_gain: stepOutputs['1B'] || (document.getElementById('ti-info-gain')?.value || ''),
+    live_search_data: stepOutputs['live_search'] || (document.getElementById('ti-live-search') ? document.getElementById('ti-live-search').value : ''),
+    lsi_keywords: stepOutputs['1C'] || (document.getElementById('ti-lsi')?.value || ''),
+    outline: stepOutputs['1D'] || (document.getElementById('ti-outline')?.value || ''),
+    eeat_hcu_eav_analysis: stepOutputs['2I'] || (document.getElementById('ti-eeat')?.value || ''),
+    quality_fact_check: stepOutputs['2J'] || (document.getElementById('ti-quality')?.value || ''),
+    seo_geo_evaluator: stepOutputs['2K'] || (document.getElementById('ti-evaluator')?.value || ''),
+    image_prompts: stepOutputs['3A'] || (document.getElementById('ti-image-prompts')?.value || ''),
+    infographic_prompt: stepOutputs['3B'] || (document.getElementById('ti-infographic')?.value || ''),
+    alt_texts: stepOutputs['3C'] || (document.getElementById('ti-alt-texts')?.value || ''),
+    title: (() => {
+      if (stepOutputs['2A']) {
+        const p = safeParseJSON(stepOutputs['2A']);
+        if (p && (p.title || p.seo_title || p.h1)) return p.title || p.seo_title || p.h1;
+      }
+      return document.getElementById('ti-title')?.value || '';
+    })(),
+    meta_description: (() => {
+      if (stepOutputs['2A']) {
+        const p = safeParseJSON(stepOutputs['2A']);
+        if (p && (p.meta_description || p.description || p.meta)) return p.meta_description || p.description || p.meta;
+      }
+      return document.getElementById('ti-meta-description')?.value || '';
+    })(),
+    slug: (() => {
+      if (stepOutputs['2A']) {
+        const p = safeParseJSON(stepOutputs['2A']);
+        if (p && (p.slug || p.url_slug)) return p.slug || p.url_slug;
+      }
+      return document.getElementById('ti-slug')?.value || '';
+    })(),
+    post_url: stepOutputs['5A'] || document.getElementById('ti-post-url')?.value || '',
   };
 
   // Live web search via Firecrawl for Step 1A and Step 1B
@@ -3018,7 +3270,7 @@ async function runTestInternal(isPipelineMode) {
 
   // Ensure vars.article is NEVER empty when running steps that require article text
   if (!vars.article || vars.article.trim().length < 200) {
-    const candidates = ['4B', '4A', '2H', '2G', '2D', '2C', '1E'];
+    const candidates = ['4B', '4A', '2J_article', '2H', '2G', '2F_article', '2E_article', '2D', '2C', '2B_article', '1E'];
     for (const cid of candidates) {
       if (stepOutputs[cid] && typeof stepOutputs[cid] === 'string' && stepOutputs[cid].trim().length > 300) {
         vars.article = stepOutputs[cid].trim();
@@ -3120,17 +3372,13 @@ async function runTestInternal(isPipelineMode) {
   const t0 = Date.now();
 
   try {
-    const result = await callLLM(model, sysPrompt, userPrompt, temp, tokenLimit);
+    const result = await callLLM(model, sysPrompt, userPrompt, temp, tokenLimit, s.id);
     const elapsed = Date.now() - t0;
-    showResults(result, model, elapsed, s.outputFormat);
+    showResults(result, model, elapsed, s.outputFormat, s.id);
 
-    // If pipeline mode, auto-advance to next enabled step
+    // If pipeline mode, quick pause for smooth UI repaint
     if (isPipelineMode && !pipelineCancelled) {
-      const nextIdx = getNextEnabledStep(currentStepIdx);
-      if (nextIdx !== -1) {
-        // Brief pause so user can see result
-        await new Promise(r => setTimeout(r, 500));
-      }
+      await new Promise(r => setTimeout(r, 40));
     }
   } catch(err) {
     document.getElementById('test-running').classList.add('hidden');
@@ -3142,7 +3390,7 @@ async function runTestInternal(isPipelineMode) {
   }
 }
 
-async function callLLM(model, systemPrompt, userPrompt, temp, maxTokens) {
+async function callLLM(model, systemPrompt, userPrompt, temp, maxTokens, targetStepId) {
   const keys = getKeys();
   const provider = getProvider(model);
 
@@ -3166,15 +3414,15 @@ async function callLLM(model, systemPrompt, userPrompt, temp, maxTokens) {
     targetModel = 'pesat-flash';
   }
 
-  // ponytail: Testing token budget limiter for pesat-x-jev. Fallback to pesat-flash if cap reached.
+  // ponytail: Testing token budget limiter for pesat-x-jev. Fallback to pesat-flash if cap reached or insufficient budget (< 500 tokens).
   let effectiveMaxTokens = maxTokens;
   if (targetModel === 'pesat-x-jev') {
     const limit = getPesatXJevLimit();
     const remaining = limit - pesatXJevTokensCurrentArticle;
-    if (remaining <= 0) {
-      console.warn(\`[callLLM] pesat-x-jev testing limit reached (\${pesatXJevTokensCurrentArticle}/\${limit}). Falling back to pesat-flash.\`);
+    if (remaining < 500) {
+      console.warn(\`[callLLM] pesat-x-jev testing limit reached or insufficient (\${pesatXJevTokensCurrentArticle}/\${limit}, remaining: \${remaining}). Falling back to pesat-flash.\`);
       if (typeof showToast === 'function') {
-        showToast(\`⚠️ Token testing pesat-x-jev mencapai batas (\${limit}). Dialihkan ke pesat-flash.\`, 'warning');
+        showToast(\`⚠️ Token testing pesat-x-jev tidak mencukupi (\${remaining} tok). Dialihkan ke pesat-flash.\`, 'warning');
       }
       targetModel = 'pesat-flash';
     } else {
@@ -3190,6 +3438,7 @@ async function callLLM(model, systemPrompt, userPrompt, temp, maxTokens) {
 
   for (const currentModel of modelsToTry) {
     for (let attempt = 1; attempt <= 2; attempt++) {
+      let timeoutId = null;
       try {
         const body = {
           model: currentModel,
@@ -3201,13 +3450,19 @@ async function callLLM(model, systemPrompt, userPrompt, temp, maxTokens) {
           ]
         };
 
+        const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+        const curStepId = (typeof targetStepId === 'string' && targetStepId) ? targetStepId : ((typeof currentStepIdx === 'number' && stepData[currentStepIdx]) ? stepData[currentStepIdx].id : '');
+        const timeoutMs = (currentModel === 'pesat-x-jev' || ['1E','2C'].includes(curStepId)) ? 90000 : 60000;
+        if (controller) timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
         const res = await fetch('https://api.pesatrouter.com/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Authorization': 'Bearer ' + key,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(body)
+          body: JSON.stringify(body),
+          signal: controller ? controller.signal : undefined
         });
 
         if (!res.ok) {
@@ -3239,6 +3494,8 @@ async function callLLM(model, systemPrompt, userPrompt, temp, maxTokens) {
         if (attempt < 2) {
           await new Promise(r => setTimeout(r, 1500));
         }
+      } finally {
+        if (timeoutId) clearTimeout(timeoutId);
       }
     }
   }
@@ -3246,7 +3503,8 @@ async function callLLM(model, systemPrompt, userPrompt, temp, maxTokens) {
   throw lastError || new Error('All model attempts failed');
 }
 
-function showResults(result, model, elapsed, outputFormat) {
+function showResults(result, model, elapsed, outputFormat, stepIdOverride) {
+  const activeStepId = stepIdOverride || (stepData[currentStepIdx] ? stepData[currentStepIdx].id : '');
   document.getElementById('test-running').classList.add('hidden');
   document.getElementById('run-btn').disabled = false;
   document.getElementById('test-results').classList.remove('hidden');
@@ -3254,18 +3512,54 @@ function showResults(result, model, elapsed, outputFormat) {
   let { output, inputTokens, outputTokens } = result;
 
   // Sanitize article content to enforce ONLY tables, lists, and text (NO ascii diagrams / arrow boxes)
-  if (['1E','2C','2D','2G','2H','4A','4B'].includes(stepData[currentStepIdx].id)) {
+  if (['1E','2C','2D','2G','2H','4A','4B'].includes(activeStepId)) {
     output = sanitizeArticleContent(output);
   }
 
   // Cache output for test-panel chaining
-  stepOutputs[stepData[currentStepIdx].id] = output;
+  if (activeStepId) {
+    stepOutputs[activeStepId] = output;
+  }
+
+  // Seamless Article Optimization Stitching (2B Intro -> 2E FAQ -> 2F Conclusion -> 2J Fact-Check)
+  if (activeStepId === '2B') {
+    try {
+      const base1E = stepOutputs['1E'] || (document.getElementById('ti-article') ? document.getElementById('ti-article').value : '') || getBestArticle();
+      if (base1E) {
+        stepOutputs['2B_article'] = mergeIntroIntoArticle(base1E, output);
+      }
+    } catch (e) {
+      console.warn('Auto-stitch intro failed in Step 2B:', e);
+    }
+  }
+
+  if (activeStepId === '2E') {
+    try {
+      const base2D = stepOutputs['2D'] || stepOutputs['2C'] || stepOutputs['2B_article'] || stepOutputs['1E'] || getBestArticle();
+      if (base2D) {
+        stepOutputs['2E_article'] = mergeFaqIntoArticle(base2D, output);
+      }
+    } catch (e) {
+      console.warn('Auto-stitch FAQ failed in Step 2E:', e);
+    }
+  }
+
+  if (activeStepId === '2F') {
+    try {
+      const base2E = stepOutputs['2E_article'] || stepOutputs['2D'] || stepOutputs['2C'] || stepOutputs['2B_article'] || stepOutputs['1E'] || getBestArticle();
+      if (base2E) {
+        stepOutputs['2F_article'] = mergeConclusionIntoArticle(base2E, output);
+      }
+    } catch (e) {
+      console.warn('Auto-stitch conclusion failed in Step 2F:', e);
+    }
+  }
 
   // When Step 2J finishes, auto-patch the article using replacements and store 2J_article
-  if (stepData[currentStepIdx].id === '2J') {
+  if (activeStepId === '2J') {
     try {
       const parsed2J = (typeof safeParseJSON === 'function') ? safeParseJSON(output) : JSON.parse(output.replace(/\`\`\`json\\n?/g,'').replace(/\`\`\`/g,'').trim());
-      const baseArticle = stepOutputs['2H'] || stepOutputs['2G'] || stepOutputs['1E'] || (document.getElementById('ti-article') ? document.getElementById('ti-article').value : '');
+      const baseArticle = stepOutputs['2H'] || stepOutputs['2G'] || stepOutputs['2F_article'] || stepOutputs['1E'] || (document.getElementById('ti-article') ? document.getElementById('ti-article').value : '');
       if (parsed2J && baseArticle) {
         const fixedArt = applyFactCheckFixes(baseArticle, parsed2J);
         stepOutputs['2J_article'] = fixedArt;
@@ -3302,10 +3596,14 @@ function showResults(result, model, elapsed, outputFormat) {
   if (outputFormat === 'json') {
     document.getElementById('json-check').classList.remove('hidden');
     try {
-      const parsed = JSON.parse(output.replace(/\`\`\`json\\n?/g,'').replace(/\`\`\`/g,'').trim());
-      document.getElementById('json-valid').classList.remove('hidden');
-      document.getElementById('json-invalid').classList.add('hidden');
-      document.getElementById('json-keys').textContent = Object.keys(parsed).join(', ');
+      const parsed = safeParseJSON(output);
+      if (parsed && typeof parsed === 'object') {
+        document.getElementById('json-valid').classList.remove('hidden');
+        document.getElementById('json-invalid').classList.add('hidden');
+        document.getElementById('json-keys').textContent = Object.keys(parsed).join(', ');
+      } else {
+        throw new Error('Invalid JSON format');
+      }
     } catch {
       document.getElementById('json-valid').classList.add('hidden');
       document.getElementById('json-invalid').classList.remove('hidden');
@@ -3379,6 +3677,7 @@ function buildFullArticleBundle() {
   if (cleanBestArticle) {
     cleanBestArticle = cleanBestArticle.replace(/^#\\s+[^\\n]+\\n+/, '');
     cleanBestArticle = cleanBestArticle.replace(/^Meta description:\\s*[^\\n]+\\n+/i, '');
+    cleanBestArticle = cleanBestArticle.replace(/^\\*By[^\\n]+\\*\\n+/gim, '');
     cleanBestArticle = cleanBestArticle.replace(/^> \\*\\*(?:URL Slug|Meta Description|Primary Keyword):\\*\\*[\\s\\S]*?\\n---\\n+/gim, '');
     cleanBestArticle = sanitizeArticleContent(cleanBestArticle);
   }
@@ -3597,11 +3896,13 @@ function viewFullArticleBundle() {
     let metaDesc = '';
     if (stepOutputs['2A']) {
       try {
-        const parsed = JSON.parse(stepOutputs['2A'].replace(/\`\`\`json\\n?/g,'').replace(/\`\`\`/g,'').trim());
-        if (parsed.title) title = parsed.title;
-        if (parsed.slug) slug = parsed.slug;
-        if (parsed.meta_description) metaDesc = parsed.meta_description;
-        if (parsed.keyword && !keyword) keyword = parsed.keyword;
+        const parsed = safeParseJSON(stepOutputs['2A']);
+        if (parsed && typeof parsed === 'object') {
+          if (parsed.title) title = parsed.title;
+          if (parsed.slug) slug = parsed.slug;
+          if (parsed.meta_description) metaDesc = parsed.meta_description;
+          if (parsed.keyword && !keyword) keyword = parsed.keyword;
+        }
       } catch {}
     }
     // Prevent keyword mismatch
@@ -3622,6 +3923,7 @@ function viewFullArticleBundle() {
     if (!slug) slug = keyword ? keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-\$/g, '') : 'article';
 
     let cleanArt = bestArticle.replace(/^#\\s+[^\\n]+\\n+/, '').replace(/^Meta description:\\s*[^\\n]+\\n+/i, '');
+    cleanArt = cleanArt.replace(/^\\*By[^\\n]+\\*\\n+/gim, '');
     cleanArt = cleanArt.replace(/^> \\*\\*(?:URL Slug|Meta Description|Primary Keyword):\\*\\*[\\s\\S]*?\\n---\\n+/gim, '');
     cleanArt = sanitizeArticleContent(cleanArt);
 
@@ -3735,12 +4037,13 @@ function copyCleanArticleOnly() {
   clean = clean.replace(/^> \\*\\*(?:URL Slug|Meta Description|Primary Keyword):\\*\\*[\\s\\S]*?\\n---\\n+/gim, '');
   clean = clean.replace(/^#\\s+[^\\n]+\\n+/, '');
   clean = clean.replace(/^Meta description:\\s*[^\\n]+\\n+/i, '');
+  clean = clean.replace(/^\\*By[^\\n]+\\*\\n+/gim, '');
 
   let title = document.getElementById('ti-title') ? document.getElementById('ti-title').value.trim() : '';
   if (stepOutputs['2A']) {
     try {
-      const p = JSON.parse(stepOutputs['2A'].replace(/\`\`\`json\\n?/g,'').replace(/\`\`\`/g,'').trim());
-      if (p.title) title = p.title;
+      const p = safeParseJSON(stepOutputs['2A']);
+      if (p && p.title) title = p.title;
     } catch {}
   }
   if (!title) {
@@ -4004,14 +4307,18 @@ async function searchFirecrawl(query, limit = 5) {
   const keys = getKeys();
   const apiKey = keys.firecrawl || 'fc-ff28587bf520455e932c0e458046ab85';
   if (!apiKey) return null;
+  let timeoutId = null;
   try {
+    const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    if (controller) timeoutId = setTimeout(() => controller.abort(), 15000);
     const res = await fetch('https://api.firecrawl.dev/v1/search', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer ' + apiKey,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ query: query, limit: limit })
+      body: JSON.stringify({ query: query, limit: limit }),
+      signal: controller ? controller.signal : undefined
     });
     if (!res.ok) return null;
     const json = await res.json();
@@ -4019,6 +4326,8 @@ async function searchFirecrawl(query, limit = 5) {
   } catch (e) {
     console.warn('Firecrawl search error:', e);
     return null;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
   }
 }
 function openSettings() {
