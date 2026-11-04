@@ -1,13 +1,13 @@
 # JDP Writing Pipeline — Cold Start Guide (v3.2)
 
 > Panduan orientasi cepat (onboarding) untuk developer & AI agent.
-> Status: **Production Ready** · Last Updated: **2026-09-28**
+> Status: **Production Ready** · Last Updated: **2026-11-04**
 
 ---
 
 ## ⚡ Quick Start (TL;DR)
 
-1. **Buka Admin UI**: Akses [jdpwriter.com](https://jdpwriter.com)
+1. **Buka Admin UI**: Akses [jdpwriter.com](https://jdpwriter.com) atau [Cloudflare Worker URL](https://jdp-pipeline-admin.emerilansel.workers.dev)
 2. **Input Data**: Masukkan `keyword` + `internal_links` (opsional: `cta`)
 3. **Format Artikel Terjamin**: Konten hanya memuat teks standar, tabel Markdown, dan list (angka/bullet). ASCII flowchart/kotak panah (`[ A ] ↓ [ B ]`) dilarang keras & disanitasi otomatis.
 4. **Inspect Firecrawl Live Web Data**:
@@ -38,7 +38,7 @@ node scripts/deploy-worker.js
 | | Research Tool | https://jdpwriter.com/research | 🟢 Live |
 | | Backup Domain | https://www.jdpwriter.com | 🟢 Live |
 | | Legacy UI | https://write.jetdigitalpro.com | 🟡 Deprecated |
-| | Cloudflare Fallback | https://jdp-pipeline-admin.emerilansel.workers.dev | 🟢 Live |
+| | Cloudflare Worker | https://jdp-pipeline-admin.emerilansel.workers.dev | 🟢 Live (Deployed 2026-11-04) |
 | **Engine** | n8n VPS | https://n8n.jetdigitalpro.com | 🟢 Active |
 | | Orchestrator ID | `cQiEML8ZSa1UcmqH` | 🟢 Active |
 | | n8n Webhook | `https://n8n.jetdigitalpro.com/webhook/pipeline-orchestrator` | 🟢 Active |
