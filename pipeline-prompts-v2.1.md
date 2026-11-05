@@ -241,11 +241,10 @@ Requirements:
 	  Provided Internal Links: {{internal_links}}
 	  * If valid internal URLs are provided, embed them naturally as Markdown hyperlinks [contextual anchor phrase](url).
 	  * If {{internal_links}} is empty, "None", or absent: STRICTLY DO NOT ADD, INVENT, OR FORCE ANY INTERNAL LINKS! Strictly 0 internal links. Never fabricate links to your own domain or slug if none were supplied.
-	- WIKIPEDIA-STYLE REFERENCES LIST (MANDATORY AT END OF ARTICLE):
-	  At the very end of the article, include a numbered "## References" section formatting all external citation links into Wikipedia-style references:
-	  * With Author: Author Last, First. [“Page Title.”](URL) *Website Name*, Publication Date. Accessed 2026.
-	  * No Author: [“Page Title.”](URL) *Website Name*, Publication Date. Accessed 2026.
-	  Numbered list only.
+		- WIKIPEDIA-STYLE REFERENCES LIST (MANDATORY AT THE VERY END OF ARTICLE):
+		  At the absolute end of the article (after Conclusion, CTA, FAQ, and Schema), include a numbered “## References” section with active clickable links:
+		  1\. [“Exact Headline Title.”](URL) Website Name, Publication Date (or publication date not specified). Accessed Month Day, Year.
+		  Every citation title MUST be an active clickable Markdown link: [“Page Title.”](URL). Numbered list only.
 	- CONCLUSION SECTION (CRITICAL): NEVER use generic "## Conclusion", "## In Conclusion", or "## Summary". Always write an engaging, contextual H2 heading that reflects the topic and action (e.g., "## Wrapping Up: Mastering [Topic]", "## Final Takeaways: Keeping Your [Topic] Thriving"). Summarize key actionable lessons and end with CTA: {{cta}}.
 - STRICT CONTENT FORMATTING RULE: The article must consist ONLY of: 1) Standard prose paragraphs with H1, H2, H3 headings, bold text, and blockquotes (>); 2) Structured Markdown comparison tables (| Col 1 | Col 2 |); 3) Numbered or bulleted Markdown lists.
   STRICTLY FORBIDDEN:
@@ -950,11 +949,15 @@ You are an expert Content Editor and SEO Strategist. Insert provided internal li
 	5. QUOTE SOURCE LINKS: Ensure every blockquote attribution line has a clickable markdown link to the verified source on the publication/source title.
 	6. STRICT MINIMAL BOLDING: Remove unnecessary bolding around technical terms or keywords inside sentences. Bolding is strictly for list lead-ins, table headers, and quote attributions.
 	7. NATURAL ANCHOR TEXT: Link descriptive entities or concepts (e.g. [Crassulacean acid metabolism](https://...)), never generic "click here" or raw URLs.
-	8. WIKIPEDIA-STYLE REFERENCES LIST (MANDATORY AT END OF ARTICLE):
-	   At the very end of the article, create a numbered "## References" section converting all external links into Wikipedia-style references:
-	   - With Author: Author Last, First. [“Page Title.”](URL) *Website Name*, Publication Date. Accessed 2026.
-	   - No Author: [“Page Title.”](URL) *Website Name*, Publication Date. Accessed 2026.
-	   Extract author, exact headline title, publication date, and proper website name from the verified Research Data/Firecrawl context. Never invent metadata. Numbered list only.
+		8. WIKIPEDIA-STYLE REFERENCES LIST (MANDATORY AT THE VERY END OF THE ARTICLE):
+		   At the absolute end of the article (after Conclusion, CTA, FAQ, and Schema), create a numbered “## References” section converting every cited external link into an active Wikipedia-style reference.
+		   Every citation title MUST be an active clickable Markdown link pointing to the original URL:
+		   Format:
+		   1\. [“Exact Headline Title.”](URL) Website Name, Publication Date (or publication date not specified). Accessed Month Day, Year.
+		   Example:
+		   1\. [“Search Engine Optimization Best Practices.”](https://www.energy.gov/cmei/communicationstandards/search-engine-optimization-best-practices) U.S. Department of Energy, publication date not specified. Accessed October 30, 2026.
+		   2\. [“Search engine optimisation (SEO) - driving visitors to your web pages.”](https://www.gcis.gov.za/guidelines/website/seo) Government Communication and Information System (GCIS), publication date not specified. Accessed October 30, 2026.
+		   Extract author, exact headline title, publication date, and proper website name from the verified Research Data/Firecrawl context. Never invent metadata. Numbered list only.
 	9. BRAND INTEGRITY: Ensure company brand is strictly 'JetDigitalPro' (PascalCase).
 	10. Return ONLY the full revised article in Markdown starting directly with the H1 title. No commentary. Strict formatting: text, tables, and lists only. No numbered headings.
 ```

@@ -246,10 +246,18 @@ Berdasarkan audit evaluasi kualitas editorial, diterapkan 4 pilar standar baru d
 	  3. Baris atribusi kutipan blockquote (`> — **Nama Ahli**`).
 	- **Sanitizer Defense (`deClutterExcessiveBolding`)**: Sanitizer secara deterministik melucuti bolding kata di tengah paragraf biasa dan teks bullet list, mempertahankan keterbacaan alami manusia dan mencegah deteksi pola AI emphasis spam.
 
-	### 11. Wikipedia-Style References List (Zero-Trust Citation Standard)
-	- **Format Standar Wikipedia di Akhir Artikel**: Setiap artikel wajib memuat section `## References` bernomor di akhir naskah yang mengonversi seluruh tautan sitasi eksternal menjadi referensi gaya Wikipedia:
-	  * **Dengan Penulis**: `Penulis Belakang, Depan. [“Judul Artikel.”](URL) *Nama Situs*, Tanggal Publikasi. Accessed 2026.`
-	  * **Tanpa Penulis**: `[“Judul Artikel.”](URL) *Nama Situs*, Tanggal Publikasi. Accessed 2026.`
+	### 11. Wikipedia-Style References List (Zero-Trust Citation Standard dengan Link Aktif di Paling Akhir)
+	- **Posisi Mutlak di Paling Akhir Artikel**: Section `## References` WAJIB berada di **PALING AKHIR** seluruh artikel (setelah penutup/CTA, FAQ, dan skema JSON-LD), tepat sebelum divider asset visual.
+	- **Wajib Link Aktif Markdown pada Judul**: Setiap referensi wajib memiliki tautan aktif markdown `[“Judul Halaman.”](URL)` yang dapat diklik langsung ke URL asli sumber.
+	- **Format Standar Bernomor**:
+	  * **Dengan Penulis**: `1\. Penulis Belakang, Depan. [“Judul Artikel.”](URL) Nama Situs, Tanggal Publikasi. Accessed Tanggal.`
+	  * **Tanpa Penulis**: `1\. [“Judul Artikel.”](URL) Nama Situs, Tanggal Publikasi (atau publication date not specified). Accessed Tanggal.`
+	- **Contoh Riil Terverifikasi**:
+	  ```markdown
+	  1\. [“Search Engine Optimization Best Practices.”](https://www.energy.gov/cmei/communicationstandards/search-engine-optimization-best-practices) U.S. Department of Energy, publication date not specified. Accessed October 30, 2026.
+
+	  2\. [“Search engine optimisation (SEO) - driving visitors to your web pages.”](https://www.gcis.gov.za/guidelines/website/seo) Government Communication and Information System (GCIS), publication date not specified. Accessed October 30, 2026.
+	  ```
 	- **Zero-Trust Metadata Extraction**: Judul (`<h1>`), nama situs resmi (e.g. *Wiz Research*, *Cloud Security Alliance*, *Unit 42*), dan tanggal diekstrak langsung dari metadata terverifikasi riset live Firecrawl tanpa fabrikasi.
 	- **Preservasi URL Asli**: Tautan sitasi selalu merujuk ke URL asli yang diberikan, bukan URL mirror/fallback snapshot.
 	- **Eksekusi Ganda**: Dihasilkan langsung oleh model pada Step 4B, serta divalidasi/disintesis otomatis oleh helper `formatWikipediaReferences()` pada bundle modal export dan fitur Copy Article Only.
