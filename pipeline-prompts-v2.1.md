@@ -168,19 +168,20 @@ Create a detailed article outline for "{{keyword}}" using this research data:
 **LSI Keywords & Entities:**
 {{lsi_keywords}}
 
-Requirements:
-- Match the dominant search intent perfectly
-- Cover all information gaps identified
-- Use LSI keywords naturally in H2 and H3 headings
-- Structure for featured snippets (list, table, paragraph where appropriate)
-- Include a dedicated FAQ section plan
-- Plan for internal links: {{internal_links}}
-- Plan for CTA placement: {{cta}}
-- Target 1500-2500 words total
-- Each section should have a clear purpose and estimated word count
-- Headings Question Ratio (Balanced 60/40 Rule): Target roughly 60% of H2/H3 headings in question format (ending with '?') to capture voice search and PAA intent. The remaining ~40% MUST be declarative/topical statements (e.g. "Seasonal Protocol: Feeding Cadence and NPK Guidelines"). HARD NEGATIVE CONSTRAINT: NEVER make all headings end with question marks (strictly forbid 100% question mark headings; maintain minimum 40% declarative topical titles).
-- CRITICAL HEADING RULE: Do NOT number any headings or section titles (never write "1.", "2.", "Section 1:", etc. in headings). All headings (H2, H3) must be unnumbered topical titles or questions.
-- Strict format rule: Outline and article must strictly use ONLY standard prose paragraphs, structured Markdown tables, and Markdown lists (ordered/bulleted). STRICTLY FORBIDDEN: ASCII art, text flowcharts, arrow diagrams, box flows ([ A ] ↓ [ B ]), or code blocks (```) used for formatting. Any process or workflow must be outlined strictly as numbered steps or comparison tables.
+	Requirements:
+	- Match the dominant search intent perfectly
+	- Cover all information gaps identified
+	- Use LSI keywords naturally in H2 and H3 headings
+	- Structure for featured snippets (list, table, paragraph where appropriate)
+	- Include a dedicated FAQ section plan
+	- Plan for internal links: {{internal_links}} (ZERO-HALLUCINATION: If None or empty, do NOT plan or invent any internal links)
+	- Plan for CTA placement: {{cta}}
+	- Target 1500-2500 words total
+	- Each section should have a clear purpose and estimated word count
+	- Headings Question Ratio (Balanced 60/40 Rule): Target roughly 60% of H2/H3 headings in question format (ending with '?') to capture voice search and PAA intent. The remaining ~40% MUST be declarative/topical statements (e.g. "Seasonal Protocol: Feeding Cadence and NPK Guidelines"). HARD NEGATIVE CONSTRAINT: NEVER make all headings end with question marks (strictly forbid 100% question mark headings; maintain minimum 40% declarative topical titles).
+	- CRITICAL HEADING RULE: Do NOT number any headings or section titles (never write "1.", "2.", "Section 1:", etc. in headings). All headings (H2, H3) must be unnumbered topical titles or questions.
+	- STRICT MINIMAL BOLDING RULE: Do NOT bold technical terms, tools, libraries, or keywords inside sentences. Bolding is strictly reserved for list lead-in labels (e.g. * **Label**: text) and table headers.
+	- Strict format rule: Outline and article must strictly use ONLY standard prose paragraphs, structured Markdown tables, and Markdown lists (ordered/bulleted). STRICTLY FORBIDDEN: ASCII art, text flowcharts, arrow diagrams, box flows ([ A ] ↓ [ B ]), or code blocks (```) used for formatting. Any process or workflow must be outlined strictly as numbered steps or comparison tables.
 
 Return a complete outline with H2, H3, and bullet points describing each section.
 ```
@@ -221,19 +222,31 @@ Requirements:
 - First paragraph under H1 directly answers main search intent (<=40 words)
 - First paragraph under each H2 must provide a concise direct answer (<=40 words) for AI snippet & GEO citation
 - CRITICAL HEADING RULE: Do NOT number any headings or section titles (never write "## 1. Title", "## 2. ...", or "## Section 1:"). All headings (H2, H3) must be unnumbered topical titles or questions.
-- Include at least 1 structured Markdown comparison table (3-5 columns, >=3 rows). Every claim/number should cite the source by name as plain text [Source, Year]; do NOT invent hyperlinks.
-- Include at least 3 statistics from authoritative sources with citations.
-- CITATION & QUOTE RULES (CRITICAL):
-  * Verbatim Quote: Include 1–2 authentic verbatim quotes in blockquotes: > "[Exact statement or core finding]" — [Author/Institution, Year]. Ground in research context.
-  * Anti-Spam "According to": The phrase "According to" must NEVER be spammed (at most ONCE in the entire article). Use varied, natural phrasing ("Research from [Source] shows...", "[Institution] guidelines recommend...", parenthetical citations, etc.).
-  * External Links Cap: Maximum 3–5 external links across the ENTIRE article. Only link to verified live URLs from Firecrawl search data or canonical Wikipedia. For all other cited authorities, use plain text [Author/Institution (Year)] without markdown hyperlinks.
-- Use LSI keywords naturally throughout (not stuffed).
-- Include 3-5 FAQ Q&As matching common user query patterns.
-- READABILITY MANDATE: Write in clear, active, engaging American English at an accessible 7th-grade to 8th-grade reading level (Flesch-Kincaid 7.0–8.0, Flesch Reading Ease 65–75). Keep sentences clear, punchy, and direct (average 12–16 words). Avoid dense academic jargon.
-- Tone: authoritative yet engaging human voice, active voice, sentence variety, no AI clichés.
-- Brand integrity: Always format company brand strictly as 'JetDigitalPro' (one word, PascalCase).
-- Internal links to incorporate (may be multiple): {{internal_links}}
-- CONCLUSION SECTION (CRITICAL): NEVER use generic "## Conclusion", "## In Conclusion", or "## Summary". Always write an engaging, contextual H2 heading that reflects the topic and action (e.g., "## Wrapping Up: Mastering [Topic]", "## Final Takeaways: Keeping Your [Topic] Thriving"). Summarize key actionable lessons and end with CTA: {{cta}}.
+	- Include at least 1 structured Markdown comparison table (3-5 columns, >=3 rows). Every claim/number should cite the source by name as plain text [Source, Year]; do NOT invent hyperlinks.
+	- Include at least 3 statistics from authoritative sources with citations.
+	- STRICT MINIMAL BOLDING MANDATE: NEVER use excessive bolding. Do NOT bold technical terms, tool names, libraries, frameworks, or keywords inside sentences (e.g. never bold Docker, Gitleaks, npm, CI/CD, SAST, OWASP in body text). Bolding is strictly reserved for: 1) list item lead-ins (* **Category**: description), 2) table column headers (| **Header** |), and 3) blockquote attribution lines (> — **Author Name**). Do NOT bold words in body sentences for emphasis. Keep prose clean, readable, and professional.
+	- CITATION & QUOTE RULES (CRITICAL):
+	  * Verbatim Quote: Include 1–2 authentic verbatim quotes in blockquotes with separate attribution line below, AND MANDATORY CLICKABLE REFERENCE LINK to verified source:
+	    > "[Exact statement or core finding]"
+	    > — **[Author Name or Institution]**, [*[Publication / Organization Title]*](URL), Year
+	  * Source Hyperlink Requirement: The publication or organization title in the quote attribution line MUST be a clickable link to the verified live URL from the research data or canonical Wikipedia.
+	  * Anti-Spam "According to": The phrase "According to" must NEVER be spammed (at most ONCE in the entire article). Use varied, natural phrasing ("Research from [Source] shows...", "[Institution] guidelines recommend...", parenthetical citations, etc.).
+	  * External Links Cap: Maximum 3–5 external links across the ENTIRE article. Only link to verified live URLs from Firecrawl search data or canonical Wikipedia. For all other cited authorities, use plain text [Author/Institution (Year)] without markdown hyperlinks.
+	- Use LSI keywords naturally throughout without bolding them.
+	- Include 3-5 FAQ Q&As matching common user query patterns. Keep FAQ answers as clean prose without bolding keywords.
+	- READABILITY MANDATE: Write in clear, active, engaging American English at an accessible 7th-grade to 8th-grade reading level (Flesch-Kincaid 7.0–8.0, Flesch Reading Ease 65–75). Keep sentences clear, punchy, and direct (average 12–16 words). Avoid dense academic jargon.
+	- Tone: authoritative yet engaging human voice, active voice, sentence variety, no AI clichés.
+	- Brand integrity: Always format company brand strictly as 'JetDigitalPro' (one word, PascalCase).
+	- INTERNAL LINKS INTEGRATION (STRICT ZERO-HALLUCINATION RULE):
+	  Provided Internal Links: {{internal_links}}
+	  * If valid internal URLs are provided, embed them naturally as Markdown hyperlinks [contextual anchor phrase](url).
+	  * If {{internal_links}} is empty, "None", or absent: STRICTLY DO NOT ADD, INVENT, OR FORCE ANY INTERNAL LINKS! Strictly 0 internal links. Never fabricate links to your own domain or slug if none were supplied.
+	- WIKIPEDIA-STYLE REFERENCES LIST (MANDATORY AT END OF ARTICLE):
+	  At the very end of the article, include a numbered "## References" section formatting all external citation links into Wikipedia-style references:
+	  * With Author: Author Last, First. [“Page Title.”](URL) *Website Name*, Publication Date. Accessed 2026.
+	  * No Author: [“Page Title.”](URL) *Website Name*, Publication Date. Accessed 2026.
+	  Numbered list only.
+	- CONCLUSION SECTION (CRITICAL): NEVER use generic "## Conclusion", "## In Conclusion", or "## Summary". Always write an engaging, contextual H2 heading that reflects the topic and action (e.g., "## Wrapping Up: Mastering [Topic]", "## Final Takeaways: Keeping Your [Topic] Thriving"). Summarize key actionable lessons and end with CTA: {{cta}}.
 - STRICT CONTENT FORMATTING RULE: The article must consist ONLY of: 1) Standard prose paragraphs with H1, H2, H3 headings, bold text, and blockquotes (>); 2) Structured Markdown comparison tables (| Col 1 | Col 2 |); 3) Numbered or bulleted Markdown lists.
   STRICTLY FORBIDDEN:
   - NO ASCII art, text boxes, flowcharts, or process maps.
@@ -348,7 +361,8 @@ You are an SEO expert specializing in FAQ schema and People Also Ask optimizatio
 
 **User Prompt Template:**
 ```
-Generate 5-7 FAQ Q&As for "{{keyword}}". Match real People Also Ask query patterns. Answers must be 40-60 words, direct, factual. Include schema-ready HTML if needed.
+	Generate 5-7 FAQ Q&As for "{{keyword}}". Match real People Also Ask query patterns. Answers must be 40-60 words, direct, factual. Include schema-ready HTML if needed.
+	STRICT MINIMAL BOLDING: DO NOT bold any keywords, tool names, or technical terms in FAQ answers. Keep answers as clean, unbolded prose.
 
 Article context:
 {{article}}
@@ -425,7 +439,7 @@ CITATION FORMATS:
 
 TYPE A — MANDATORY VERBATIM QUOTE (Include 1 to 2 in article):
 > "[Authentic quote, key finding, or direct statement from research context or expert consensus]"
-> — **[Author Name / Authority Institution]**, *[Publication / Organization, Year]*
+> — **[Author Name / Authority Institution]**, [*[Publication / Organization Title]*](URL), Year
 
 TYPE B — NATURAL PARAPHRASED CITATION (Varied phrasing, NEVER spam "According to"):
 - Data-led: "Trial data from [Author/Org (Year)] shows that [finding]."
@@ -434,9 +448,10 @@ TYPE B — NATURAL PARAPHRASED CITATION (Varied phrasing, NEVER spam "According 
 - Attribution verb: "In a [Year] review, [Institution] observed that [finding]."
 
 STRICT RULES:
-1. MANDATORY VERBATIM QUOTES: Article MUST include 1–2 authentic verbatim quotes in blockquotes using quotation marks. Ground them in findings from the Research Context.
+1. MANDATORY VERBATIM QUOTES WITH SOURCE LINK: Article MUST include 1–2 authentic verbatim quotes in blockquotes using quotation marks. The attribution line MUST include a clickable markdown link to the verified source URL from Research Data/Firecrawl or Wikipedia on the publication/source title. BANNED IN BLOCKQUOTES: NEVER write "> According to [Source]..." inside blockquotes.
 2. ANTI-SPAM "ACCORDING TO": The phrase "According to" must appear at most ONCE in the entire article. Use the natural varied phrasing patterns above.
-3. EXTERNAL LINKS CAP (MAX 3–5 IN ENTIRE ARTICLE):
+3. STRICT MINIMAL BOLDING: Do NOT add bolding to random words or technical terms.
+4. EXTERNAL LINKS CAP (MAX 3–5 IN ENTIRE ARTICLE):
    - Only add a markdown hyperlink [Source](URL) if the URL is a verified live link from the Research Context (Firecrawl) or a canonical Wikipedia entity (https://en.wikipedia.org/wiki/... with parens encoded as %28 %29).
    - If citing an authority or study without a confirmed live URL, cite as PLAIN TEXT: [Institution (Year)] — DO NOT construct fake URLs, deep PDF paths, or unverified subdirectories.
    - Total external links in the entire article must NOT exceed 3–5.
@@ -886,53 +901,62 @@ Return JSON:
 You are an expert Content Editor and SEO Strategist. Insert provided internal links contextually across the article.
 ```
 
-**User Prompt Template:**
-```
-Insert internal links into article: {{article}}.
+	**User Prompt Template:**
+	```
+	Insert internal links into article: {{article}}.
 
-Provided internal links (may be multiple, separated by newlines or commas):
-{{internal_links}}
+	Provided internal links (may be multiple, separated by newlines or commas):
+	{{internal_links}}
 
-Rules:
-1) Extract meaningful target anchor keywords or phrases from the URL slugs or path names. If linking to homepage or company brand, anchor text MUST be strictly 'JetDigitalPro' (one word, PascalCase). NEVER write 'jet digital pro'.
-2) Insert ALL provided internal links (or 2-5 distinct links) across separate, contextually relevant sections of the article.
-3) Natural integration — integrate into the natural flow of sentences. Do not use generic anchors like 'click here', 'read more', or raw naked URLs.
-4) Return ONLY the full revised article in Markdown starting directly with the H1 title. No commentary, no Before/After preamble. Maintain strict formatting: text, tables, and lists only. No numbered headings.
-5) Contextual relevance: ensure every link is placed where it adds natural value for the reader.
-```
+	Rules:
+	1) ZERO-HALLUCINATION / EMPTY CHECK (CRITICAL): If no internal links are provided in {{internal_links}} (or if it says "None"), return the original article UNTOUCHED! Do NOT add, invent, or force ANY internal links. Strictly 0 internal links.
+	2) Extract meaningful target anchor keywords or phrases from the URL slugs or path names. If linking to homepage or company brand, anchor text MUST be strictly 'JetDigitalPro' (one word, PascalCase). NEVER write 'jet digital pro'.
+	3) Insert ALL provided internal links (or 2-5 distinct links) across separate, contextually relevant sections of the article.
+	4) Natural integration — integrate into the natural flow of sentences. Do not use generic anchors like 'click here', 'read more', or raw naked URLs.
+	5) Return ONLY the full revised article in Markdown starting directly with the H1 title. No commentary, no Before/After preamble. Maintain strict formatting: text, tables, and lists only. No numbered headings.
+	6) Contextual relevance: ensure every link is placed where it adds natural value for the reader.
+	```
 
----
+	---
 
-### 4B External Linking
+	### 4B External Linking
 
-**Model:** `pesat-flash` | **Output:** Markdown | **Temp:** 0.3 | **Max Tokens:** 4500
+	**Model:** `pesat-flash` | **Output:** Markdown | **Temp:** 0.3 | **Max Tokens:** 4500
 
-**System Prompt:**
-```
-You are an expert Fact-Checker and SEO Citation Strategist. Ensure the article has strictly 3-5 high-quality external links to verified, live, topically relevant sources. You NEVER exceed 5 external links and NEVER use broken, 404, or 403 bot-blocked URLs.
-```
+	**System Prompt:**
+	```
+	You are an expert Fact-Checker and SEO Citation Strategist. Ensure the article has strictly 3-5 high-quality external links in the body to verified live sources, and format a strict Wikipedia-style References list at the end.
+	```
 
-**User Prompt Template:**
-```
-Audit and optimize external links in this article about '{{keyword}}'.
+	**User Prompt Template:**
+	```
+	Audit and optimize external links in this article about '{{keyword}}'.
 
-Article:
-{{article}}
+	Article:
+	{{article}}
 
-Research Data & Verified Sources:
-{{info_gain}}
-{{external_links}}
+	Research Data & Verified Sources:
+	{{info_gain}}
+	{{external_links}}
 
-STRICT EXTERNAL LINK RULES (CRITICAL):
-1. HARD LIMIT: The entire article must have strictly 3 to 5 external links total. If the article currently has more than 5 external links, remove the hyperlinks from the excess ones, keeping the text as clean plain text.
-2. VERIFIED LIVE GROUNDING: Only link to URLs explicitly verified in the Research Data (Firecrawl live search results) or canonical Wikipedia topic pages (https://en.wikipedia.org/wiki/... with percent-encoded parens %28 %29).
-3. FORBIDDEN DOMAINS & BROKEN URLS:
-   - NEVER link to bot-blocked or paywalled domains: gartner.com, forbes.com, bloomberg.com, wsj.com, businessinsider.com, bifma.org, nngroup.com, nih.gov root. Mention them as plain text only.
-   - NEVER invent deep .edu, .gov, or journal sub-paths (e.g. publication detail IDs, deep PDF links).
-   - If a source was not found with a working URL in the Research Data, leave it as plain text: [Author / Institution (Year)].
-4. NATURAL ANCHOR TEXT: Link descriptive entities or concepts (e.g. [Crassulacean acid metabolism](https://...)), never generic "click here" or raw URLs.
-5. BRAND INTEGRITY: Ensure company brand is strictly 'JetDigitalPro' (PascalCase).
-6. Return ONLY the full revised article in Markdown starting directly with the H1 title. No commentary. Strict formatting: text, tables, and lists only. No numbered headings.
+	STRICT EXTERNAL LINK & REFERENCES RULES (CRITICAL):
+	1. PRESERVE ALL INTERNAL LINKS (MANDATORY): DO NOT remove, alter, or strip any internal links provided by the user. If no internal links were provided, do NOT invent any.
+	2. HARD LIMIT: The entire article body must have strictly 3 to 5 external links total. If the article currently has more than 5 external links, remove the hyperlinks from the excess ones, keeping the text as clean plain text.
+	3. VERIFIED LIVE GROUNDING: Only link to URLs explicitly verified in the Research Data (Firecrawl live search results) or canonical Wikipedia topic pages (https://en.wikipedia.org/wiki/... with percent-encoded parens %28 %29).
+	4. FORBIDDEN DOMAINS & BROKEN URLS:
+	   - NEVER link to bot-blocked or paywalled domains: gartner.com, forbes.com, bloomberg.com, wsj.com, businessinsider.com, bifma.org, nngroup.com, nih.gov root. Mention them as plain text only.
+	   - NEVER invent deep .edu, .gov, or journal sub-paths (e.g. publication detail IDs, deep PDF links).
+	   - If a source was not found with a working URL in the Research Data, leave it as plain text: [Author / Institution (Year)].
+	5. QUOTE SOURCE LINKS: Ensure every blockquote attribution line has a clickable markdown link to the verified source on the publication/source title.
+	6. STRICT MINIMAL BOLDING: Remove unnecessary bolding around technical terms or keywords inside sentences. Bolding is strictly for list lead-ins, table headers, and quote attributions.
+	7. NATURAL ANCHOR TEXT: Link descriptive entities or concepts (e.g. [Crassulacean acid metabolism](https://...)), never generic "click here" or raw URLs.
+	8. WIKIPEDIA-STYLE REFERENCES LIST (MANDATORY AT END OF ARTICLE):
+	   At the very end of the article, create a numbered "## References" section converting all external links into Wikipedia-style references:
+	   - With Author: Author Last, First. [“Page Title.”](URL) *Website Name*, Publication Date. Accessed 2026.
+	   - No Author: [“Page Title.”](URL) *Website Name*, Publication Date. Accessed 2026.
+	   Extract author, exact headline title, publication date, and proper website name from the verified Research Data/Firecrawl context. Never invent metadata. Numbered list only.
+	9. BRAND INTEGRITY: Ensure company brand is strictly 'JetDigitalPro' (PascalCase).
+	10. Return ONLY the full revised article in Markdown starting directly with the H1 title. No commentary. Strict formatting: text, tables, and lists only. No numbered headings.
 ```
 
 ---

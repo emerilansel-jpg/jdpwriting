@@ -1,7 +1,7 @@
-# JDP Writing Pipeline — Cold Start Guide (v3.2)
+# JDP Writing Pipeline — Cold Start Guide (v3.3)
 
 > Panduan orientasi cepat (onboarding) untuk developer & AI agent.
-> Status: **Production Ready** · Last Updated: **2026-11-04**
+> Status: **Production Ready** · Last Updated: **2026-11-05**
 
 ---
 
@@ -148,6 +148,10 @@ Sistem penulisan menggunakan kombinasi **Search Engine Retrieval (Firecrawl API)
 | **Pipeline lambat (~110-120s), hilangnya hasil optimasi 2B/2E/2F, & kelemahan link slug lintas topik** | 1. Step 2B (Intro Hook), 2E (PAA FAQ), dan 2F (Conclusion & CTA) sebelumnya tidak terintegrasi ke naskah artikel final, menyebabkan hasil optimasi terbuang.<br>2. Pipeline memiliki artificial sleep berlebihan (500ms + 100ms per step) yang membuang ~12s.<br>3. Track 2K (Evaluator), Track Phase 4 (Link Insertion: 4A-4B), dan Track Phase 3 (Visuals: 3A-3C) dijalankan sekuensial kaku padahal ketiganya independen setelah `2J_article` selesai.<br>4. `fetch` tidak memiliki `AbortSignal` timeout sehingga rentan freeze jika gateway/Firecrawl lambat.<br>5. Filter kata slug `w.length > 2` pada `injectMissingInternalLinks` melucuti kata 'to'/'a'/'an' pada slug `how-to-`, sehingga gagal mencocokkan frasa alami di luar topik botani.<br>6. Replacement string JS dengan tanda `$` rentan ekspansi backreference regex (`$1`).<br>7. `pesat-x-jev` sangat krusial untuk fact-check & fix; jika gagal atau kehabisan token, hasil pipeline menjadi tidak reliabel.<br>8. Download Markdown riwayat artikel tidak memiliki H1 jika raw body tersimpan. | 1. **Integrasi Penuh 23 Step**: Buat engine merger deterministik `mergeIntroIntoArticle` (menenun hook 2B ke pembuka naskah tanpa merusak H1/byline), `mergeFaqIntoArticle` (menyematkan 5 Q&A PAA 2E ke body), dan `mergeConclusionIntoArticle` (mengganti penutup kaku dengan kesimpulan & CTA 2F). Seluruh 23 step aktif 100% dan terakumulasi ke naskah deliverable.<br>2. **Reliabilitas Maksimal `pesat-x-jev`**: Dedikasikan token budget per artikel, perkuat retry loop 2x dengan timeout guard 90s, dan pastikan auto-patching `applyFactCheckFixes` memvalidasi integritas fakta, kutipan, dan link sebelum dialirkan ke downstream.<br>3. **Optimasi Kecepatan 3-Track Paralel**: Eksekusi 2A (metadata) & 2B (intro) secara concurrent, serta 3 track independen downstream `2J_article` via `Promise.all` (Track 1: 2K // Track 2: Phase 4 [4A->4B] // Track 3: Phase 3 [3A->3B->3C]). Pangkas delay 500ms -> 40ms. Durasi pipeline turun dari ~120s+ menjadi **~70–80s** dengan **100% KUALITAS, FITUR, & INTEGRITAS DATA LENGKAP**.<br>4. Sematkan `AbortSignal` timeout guard (60s/90s pada LLM dan 15s pada Firecrawl).<br>5. Perbarui parser internal link: preservasi kata pendek, strip prefix `how-to-`, dan otomatis generate konjugasi gerund alami (`calibrate` -> `calibrating`, `save` -> `saving`).<br>6. Gunakan `() => fix` pada replacer fact-check agar aman simbol `$` dan angka.<br>7. Terapkan failover otomatis `pesat-x-jev` ke `pesat-flash` hanya jika token benar-benar tidak mencukupi (< 500 tok).<br>8. Pastikan download history Markdown otomatis menyematkan H1 dan E-E-A-T byline lengkap. |
 | **Kebocoran Invisible Unicode & AI Watermarks (ZWSP, NBSP, Bidi, Soft Hyphens)** | Output mentah LLM atau sumber web Firecrawl dapat membawa zero-width characters (ZWSP, ZWJ, ZWNJ), non-breaking spaces (NBSP), bidi markers, dan format artifacts yang terdeteksi oleh AI detectors / Google crawler. | 1. Terapkan **Layer A Anti-AI-Marks & Steganography Stripper** deterministik di awal `sanitizeArticleContent()`.<br>2. Hapus zero-width spaces (`\u200B`, `\uFEFF`, `\u2060`), soft hyphens (`\u00AD`), bidi controls (`\u202A-\u202E`, `\u2066-\u2069`), tag characters steganografi (`\uE0001-\uE007F`), dan isolated variation selectors tanpa merusak composite emoji (`👨‍👩‍👧`, `❤️`).<br>3. Normalisasi seluruh space homoglyphs (NBSP `\u00A0`, em-space, thin space) ke ASCII space standar `\u0020`. |
 | **Race Condition pada Eksekusi Paralel (Step 2A Background & Downstream 3-Track) & Duplikasi Byline E-E-A-T** | 1. Mutasi shared global state `currentStepIdx` pada saat paralelisme cabang downstream menyebabkan race condition pada `stepOutputs` dan timeout guard.<br>2. Byline editorial ganda muncul pada saat artikel disalin (`copyCleanArticleOnly`) atau diekspor ke bundle jika draf mentah sudah memiliki byline.<br>3. Sanitizer memotong link eksternal pada batas 4 (kurang dari batas atas SOP 5).<br>4. URL parsing pada link generator rentan error jika instance URL kustom tidak memiliki `.pathname`. | 1. **Thread-Safe Step Execution**: Tambahkan argumen `targetStepId` ke `callLLM`, `runTestInternal`, dan `showResults` sehingga setiap operasi paralel menulis ke step ID yang benar tanpa bergantung pada pointer global.<br>2. **Byline Deduplication**: Pastikan `buildFullArticleBundle`, `renderDeliverableModal`, dan `copyCleanArticleOnly` membersihkan format `*By [Brand] Editorial Team...*` yang ada pada draf mentah sebelum menyematkan byline tunggal terformat.<br>3. **External Link Cap Presisi**: Sesuaikan filter `extCount > 5` agar tepat menampung hingga 5 tautan eksternal otoritatif sesuai SOP.<br>4. **Robust URL Path Resolution**: Tambahkan fallback ekstraksi regex pada `injectMissingInternalLinks` jika method `URL` gagal atau menghasilkan undefined. |
+| **Halusinasi Internal Links Saat Input Kosong** | 1. Variabel internal links sebelumnya otomatis di-fallback ke `https://jetdigitalpro.com/${slug}` jika kosong, sehingga memicu LLM mengarang internal link.<br>2. Prompt Step 1E & 4A memerintahkan penanaman tautan internal tanpa memeriksa apakah user memang memasukkan link.<br>3. Step 4A tetap memanggil LLM meski input kosong. | 1. **Zero-Hallucination Guard**: Hapus fallback auto-assign link pada variabel prompt (`vars.internal_links = ''` jika kosong).<br>2. **Negative Prompt Constraint**: Prompt 1D, 1E, dan 4A dilengkapi instruksi mutlak: jika internal links kosong atau "None", DILARANG KERAS membuat/mengarang tautan internal (strictly 0 internal links).<br>3. **Auto-Pass Step 4A**: Step 4A otomatis di-skip (pass-through) tanpa memanggil LLM jika input link kosong, menghemat token dan waktu eksekusi.<br>4. **Sanitizer Defense**: Jika user tidak mengisi internal links, sanitizer otomatis melucuti tautan internal fiktif/self-domain menjadi anchor text biasa. |
+| **Bold Berlebihan pada Teks Isi (Excessive AI Bold Spam)** | Prompt 1D dan 1E sebelumnya menginstruksikan `bold key statistics and named entities`, menyebabkan model mem-bold puluhan istilah teknis dan nama tools di setiap kalimat. | 1. **Strict Minimal Bolding Mandate**: Hapus aturan bolding istilah pada prompt 1D, 1E, 2C, 2D, 2E. Tetapkan aturan tegas bahwa bold HANYA diizinkan untuk label lead-in bullet list (`* **Label**: text`), header tabel (`\| **Col** \|`), dan atribusi kutipan.<br>2. **Deterministic Bold Cleaner**: Fungsi `deClutterExcessiveBolding()` pada sanitizer secara deterministik melucuti bolding kata di tengah kalimat body teks biasa tanpa merusak list label dan header tabel. |
+| **Kutipan Verbatim Kehilangan Link Referensi** | Format kutipan TYPE A sebelumnya hanya mencantumkan nama publikasi cetak miring tanpa hyperlink (`*Publication, Year*`). | 1. **Mandatory Quote Source Link**: Standarisasi format TYPE A pada prompt 1E, 2H, 2J, dan 4B mewajibkan tautan aktif markdown pada judul sumber: `> — **Author**, [*Publication Title*](URL), Year`.<br>2. **Auto-Link Quote Sanitizer**: Fungsi `ensureQuoteSourceLinks()` otomatis mencocokkan atribusi kutipan dengan tautan riset terverifikasi (Firecrawl/Wikipedia) dan menanam hyperlink jika model melewatkannya. |
+| **Ketiadaan Daftar Pustaka Gaya Wikipedia** | Artikel tidak memiliki rekapitulasi referensi terstruktur di akhir naskah. | 1. **Wikipedia-Style References Prompt**: Injeksi protokol sitasi gaya Wikipedia zero-trust pada Step 4B dan draf artikel akhir.<br>2. **Deterministic References Generator**: Fungsi `formatWikipediaReferences()` secara otomatis mengompilasi seluruh sitasi eksternal menjadi daftar bernomor `## References` di akhir artikel dengan format standar Wikipedia (`Author Last, First. [“Page Title.”](URL) *Website Name*, Publication Date. Accessed 2026`). |
 
 
 ---
@@ -171,64 +175,84 @@ Berdasarkan audit evaluasi kualitas editorial, diterapkan 4 pilar standar baru d
   4. *Direct Attribution Verb*: "Dalam publikasi resminya, [Institution (Year)] mencatat bahwa..."
   5. *Quote-Led*: `"[Pernyataan kutipan],"` tegas [Author/Expert] dari [Institution].
 
-### 3. Standar Verbatim Quote (TYPE A Terverifikasi)
-- **Wajib Hadir**: Setiap artikel wajib memiliki **1 hingga 2 kutipan verbatim otentik** bertanda kutip ganda (`"..."`) dalam format blockquote:
-  ```markdown
-  > "[Pernyataan otentik, temuan kunci, atau kesimpulan dari studi/institusi]"
-  > — **[Nama Penulis / Ahli]**, *[Institusi / Publikasi, Tahun]*
-  ```
-- **Larangan Total Paraphrase Datar**: Dilarang 100% hanya menyajikan sitasi parafrase tanpa quote verbatim. Verbatim quote diambil dari intisari atau abstrak riset Firecrawl.
-- **Keseimbangan Editorial**: 1–2 Verbatim Quote (TYPE A) + 1–2 Parafrase Natural = Total 3–4 sitasi otoritatif di seluruh artikel.
+	### 3. Standar Verbatim Quote (TYPE A Terverifikasi dengan Link Sumber)
+	- **Wajib Hadir**: Setiap artikel wajib memiliki **1 hingga 2 kutipan verbatim otentik** bertanda kutip ganda (`"..."`) dalam format blockquote:
+	  ```markdown
+	  > "[Pernyataan otentik, temuan kunci, atau kesimpulan dari studi/institusi]"
+	  > — **[Nama Penulis / Ahli]**, [*[Publikasi / Organisasi]*](URL), Tahun
+	  ```
+	- **Wajib Link Aktif ke Sumber**: Baris atribusi kutipan WAJIB menyertakan markdown hyperlink aktif ke URL sumber terverifikasi (Firecrawl atau Wikipedia canonical) pada judul publikasi/sumber.
+	- **Larangan Total Paraphrase Datar**: Dilarang 100% hanya menyajikan sitasi parafrase tanpa quote verbatim. Verbatim quote diambil dari intisari atau abstrak riset Firecrawl.
+	- **Keseimbangan Editorial**: 1–2 Verbatim Quote (TYPE A) + 1–2 Parafrase Natural = Total 3–4 sitasi otoritatif di seluruh artikel.
 
-### 4. Heading Penutup Menarik (Dilarang Kata "Conclusion" Mentah)
-- **Dilarang Keras**: `## Conclusion`, `## In Conclusion`, atau `## Summary`.
-- **Wajib Contextual & Action-Driven**: Heading penutup wajib menggambarkan topik dan aksi nyata:
-  - Contoh: `## Wrapping Up: Mastering Jade Plant Nutrition for Long-Term Growth`
-  - Contoh: `## Final Takeaways: Keeping Your Succulent Sturdy and Thriving`
-  - Contoh: `## Your Action Plan: Healthy Growth in Every Season`
-- **Format Paragraf**: 2 paragraf padat (maks 120 kata). Paragraf 1 merangkum solusi inti tanpa trio klise. Paragraf 2 menyertakan nama brand dinamis `{{brand_name}}` dan CTA yang menguatkan pembaca.
-- **Sanitizer Fallback**: Jika LLM tidak sengaja mengeluarkan `## Conclusion`, sanitizer otomatis menggantinya menjadi heading penutup kontekstual.
+	### 4. Heading Penutup Menarik (Dilarang Kata "Conclusion" Mentah)
+	- **Dilarang Keras**: `## Conclusion`, `## In Conclusion`, atau `## Summary`.
+	- **Wajib Contextual & Action-Driven**: Heading penutup wajib menggambarkan topik dan aksi nyata:
+	  - Contoh: `## Wrapping Up: Mastering Jade Plant Nutrition for Long-Term Growth`
+	  - Contoh: `## Final Takeaways: Keeping Your Succulent Sturdy and Thriving`
+	  - Contoh: `## Your Action Plan: Healthy Growth in Every Season`
+	- **Format Paragraf**: 2 paragraf padat (maks 120 kata). Paragraf 1 merangkum solusi inti tanpa trio klise. Paragraf 2 menyertakan nama brand dinamis `{{brand_name}}` dan CTA yang menguatkan pembaca.
+	- **Sanitizer Fallback**: Jika LLM tidak sengaja mengeluarkan `## Conclusion`, sanitizer otomatis menggantinya menjadi heading penutup kontekstual.
 
-### 5. Adaptasi Brand Dinamis & Proteksi Tautan Internal
-- **Deteksi Otomatis Brand (Zero-Config)**: Nama brand otomatis diinferensi dari hostname `internal_links` (misal: `https://knowngarden.com/...` -> `KnownGarden`).
-- **Input Kustom Fleksibel**: Jika link internal belum dimasukkan, user dapat menginput nama brand di Writer Mode (`wv-brand`) atau Dev Mode (`ti-brand`).
-- **Byline Editorial E-E-A-T Dinamis**: Byline di bawah H1 otomatis menyesuaikan brand: `*By [Brand] Editorial Team | Botanically & Fact-Checked by Specialists | Updated 2026*`.
-- **Integrasi Tautan Internal Parsial & Zero-Referral**:
-  - **Partial Keywords Anchor**: Ekstrak kata kunci parsial/inti dari slug URL (contoh: `how to fertilize jade plants` -> `fertilize`, `fertilizing jade plants`; `how to save a dying jade plant` -> `[saving a dying jade plant](url)`). Dilarang memakai slug mentah atau frasa mekanis panjang.
-  - **Zero Meta/Referral Language (BANNED)**: Dilarang keras memakai kata `guide`, `resource`, `article`, atau pola percakapan `check this guide on [X]`, `see our guide on [X]`, `resources on [X]`, `if you need more details check [X]`, `as emphasized on this article`.
-  - **Natural Declarative Grammar**: Tautan wajib menjadi bagian tata bahasa alami kalimat deklaratif (subjek/predikat/objek):
-    * *GOOD:* "When root decay is caught early, [saving a dying jade plant](url) requires trimming blackened tissue before repotting."
-    * *GOOD:* "Successful [jade plant propagation](url) depends on letting raw stem cuttings dry thoroughly in shade before potting."
-    * *GOOD:* "Unlike [propagating a philodendron](url) where cuttings root in plain water, succulent stems rot if submerged."
-    * *BANNED:* "If your jade is sick, check this guide on [how to save a dying jade plant] for tips."
-- **Hard Protection Layer (Step 4B & Sanitizer)**: Batas kuota 3-5 external link HANYA berlaku untuk sitasi web eksternal (Wikipedia/riset). Seluruh link internal ke domain brand (`{{brand_domain}}`) diproteksi 100% dan tidak pernah dilucuti menjadi teks biasa.
+	### 5. Adaptasi Brand Dinamis & Proteksi Tautan Internal (Zero-Hallucination)
+	- **Deteksi Otomatis Brand (Zero-Config)**: Nama brand otomatis diinferensi dari hostname `internal_links` (misal: `https://knowngarden.com/...` -> `KnownGarden`).
+	- **Input Kustom Fleksibel**: Jika link internal belum dimasukkan, user dapat menginput nama brand di Writer Mode (`wv-brand`) atau Dev Mode (`ti-brand`).
+	- **Byline Editorial E-E-A-T Dinamis**: Byline di bawah H1 otomatis menyesuaikan brand: `*By [Brand] Editorial Team | Independently Fact-Checked by Subject Specialists | Updated 2026*`.
+	- **Zero-Hallucination Internal Links Policy**:
+	  * **Jika Input Kosong**: DILARANG KERAS memaksa input internal link atau mengarang URL slug sendiri (misal ke domain default). Jika user tidak mengisi internal link, artikel WAJIB memiliki **0 tautan internal**. Step 4A otomatis di-skip (pass-through), dan sanitizer secara deterministik melucuti tautan internal fiktif jika model mencoba berhalusinasi.
+	  * **Jika Input Disediakan**: Integrasikan seluruh URL yang diberikan (2-5 links) sebagai tautan aktif Markdown `[anchor](url)` secara alami.
+	- **Integrasi Tautan Internal Parsial & Zero-Referral**:
+	  - **Partial Keywords Anchor**: Ekstrak kata kunci parsial/inti dari slug URL (contoh: `how to fertilize jade plants` -> `fertilize`, `fertilizing jade plants`; `how to save a dying jade plant` -> `[saving a dying jade plant](url)`). Dilarang memakai slug mentah atau frasa mekanis panjang.
+	  - **Zero Meta/Referral Language (BANNED)**: Dilarang keras memakai kata `guide`, `resource`, `article`, atau pola percakapan `check this guide on [X]`, `see our guide on [X]`, `resources on [X]`, `if you need more details check [X]`, `as emphasized on this article`.
+	  - **Natural Declarative Grammar**: Tautan wajib menjadi bagian tata bahasa alami kalimat deklaratif (subjek/predikat/objek):
+	    * *GOOD:* "When root decay is caught early, [saving a dying jade plant](url) requires trimming blackened tissue before repotting."
+	    * *GOOD:* "Successful [jade plant propagation](url) depends on letting raw stem cuttings dry thoroughly in shade before potting."
+	    * *GOOD:* "Unlike [propagating a philodendron](url) where cuttings root in plain water, succulent stems rot if submerged."
+	    * *BANNED:* "If your jade is sick, check this guide on [how to save a dying jade plant] for tips."
+	- **Hard Protection Layer (Step 4B & Sanitizer)**: Batas kuota 3-5 external link HANYA berlaku untuk sitasi web eksternal (Wikipedia/riset). Seluruh link internal ke domain brand (`{{brand_domain}}`) diproteksi 100% dan tidak pernah dilucuti menjadi teks biasa.
 
-### 6. Universal Cross-Domain Fact-Checking & Domain Accuracy
-Fact-checking dan validasi akurasi teknis di pipeline **TIDAK TERBATAS PADA TOPIK BOTANI**, melainkan berlaku universal untuk seluruh ceruk (teknologi, finansial, kuliner, kesehatan, SaaS, otomotif, perkakas, dll.):
-- **Fidelitas Parameter & Spesifikasi**: Seluruh angka teknis, sintaks perintah/CLI, rasio, toleransi, voltase, tekanan bar, suhu, dosis, timeline, dan ambang batas regulasi wajib bersumber langsung dari Research Data terverifikasi (`{{info_gain}}`) atau standar konsensus resmi industri (IEEE, NIST, ISO, W3C, EPA, WHO, extension universitas).
-- **Larangan Angka Non-Standar / Fabrikasi**: Dilarang keras mengarang angka spesifikasi yang tidak diverifikasi. Contoh di botani: gunakan rasio standar 10-10-10 atau 2-7-7 (dilarang 2-4-3); di kopi: gunakan standar rasio seduh espresso 1:2 dan tekanan 9 bar; di software/tech: gunakan flag CLI dan parameter kompatibilitas OS yang sah.
-- **Kebenaran Bersyarat & Nuansa**: Dilarang membuat klaim tanpa batas kondisi jika di dunia nyata terdapat prasyarat mutlak (contoh: pemupukan musim dingin hanya jika ada pertumbuhan daun aktif; overclocking membutuhkan ruang termal; leverage finansial membutuhkan mitigasi stop-loss).
-- **Bahasa Kausal vs Asosiatif**: Data observasional wajib menggunakan bahasa asosiatif ("berkorelasi dengan", "berhubungan dengan"); bahasa kausalitas langsung ("menyebabkan") hanya untuk eksperimen ilmiah/RCT terkontrol.
-- **Universal E-E-A-T Byline**: Byline editorial menggunakan frasa agnostik-domain: `*By [Brand] Editorial Team | Independently Fact-Checked by Subject Specialists | Updated 2026*`.
+	### 6. Universal Cross-Domain Fact-Checking & Domain Accuracy
+	Fact-checking dan validasi akurasi teknis di pipeline **TIDAK TERBATAS PADA TOPIK BOTANI**, melainkan berlaku universal untuk seluruh ceruk (teknologi, finansial, kuliner, kesehatan, SaaS, otomotif, perkakas, dll.):
+	- **Fidelitas Parameter & Spesifikasi**: Seluruh angka teknis, sintaks perintah/CLI, rasio, toleransi, voltase, tekanan bar, suhu, dosis, timeline, dan ambang batas regulasi wajib bersumber langsung dari Research Data terverifikasi (`{{info_gain}}`) atau standar konsensus resmi industri (IEEE, NIST, ISO, W3C, EPA, WHO, extension universitas).
+	- **Larangan Angka Non-Standar / Fabrikasi**: Dilarang keras mengarang angka spesifikasi yang tidak diverifikasi. Contoh di botani: gunakan rasio standar 10-10-10 atau 2-7-7 (dilarang 2-4-3); di kopi: gunakan standar rasio seduh espresso 1:2 dan tekanan 9 bar; di software/tech: gunakan flag CLI dan parameter kompatibilitas OS yang sah.
+	- **Kebenaran Bersyarat & Nuansa**: Dilarang membuat klaim tanpa batas kondisi jika di dunia nyata terdapat prasyarat mutlak (contoh: pemupukan musim dingin hanya jika ada pertumbuhan daun aktif; overclocking membutuhkan ruang termal; leverage finansial membutuhkan mitigasi stop-loss).
+	- **Bahasa Kausal vs Asosiatif**: Data observasional wajib menggunakan bahasa asosiatif ("berkorelasi dengan", "berhubungan dengan"); bahasa kausalitas langsung ("menyebabkan") hanya untuk eksperimen ilmiah/RCT terkontrol.
+	- **Universal E-E-A-T Byline**: Byline editorial menggunakan frasa agnostik-domain: `*By [Brand] Editorial Team | Independently Fact-Checked by Subject Specialists | Updated 2026*`.
 
-### 7. Integrasi Model `pesat-x-jev` & Token Budget Limiter (Testing)
-- **Fokus Eksklusif (Solely Fact-Check & Fix)**: Model `pesat-x-jev` diintegrasikan khusus untuk Step 2J (`Quality + Fact Check Analysis`) guna mengaudit validitas klaim, rasio teknis, kepatuhan kutipan verbatim, dan integritas link.
-- **Token Budget Limiter per Artikel**: Untuk tahap pengujian (testing), konsumsi token `pesat-x-jev` dibatasi secara ketat per proses pembuatan artikel (default: 4.000 tokens). Batas ini dapat dikonfigurasi langsung via Settings Modal.
-- **Fail-Safe Fallback**: Jika kuota token testing tercapai saat eksekusi pipeline berlangsung, sistem otomatis mengalihkan proses audit ke `pesat-flash` tanpa memutus jalannya pipeline.
+	### 7. Integrasi Model `pesat-x-jev` & Token Budget Limiter (Testing)
+	- **Fokus Eksklusif (Solely Fact-Check & Fix)**: Model `pesat-x-jev` diintegrasikan khusus untuk Step 2J (`Quality + Fact Check Analysis`) guna mengaudit validitas klaim, rasio teknis, kepatuhan kutipan verbatim, dan integritas link.
+	- **Token Budget Limiter per Artikel**: Untuk tahap pengujian (testing), konsumsi token `pesat-x-jev` dibatasi secara ketat per proses pembuatan artikel (default: 4.000 tokens). Batas ini dapat dikonfigurasi langsung via Settings Modal.
+	- **Fail-Safe Fallback**: Jika kuota token testing tercapai saat eksekusi pipeline berlangsung, sistem otomatis mengalihkan proses audit ke `pesat-flash` tanpa memutus jalannya pipeline.
 
-### 8. Fitur Histori Pembuatan Artikel (Minimal 10 Artikel Terakhir)
-- **Penyimpanan Lokal Persisten**: Menyimpan riwayat artikel yang dibuat ke `localStorage` (ring buffer hingga 20 artikel, menjamin ketersediaan minimal 10 artikel lampau).
-- **Akses & Restorasi Cepat**:
-  - Tombol **[📜 History (N)]** di header navigasi dan Writer Mode membuka modal arsip lengkap.
-  - Kartu **Riwayat Pembuatan Artikel** di Writer Mode menampilkan tanggal, keyword, brand, jumlah kata, skor SEO/GEO, serta pemakaian token `pesat-x-jev`.
-  - Fitur **Restore**: Tombol `[👁 Lihat]` langsung memuat ulang seluruh snapshot artikel lampau ke dalam Deliverable Modal / Reader View untuk peninjauan instan.
-  - Fitur **Copy & Download**: Salin naskah Markdown bersih (`[📋 Copy]`) atau unduh file bundle (`[⬇️ .md]`) langsung dari kartu riwayat tanpa harus meregenerasi artikel.
+	### 8. Fitur Histori Pembuatan Artikel (Minimal 10 Artikel Terakhir)
+	- **Penyimpanan Lokal Persisten**: Menyimpan riwayat artikel yang dibuat ke `localStorage` (ring buffer hingga 20 artikel, menjamin ketersediaan minimal 10 artikel lampau).
+	- **Akses & Restorasi Cepat**:
+	  - Tombol **[📜 History (N)]** di header navigasi dan Writer Mode membuka modal arsip lengkap.
+	  - Kartu **Riwayat Pembuatan Artikel** di Writer Mode menampilkan tanggal, keyword, brand, jumlah kata, skor SEO/GEO, serta pemakaian token `pesat-x-jev`.
+	  - Fitur **Restore**: Tombol `[👁 Lihat]` langsung memuat ulang seluruh snapshot artikel lampau ke dalam Deliverable Modal / Reader View untuk peninjauan instan.
+	  - Fitur **Copy & Download**: Salin naskah Markdown bersih (`[📋 Copy]`) atau unduh file bundle (`[⬇️ .md]`) langsung dari kartu riwayat tanpa harus meregenerasi artikel.
 
-### 9. Anti-AI-Marks & Steganography Hygiene (Layer A Deterministic Strip)
-- **Zero Invisible Watermarks**: Menjamin seluruh karakter tak terlihat (Zero-Width Space `\u200B`, Zero-Width Non-Joiner `\u200C`, Word Joiner `\u2060`, BOM `\uFEFF`, Soft Hyphen `\u00AD`, Arabic Letter Mark `\u061C`, Bidi controls `\u202A–\u202E`, `\u2066–\u206F`, invisible math `\u2061–\u2064`, steganographic tag chars `\uE0001–\uE007F`, dan isolated variation selectors) dibersihkan secara deterministik di awal sanitasi artikel.
-- **Emoji Integrity Protection**: Menggunakan Unicode regex berbasis property escape `\p{Extended_Pictographic}` agar composite emoji ZWJ sequence (`👨‍👩‍👧`) dan emoji variation selectors (`❤️`) tetap utuh.
-- **Normalisasi Space Homoglyphs**: Menormalkan non-breaking space (NBSP `\u00A0`), em-space, thin-space, dan ideographic space menjadi spasi standar ASCII ` ` (`\u0020`) untuk mencegah deteksi anomali spasi pada AI detectors.
-- **Layer B Statistical Disruptor**: Kombinasi Step 2B (Intro Rewrite), 2C (Originality Rewrite), 2D (Fluff Check), dan 2F (Conclusion Rewrite) secara inheren mengacak pola n-gram sampling (SynthID / Kirchenbauer) tanpa memerlukan dependensi external model yang lambat.
+	### 9. Anti-AI-Marks & Steganography Hygiene (Layer A Deterministic Strip)
+	- **Zero Invisible Watermarks**: Menjamin seluruh karakter tak terlihat (Zero-Width Space `\u200B`, Zero-Width Non-Joiner `\u200C`, Word Joiner `\u2060`, BOM `\uFEFF`, Soft Hyphen `\u00AD`, Arabic Letter Mark `\u061C`, Bidi controls `\u202A–\u202E`, `\u2066–\u206F`, invisible math `\u2061–\u2064`, steganographic tag chars `\uE0001–\uE007F`, dan isolated variation selectors) dibersihkan secara deterministik di awal sanitasi artikel.
+	- **Emoji Integrity Protection**: Menggunakan Unicode regex berbasis property escape `\p{Extended_Pictographic}` agar composite emoji ZWJ sequence (`👨👩👧`) dan emoji variation selectors (`❤️`) tetap utuh.
+	- **Normalisasi Space Homoglyphs**: Menormalkan non-breaking space (NBSP `\u00A0`), em-space, thin-space, dan ideographic space menjadi spasi standar ASCII ` ` (`\u0020`) untuk mencegah deteksi anomali spasi pada AI detectors.
+	- **Layer B Statistical Disruptor**: Kombinasi Step 2B (Intro Rewrite), 2C (Originality Rewrite), 2D (Fluff Check), dan 2F (Conclusion Rewrite) secara inheren mengacak pola n-gram sampling (SynthID / Kirchenbauer) tanpa memerlukan dependensi external model yang lambat.
+
+	### 10. Strict Minimal Bolding Mandate (Anti-AI Emphasis Spam)
+	- **Larangan Bold Berlebihan**: DILARANG KERAS mem-bold kata-kata atau istilah teknis secara sporadis di tengah kalimat (misal: dilarang mem-bold `**Docker**`, `**Gitleaks**`, `**continuous integration**`, `**npm**`, `**OWASP**` di body teks).
+	- **Alokasi Bold yang Diizinkan**:
+	  1. Lead-in label pada bullet list (contoh: `* **Deterministic Defenses**: teks penjelasan...`).
+	  2. Header kolom pada Markdown tables (`| **Strategy** | **Layer** |`).
+	  3. Baris atribusi kutipan blockquote (`> — **Nama Ahli**`).
+	- **Sanitizer Defense (`deClutterExcessiveBolding`)**: Sanitizer secara deterministik melucuti bolding kata di tengah paragraf biasa dan teks bullet list, mempertahankan keterbacaan alami manusia dan mencegah deteksi pola AI emphasis spam.
+
+	### 11. Wikipedia-Style References List (Zero-Trust Citation Standard)
+	- **Format Standar Wikipedia di Akhir Artikel**: Setiap artikel wajib memuat section `## References` bernomor di akhir naskah yang mengonversi seluruh tautan sitasi eksternal menjadi referensi gaya Wikipedia:
+	  * **Dengan Penulis**: `Penulis Belakang, Depan. [“Judul Artikel.”](URL) *Nama Situs*, Tanggal Publikasi. Accessed 2026.`
+	  * **Tanpa Penulis**: `[“Judul Artikel.”](URL) *Nama Situs*, Tanggal Publikasi. Accessed 2026.`
+	- **Zero-Trust Metadata Extraction**: Judul (`<h1>`), nama situs resmi (e.g. *Wiz Research*, *Cloud Security Alliance*, *Unit 42*), dan tanggal diekstrak langsung dari metadata terverifikasi riset live Firecrawl tanpa fabrikasi.
+	- **Preservasi URL Asli**: Tautan sitasi selalu merujuk ke URL asli yang diberikan, bukan URL mirror/fallback snapshot.
+	- **Eksekusi Ganda**: Dihasilkan langsung oleh model pada Step 4B, serta divalidasi/disintesis otomatis oleh helper `formatWikipediaReferences()` pada bundle modal export dan fitur Copy Article Only.
 
 ---
 

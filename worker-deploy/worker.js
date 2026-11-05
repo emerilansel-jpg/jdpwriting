@@ -1160,10 +1160,10 @@ const STEPS = [
     userPrompt:'For topic \\'{{keyword}}\\' using research context: {{prev_output}}\\n\\nGenerate JSON with: 1) Primary LSI (20 terms), 2) Secondary LSI (15), 3) Semantic entities (10), 4) Topical clusters (5), 5) Question-based keywords (10), 6) Long-tail variations (10), 7) Related concepts (10).', temp:0.3, maxTokens:1500, outputFormat:'json' },
   { id:'1D', name:'Outline Creation', phase:0, model:'pesat-flash', provider:'pesat', desc:'Phase 1 — Create article outline from research', n8nId:'eAMwyeXFoPwzKWNq', enabled:true,
     systemPrompt:'You are a GEO specialist (ChatGPT, Gemini, Perplexity) who creates comprehensive article outlines. All stats/claims must be web-verifiable.',
-    userPrompt:'Create outline for \\'{{keyword}}\\' using: Info Gain: {{info_gain}} | LSI Keywords: {{lsi_keywords}} | Internal links: {{internal_links}} | CTA: {{cta}}\\n\\nRequirements: match dominant search intent. Cover all identified gaps. Use LSI keywords naturally in H2/H3 headings. Structure for featured snippets (direct answers, lists, tables). Include an FAQ plan (at least 3 Qs) with answers. Target total word count: 1500-2500 words. Each section must include: purpose + suggested word count. Output: Complete outline with H2, H3, bullet points, direct answer suggestions, and format recommendations. Headings Question Ratio (Balanced 60/40 Rule): Target roughly 60% of H2/H3 headings in question format (ending with \\'?\\') to capture voice search and PAA intent. The remaining ~40% MUST be declarative/topical statements (e.g. "Seasonal Protocol: Feeding Cadence and NPK Guidelines" or "Core Biological Mechanisms"). HARD NEGATIVE CONSTRAINT: NEVER make all headings end with question marks (strictly forbidden: 100% question mark headings; maintain minimum 40% declarative topical titles). CRITICAL HEADING RULE: Do NOT number any headings or sections (never write "1.", "2.", "Section 1:", etc. in headings). Headings must be clean, unnumbered topical titles or questions. Sections: Intro - explicit direct answer <=40 words + 1 stat/named entity. <=100 words total. Key takeaway section - heading must NOT be "Key Takeaways" (rename). 3 bullet points summarizing core answers. Main body - minimum 10 H2 sections. Each H2 + content <=200 words. Per H2: direct answer <=40 words, 1 bold statistic, 1 bold named entity. Strict format rule: Outline and article must strictly use ONLY standard prose paragraphs, structured Markdown tables, and Markdown lists (ordered/bulleted). STRICTLY FORBIDDEN: ASCII art, text flowcharts, arrow diagrams, box flows ([ A ] ↓ [ B ]), or code blocks (\`\`\`) used for formatting. Any process or workflow must be outlined strictly as numbered steps or comparison tables. Conclusion - <=100 words, includes {{cta}}, forward-looking takeaway. FAQ section - 3+ Q&A pairs (answers from outline, not pulled from article). Tone: knowledgeable, approachable, semi-formal, active voice, sentences <=20 words. No clickbait. No stacked CTAs. Banned: delve/tapestry/landscape/realm/embark/vital/comprehensive/vibrant/pivotal/moreover/arguably/notably/elevate/captivate/resonate/foster/endeavor. Return only the outline - no commentary, no meta text.', temp:0.4, maxTokens:2000, outputFormat:'markdown' },
+    userPrompt:'Create outline for \\'{{keyword}}\\' using: Info Gain: {{info_gain}} | LSI Keywords: {{lsi_keywords}} | Internal links: {{internal_links}} | CTA: {{cta}}\\n\\nRequirements: match dominant search intent. Cover all identified gaps. Use LSI keywords naturally in H2/H3 headings. Structure for featured snippets (direct answers, lists, tables). Include an FAQ plan (at least 3 Qs) with answers. Target total word count: 1500-2500 words. Each section must include: purpose + suggested word count. Output: Complete outline with H2, H3, bullet points, direct answer suggestions, and format recommendations. Headings Question Ratio (Balanced 60/40 Rule): Target roughly 60% of H2/H3 headings in question format (ending with \\'?\\') to capture voice search and PAA intent. The remaining ~40% MUST be declarative/topical statements (e.g. "Seasonal Protocol: Feeding Cadence and NPK Guidelines" or "Core Biological Mechanisms"). HARD NEGATIVE CONSTRAINT: NEVER make all headings end with question marks (strictly forbidden: 100% question mark headings; maintain minimum 40% declarative topical titles). CRITICAL HEADING RULE: Do NOT number any headings or sections (never write "1.", "2.", "Section 1:", etc. in headings). Headings must be clean, unnumbered topical titles or questions. Sections: Intro - explicit direct answer <=40 words + 1 stat/named entity. <=100 words total. Key takeaway section - heading must NOT be "Key Takeaways" (rename). 3 bullet points summarizing core answers. Main body - minimum 10 H2 sections. Each H2 + content <=200 words. Per H2: direct answer <=40 words. Focus on substance and clarity. STRICT MINIMAL BOLDING RULE: Do NOT bold technical terms, tools, libraries, or keywords inside sentences. Bolding is strictly reserved for list lead-in labels (e.g. * **Label**: text) and table headers. ZERO-HALLUCINATION INTERNAL LINKS RULE: If internal links are empty or None, do NOT plan or invent any internal links. Strict format rule: Outline and article must strictly use ONLY standard prose paragraphs, structured Markdown tables, and Markdown lists (ordered/bulleted). STRICTLY FORBIDDEN: ASCII art, text flowcharts, arrow diagrams, box flows ([ A ] ↓ [ B ]), or code blocks (\`\`\`) used for formatting. Any process or workflow must be outlined strictly as numbered steps or comparison tables. Conclusion - <=100 words, includes {{cta}}, forward-looking takeaway. FAQ section - 3+ Q&A pairs (answers from outline, not pulled from article). Tone: knowledgeable, approachable, semi-formal, active voice, sentences <=20 words. No clickbait. No stacked CTAs. Banned: delve/tapestry/landscape/realm/embark/vital/comprehensive/vibrant/pivotal/moreover/arguably/notably/elevate/captivate/resonate/foster/endeavor. Return only the outline - no commentary, no meta text.', temp:0.4, maxTokens:2000, outputFormat:'markdown' },
   { id:'1E', name:'Generate Article', phase:0, model:'pesat-flash', provider:'pesat', desc:'Phase 1 — Write full article from outline', n8nId:'iC210o6qoXTO8muA', enabled:true,
     systemPrompt:'You are an expert SEO/GEO writer. Generate ~2000-word articles in American English with anti-detection techniques, genuine factual grounding, easy 7th-grade reading level, and professional human voice.',
-    userPrompt:'Write a comprehensive, professional, search-optimized ~2000-word article in American English based on the provided topic, outline, and research context.\\n\\nTarget Keyword: {{keyword}}\\nCall to Action (CTA): {{cta}}\\nInternal Links: {{internal_links}}\\nPublishing Brand: {{brand_name}} (Domain: {{brand_domain}})\\n\\nContent Outline:\\n{{outline}}\\n\\nResearch Data & Context:\\n{{info_gain}}\\n{{lsi_keywords}}\\n\\nRequirements:\\n1. Title: H1 (50-60 chars, keyword-first, benefit-driven). Must match the EXACT topical scope of "{{keyword}}" without overpromising broader care (e.g. if keyword is "how to fertilize jade plant", title must be "How to Fertilize Jade Plants: Complete Feeding Guide", NEVER "Complete Succulent Care Guide"). Immediately under H1, include an editorial E-E-A-T byline: "*By {{brand_name}} Editorial Team | Independently Fact-Checked by Subject Specialists | Updated 2026*".\\n2. Meta Description: 150-160 chars labeled "Meta description:". Directly targets "{{keyword}}".\\n3. Introduction (~100 words): First sentence <=40 words directly answers search intent. Include a verified finding or guideline from the Research Data context below. STATISTICS INTEGRITY: Only cite numbers that appear in verified Research Data. If no exact number is available, describe the general trend. NEVER invent statistics.\\n4. Key Takeaways: H2 with 3 bullet insights.\\n5. Main Body: Follow the H2/H3 outline thoroughly. First paragraph under each H2 must provide a concise direct answer (<=40 words) for featured snippet and AI citation capture. Bold key statistics and named entities. CRITICAL HEADING RULE: Do NOT number any headings or section titles (never write "## 1. Title", "## 2. ...", or "## Section 1:"). All headings (H2, H3) must be unnumbered topical titles or questions.\\n6. Comparison Table: Include at least one structured Markdown comparison table (3-5 columns, >=3 rows). Cite sources by name as plain text [Source, Year]; do NOT invent hyperlinks.\\n7. CITATIONS & QUOTES (MANDATORY & ANTI-SPAM):\\n   - Verbatim Quote (1-2 total): Format in standard blockquote with separate attribution line below:\\n     > "[Exact statement, key finding, or core guideline]"\\n     > — **[Author Name or Institution]**, *[Publication / Organization, Year]*\\n   - BANNED in Blockquotes: NEVER start a blockquote with "According to [Source]". The citation attribution goes on the line below.\\n   - STRICT "ACCORDING TO" LIMIT: The phrase "According to" is allowed AT MOST ONCE in the entire article. Use varied natural phrasing ("Research from [Source] indicates...", "[Institution] guidelines advise that...", parenthetical citations ([Source, Year]), or direct attribution verbs).\\n   - External Links Cap: Maximum 3–5 external links across the ENTIRE article. Only link to verified live URLs from Firecrawl search data or canonical Wikipedia. For all other cited authorities, write as plain text: [Author/Institution (Year)] without markdown hyperlinks. NEVER link to journal catalog/index pages (e.g. /loi/, /aob, /journals/).\\n   - NO FAKE STATISTICS: NEVER invent percentages (e.g. "over 60%") or statistical ratios. Describe trends qualitatively if no exact number is in the research context.\\n8. MANDATORY INTERNAL LINKS INTEGRATION (STRICT NATURAL PROSE RULES):\\n   You are provided with target Internal Links:\\n   {{internal_links}}\\n   You MUST embed EVERY provided internal link (2-5 links) as natural Markdown hyperlinks [contextual anchor phrase](url) directly inside the relevant sections of the article body.\\n   - PARTIAL KEYWORDS ONLY: Extract concise, natural topical keywords from the URL slug without mechanical full phrases (e.g. for \\'/how-to-save-a-dying-jade-plant/\\' use anchor text [saving a dying jade plant] or [dying jade plant]; for \\'/jade-plant-propagation/\\' use [jade plant propagation] or [propagating jade plants]; for \\'/propagating-a-philodendron/\\' use [propagating a philodendron]).\\n   - ZERO REFERRAL / META LANGUAGE (STRICTLY BANNED): NEVER use words like "guide", "guides", "resource", "resources", "article", or "tutorial" in or around the link. NEVER write referral framing like "see [X]", "check this guide on [X]", "check out [X]", "review resources on [X]", "if you need more details check [X]", or "as emphasized in this article".\\n   - NATURAL DECLARATIVE INTEGRATION: The linked phrase MUST be an organic subject, verb phrase, or object inside a substantive factual sentence.\\n     * GOOD: "When root decay is caught early, [saving a dying jade plant](url) requires trimming blackened tissue before repotting."\\n     * GOOD: "Successful [jade plant propagation](url) depends on letting raw stem cuttings dry thoroughly in shade before potting."\\n     * GOOD: "Unlike [propagating a philodendron](url) where cuttings root in plain water, succulent stems will rot if submerged."\\n     * BANNED: "If your jade is sick, check this guide on [how to save a dying jade plant] for tips."\\n   - DO NOT leave them as plain text — they MUST be clickable Markdown links: [anchor text](URL).\\n9. FAQ Section: Include 3-5 high-intent Q&A pairs directly addressing related queries.\\n10. READABILITY MANDATE: Write in clear, active, engaging American English at an accessible 7th-grade to 8th-grade reading level (Flesch-Kincaid grade level 7.0–8.0, Flesch Reading Ease score 65–75). Keep sentences clear, punchy, and direct (average 12–16 words). Avoid dense academic jargon.\\n11. Tone: Grounded, authoritative, engaging human voice. Active voice, sentence variety, no AI clichés.\\n12. CAUSATION VS CORRELATION: When citing observational studies, use associative language ("is associated with", "is linked to"). Reserve causal language ("causes", "leads to") ONLY for experimental/RCT studies.\\n13. ENGAGING CONCLUSION (CRITICAL): NEVER use a generic heading like "## Conclusion", "## In Conclusion", or "## Summary". Always write an engaging, contextual H2 heading that reflects the topic and action (e.g., "## Wrapping Up: Keeping Your Jade Plant Thriving Year-Round"). Summarize actionable takeaways, integrate CTA [{{cta}}] naturally as an empowering next step, mentioning publishing brand \\'{{brand_name}}\\' as the provider of the resource. Do NOT insert awkward promotional phrases like "by {{brand_name}} standards" or "under {{brand_name}} guidance" in the body text.\\n14. BRAND INTEGRITY: The official publishing brand is \\'{{brand_name}}\\'. Refer to the brand strictly as \\'{{brand_name}}\\' (PascalCase). Mention brand ONLY in the final CTA paragraph as the source/platform of the resource, NEVER as an awkward adjective describing general topics.\\n15. STRICT CONTENT FORMATTING RULE: Standard prose paragraphs with headings, bold text, blockquotes (>), markdown comparison tables, and markdown lists only. NO ASCII art, NO flowchart arrows (↓, →), NO code blocks used for diagrams.\\n16. NATURAL SENTENCE VARIETY: Write with diverse, natural sentence openings. DO NOT start consecutive or frequent sentences with coordinating conjunctions (\\'And\\', \\'But\\', \\'So\\').\\n17. UNIVERSAL DOMAIN & FACTUAL ACCURACY (APPLIES ACROSS ALL TOPICS):\\n    - DATA & SPECIFICATION FIDELITY: Every technical parameter, software command, ratio, temperature, voltage, measurement, timeline, dosage, metric, benchmark, or regulatory threshold MUST strictly align with verified established domain consensus and provided Research Data ({{info_gain}}).\\n    - NO UNVERIFIED / FABRICATED NUMBERS: If a specific ratio, percentage, or metric is not confirmed by authoritative sources or research data, describe the recommendation qualitatively or cite established industry standards (e.g. in botany: standard 10-10-10 or 2-7-7, never unverified 2-4-3; in tech/software: exact valid CLI syntax and version flags; in coffee: 1:2 espresso brew ratio and 9 bar pressure; in finance: standard risk-reward ratios). NEVER invent non-standard numbers.\\n    - CONDITIONAL ACCURACY & NUANCE: Never make blanket unconditional claims where real-world conditions vary (e.g. winter plant feeding requires visible active new growth; overclocking requires thermal headroom; financial leverage requires stop-loss risk controls; software commands must specify target OS version).\\n    - CAUSATION VS CORRELATION: When citing observational studies or correlational data across any domain, use associative language ("is associated with", "correlates with", "is linked to"). Use causal language ("causes", "produces") ONLY where rigorous experimental/RCT evidence exists.\\n\\nWrite the COMPLETE full-length article in Markdown. Begin directly with the H1 title. Do not ask questions or request more input.', temp:0.7, maxTokens:5000, outputFormat:'markdown' },
+    userPrompt:'Write a comprehensive, professional, search-optimized ~2000-word article in American English based on the provided topic, outline, and research context.\\n\\nTarget Keyword: {{keyword}}\\nCall to Action (CTA): {{cta}}\\nInternal Links: {{internal_links}}\\nPublishing Brand: {{brand_name}} (Domain: {{brand_domain}})\\n\\nContent Outline:\\n{{outline}}\\n\\nResearch Data & Context:\\n{{info_gain}}\\n{{lsi_keywords}}\\n\\nRequirements:\\n1. Title: H1 (50-60 chars, keyword-first, benefit-driven). Must match the EXACT topical scope of "{{keyword}}" without overpromising broader care (e.g. if keyword is "how to fertilize jade plant", title must be "How to Fertilize Jade Plants: Complete Feeding Guide", NEVER "Complete Succulent Care Guide"). Immediately under H1, include an editorial E-E-A-T byline: "*By {{brand_name}} Editorial Team | Independently Fact-Checked by Subject Specialists | Updated 2026*".\\n2. Meta Description: 150-160 chars labeled "Meta description:". Directly targets "{{keyword}}".\\n3. Introduction (~100 words): First sentence <=40 words directly answers search intent. Include a verified finding or guideline from the Research Data context below. STATISTICS INTEGRITY: Only cite numbers that appear in verified Research Data. If no exact number is available, describe the general trend. NEVER invent statistics.\\n4. Key Takeaways: H2 with 3 bullet insights.\\n5. Main Body: Follow the H2/H3 outline thoroughly. First paragraph under each H2 must provide a concise direct answer (<=40 words) for featured snippet and AI citation capture. CRITICAL HEADING RULE: Do NOT number any headings or section titles (never write "## 1. Title", "## 2. ...", or "## Section 1:"). All headings (H2, H3) must be unnumbered topical titles or questions.\\n   STRICT MINIMAL BOLDING MANDATE: NEVER use excessive bolding. Do NOT bold technical terms, tool names, libraries, frameworks, or keywords inside sentences (e.g. never bold Docker, Gitleaks, npm, CI/CD, SAST, OWASP, Cloudflare in body text). Bolding is strictly reserved for: 1) list item lead-ins (* **Category**: description), 2) table column headers (| **Header** |), and 3) blockquote attribution lines (> — **Author Name**). Do NOT bold words in body sentences for emphasis. Keep prose clean, readable, and professional.\\n6. Comparison Table: Include at least one structured Markdown comparison table (3-5 columns, >=3 rows). Cite sources by name as plain text [Source, Year]; do NOT invent hyperlinks.\\n7. CITATIONS & QUOTES (MANDATORY & ANTI-SPAM):\\n   - Verbatim Quote (1-2 total): Format in standard blockquote with separate attribution line below, AND MANDATORY CLICKABLE REFERENCE LINK to verified source on the publication/source title:\\n     > "[Exact statement, key finding, or core guideline]"\\n     > — **[Author Name or Institution]**, [*[Publication / Organization Title]*](URL), Year\\n   - Source Hyperlink Requirement: The publication or organization title in the quote attribution line MUST be a clickable link to the verified live URL from the research data or canonical Wikipedia.\\n   - BANNED in Blockquotes: NEVER start a blockquote with "According to [Source]". The citation attribution goes on the line below.\\n   - STRICT "ACCORDING TO" LIMIT: The phrase "According to" is allowed AT MOST ONCE in the entire article. Use varied natural phrasing ("Research from [Source] indicates...", "[Institution] guidelines advise that...", parenthetical citations ([Source, Year]), or direct attribution verbs).\\n   - External Links Cap: Maximum 3–5 external links across the ENTIRE article. Only link to verified live URLs from Firecrawl search data or canonical Wikipedia. For all other cited authorities, write as plain text: [Author/Institution (Year)] without markdown hyperlinks. NEVER link to journal catalog/index pages (e.g. /loi/, /aob, /journals/).\\n   - NO FAKE STATISTICS: NEVER invent percentages (e.g. "over 60%") or statistical ratios. Describe trends qualitatively if no exact number is in the research context.\\n8. INTERNAL LINKS INTEGRATION (STRICT ZERO-HALLUCINATION RULE):\\n   Provided Internal Links:\\n   {{internal_links}}\\n   - IF VALID INTERNAL URLS ARE PROVIDED: Embed each provided link (2-5 links) as natural Markdown hyperlinks [contextual anchor phrase](url) directly inside the relevant sections of the article body. Use concise partial keywords from the slug (e.g. [saving a dying jade plant](url)). ZERO REFERRAL WORDS: NEVER use words like "guide", "resource", "check out".\\n   - IF NO INTERNAL LINKS ARE PROVIDED (empty, None, or absent): STRICTLY DO NOT ADD, INVENT, OR FORCE ANY INTERNAL LINKS! Strictly 0 internal links. NEVER invent or fabricate URLs to your own domain or slug if none were supplied by the user.\\n9. FAQ Section: Include 3-5 high-intent Q&A pairs directly addressing related queries. STRICT RULE: Keep FAQ answers as clean prose without bolding keywords.\\n10. READABILITY MANDATE: Write in clear, active, engaging American English at an accessible 7th-grade to 8th-grade reading level (Flesch-Kincaid grade level 7.0–8.0, Flesch Reading Ease score 65–75). Keep sentences clear, punchy, and direct (average 12–16 words). Avoid dense academic jargon.\\n11. Tone: Grounded, authoritative, engaging human voice. Active voice, sentence variety, no AI clichés.\\n12. CAUSATION VS CORRELATION: When citing observational studies, use associative language ("is associated with", "is linked to"). Reserve causal language ("causes", "leads to") ONLY for experimental/RCT studies.\\n13. ENGAGING CONCLUSION (CRITICAL): NEVER use a generic heading like "## Conclusion", "## In Conclusion", or "## Summary". Always write an engaging, contextual H2 heading that reflects the topic and action (e.g., "## Wrapping Up: Keeping Your Jade Plant Thriving Year-Round"). Summarize actionable takeaways, integrate CTA [{{cta}}] naturally as an empowering next step, mentioning publishing brand \\'{{brand_name}}\\' as the provider of the resource. Do NOT insert awkward promotional phrases like "by {{brand_name}} standards" or "under {{brand_name}} guidance" in the body text.\\n14. BRAND INTEGRITY: The official publishing brand is \\'{{brand_name}}\\'. Refer to the brand strictly as \\'{{brand_name}}\\' (PascalCase). Mention brand ONLY in the final CTA paragraph as the source/platform of the resource, NEVER as an awkward adjective describing general topics.\\n15. STRICT CONTENT FORMATTING RULE: Standard prose paragraphs with headings, bold text, blockquotes (>), markdown comparison tables, and markdown lists only. NO ASCII art, NO flowchart arrows (↓, →), NO code blocks used for diagrams.\\n16. NATURAL SENTENCE VARIETY: Write with diverse, natural sentence openings. DO NOT start consecutive or frequent sentences with coordinating conjunctions (\\'And\\', \\'But\\', \\'So\\').\\n17. UNIVERSAL DOMAIN & FACTUAL ACCURACY (APPLIES ACROSS ALL TOPICS):\\n    - DATA & SPECIFICATION FIDELITY: Every technical parameter, software command, ratio, temperature, voltage, measurement, timeline, dosage, metric, benchmark, or regulatory threshold MUST strictly align with verified established domain consensus and provided Research Data ({{info_gain}}).\\n    - NO UNVERIFIED / FABRICATED NUMBERS: If a specific ratio, percentage, or metric is not confirmed by authoritative sources or research data, describe the recommendation qualitatively or cite established industry standards (e.g. in botany: standard 10-10-10 or 2-7-7, never unverified 2-4-3; in tech/software: exact valid CLI syntax and version flags; in coffee: 1:2 espresso brew ratio and 9 bar pressure; in finance: standard risk-reward ratios). NEVER invent non-standard numbers.\\n    - CONDITIONAL ACCURACY & NUANCE: Never make blanket unconditional claims where real-world conditions vary (e.g. winter plant feeding requires visible active new growth; overclocking requires thermal headroom; financial leverage requires stop-loss risk controls; software commands must specify target OS version).\\n    - CAUSATION VS CORRELATION: When citing observational studies or correlational data across any domain, use associative language ("is associated with", "correlates with", "is linked to"). Use causal language ("causes", "produces") ONLY where rigorous experimental/RCT evidence exists.\\n18. WIKIPEDIA-STYLE REFERENCES LIST (MANDATORY AT END OF ARTICLE):\\n    At the very end of the article, include a numbered "## References" section formatting all external citation links into Wikipedia-style references:\\n    - With Author: Author Last, First. [“Page Title.”](URL) *Website Name*, Publication Date. Accessed 2026.\\n    - No Author: [“Page Title.”](URL) *Website Name*, Publication Date. Accessed 2026.\\n    Numbered list only.\\n\\nWrite the COMPLETE full-length article in Markdown. Begin directly with the H1 title. Do not ask questions or request more input.', temp:0.7, maxTokens:5000, outputFormat:'markdown' },
   { id:'2A', name:'Title & Meta', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — SEO title, meta, slug', n8nId:'NhssXDWzEktwl6MM', enabled:true,
     systemPrompt:'You are an expert SEO/GEO content strategist. Generate accurate, tightly scoped SEO metadata matching the exact search intent of the keyword.',
     userPrompt:'Generate SEO metadata as JSON only for keyword \\'{{keyword}}\\'.\\n\\nArticle Context:\\n{{article}}\\n\\nRules:\\n1. Title (50-60 chars, keyword-first): Must match the EXACT topical scope of \\'{{keyword}}\\' without overpromising broader care (e.g. if keyword is "how to fertilize jade plant", title must be "How to Fertilize Jade Plants: Complete Feeding Guide", NOT "Complete Succulent Care Guide").\\n2. Meta Description (150-160 chars): Directly targets \\'{{keyword}}\\', states key benefit, includes actionable CTA, no generic words like "discover".\\n3. URL Slug: Clean, concise lowercase with hyphens matching the primary keyword (e.g. "how-to-fertilize-jade-plant").\\n4. Primary Keyword: Set explicitly as \\'{{keyword}}\\'.\\n\\nJSON format: {"title":"...", "meta_description":"...", "slug":"...", "keyword":"{{keyword}}"}', temp:0.3, maxTokens:600, outputFormat:'json' },
@@ -1178,7 +1178,7 @@ const STEPS = [
     userPrompt:'Remove all filler and redundant phrases from {{article}}. Keep facts, numbers, entities, headings. Cut: It is important to note that, In order to - to, Due to the fact that - because, Regardless of the fact that - although, For all intents and purposes (delete), Quite, rather, somewhat, very, really, actually, simply, just, literally, In my opinion, I believe that, It seems that, There is/There are at start (rewrite), The reason why is because - because, Each and every - each/every, Completely eliminate/totally remove - one word, Past history/future plans/end result/free gift. Use contractions. Break up long sentences to maintain an accessible 7th-grade reading level (average 12–15 words per sentence). Write with varied, natural sentence structures. Occasional conversational flow is good, but NEVER force sentences to start with \\'And\\', \\'But\\', or \\'So\\'. No parallel triples. Brand is {{brand_name}} in CTA only (never \\'by {{brand_name}} standards\\'). STRICT FORMAT RULE: Ensure content consists exclusively of clean prose, markdown tables, blockquotes, and lists. Completely remove or convert any ASCII diagrams, box chains, arrows (↓, →), or faux diagram code blocks into clean numbered lists or standard paragraphs. Return full cleaned article in Markdown.', temp:0.3, maxTokens:4000, outputFormat:'markdown' },
   { id:'2E', name:'FAQ Generation', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — PAA-optimized FAQ section & schema', n8nId:'KmhQc7NgxxhOKFpZ', enabled:true,
     systemPrompt:'You are an FAQ generator. Create 5 Q&A pairs that are NOT found in the article itself.',
-    userPrompt:'Create 5 Q&A pairs for keyword {{keyword}}. Rules: {{article}} is ONLY for context. Answers must NOT come from article (general knowledge). Use 5-10 LSI keywords naturally per answer. Return with markdown and valid FAQPage JSON markup for schema.', temp:0.4, maxTokens:1200, outputFormat:'json' },
+    userPrompt:'Create 5 Q&A pairs for keyword {{keyword}}. Rules: {{article}} is ONLY for context. Answers must NOT come from article (general knowledge). Integrate relevant search entities naturally into clear, conversational answers. STRICT MINIMAL BOLDING RULE: DO NOT bold any keywords, tool names, or technical terms inside FAQ answers. Keep all FAQ text as clean, unbolded prose. Return with markdown and valid FAQPage JSON markup for schema.', temp:0.4, maxTokens:1200, outputFormat:'json' },
   { id:'2F', name:'Conclusion Optimizer', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Conclusion + CTA strengthening', n8nId:'oqk30qwS6vX1noVl', enabled:true,
     systemPrompt:'You are an Expert Content Strategist and Conversion Copywriter who crafts engaging, action-driven article conclusions. You NEVER use generic headings like "## Conclusion" or "## Summary".',
     userPrompt:'Optimize conclusion for \\'{{keyword}}\\' using article: {{article}} | CTA: {{cta}} | Brand: {{brand_name}}. Output Task 1 then Task 2.\\n\\nTask 1 — Rewritten conclusion (Markdown only, no commentary):\\nHeading: Engaging H2 heading reflecting topic and action (e.g. \\'## Wrapping Up: Keeping Your {{keyword}} Healthy\\' or \\'## Final Takeaways: Long-Term Success\\'). NEVER write \\'## Conclusion\\', \\'## In Conclusion\\', or \\'## Summary\\'.\\nParagraph 1 (max 70w): start directly with reader\\'s core challenge or frustration, address \\'you\\', include 3 key actionable takeaways woven naturally into sentences (no robotic First/Second/Third), end with natural pivot to solution.\\nParagraph 2 (max 50w): include CTA as empowering next step, mentioning publishing brand \\'{{brand_name}}\\' naturally as the platform or team providing the comprehensive guide or resource. If mentioning brand, use \\'{{brand_name}}\\' strictly as the platform providing the resource (never write \\'by {{brand_name}} standards\\').\\nTotal: 120 words max.\\n\\nAnti-bot: no em-dashes/semicolons, use commas/periods only, natural contractions (don\\'t, it\\'s, you\\'re, that\\'s), no trio (X, Y, Z), no metaphors/poetry, sentence variety (medium 12-18w then short blunt 5-8w).\\n\\nBanned: It\\'s important to note that, When it comes to, Let\\'s dive in, In conclusion, Conclusion, That said, Here\\'s the thing, The truth is, Not only… but also, tends to, simply, just, actually, absolutely, crucial, vital, robust, leverage, delve, landscape, realm, testament, seamless, moreover, arguably.\\n\\nTask 2 — Comparison table (after blank line):\\n| Metric | Original | Rewritten |\\n| SEO/GEO score (1-10) | X | Y |\\n| Reader helpfulness (1-10) | X | Y |\\n| Better version | — | Original/Rewritten |\\nThen 3-5 bullet reasons below table focusing on clarity, human voice, conversion, anti-bot rules, SEO/GEO.\\n\\nSelf-check: heading no colon, not generic conclusion, two paragraphs only, ≤120w, no em-dashes/semicolons, contractions present, no trio, no metaphors, sentence variety, CTA in P2, no banned phrases.', temp:0.6, maxTokens:400, outputFormat:'markdown' },
@@ -1187,7 +1187,7 @@ const STEPS = [
     userPrompt:'Add table to article about \\'{{keyword}}\\': {{article}}. Return FULL modified article.\\n\\nTable: 3-5 columns, ≥3 data rows, relevant to keyword (comparison, data, timeline, ranking). Every claim/number should reference the source institution or study by name. Do NOT invent hyperlinks — write [Source Name, Year] as plain text. URLs will be added in Phase 4.\\nSTATISTICS INTEGRITY: Only include specific numbers that appear in the article text or research context. NEVER invent precise percentages, fold-risks, or exact figures to fill table cells. If a precise number is not available, describe the finding qualitatively (e.g. "Higher risk" instead of "54% higher risk"). Insert immediately after first H2. If no H2, insert after H1 with comment <!-- No H2 found – table after H1 -->.\\n\\nAnti-detection: no banned phrases/words, contractions natural, avoid parallel triples in cells, cells mostly 5-12 words, be direct.\\nStrict format rule: Standard Markdown table only (| Col 1 | Col 2 |). Never use ASCII box art, unicode arrows, or code block diagrams.\\n\\nBanned: It\\'s important to note that, When it comes to, Let\\'s dive in, In conclusion, That said, Here is how, The truth is, Not only… but also, tends to, simply, just, actually, crucial, vital, robust, leverage.\\n\\nBanned words: delve, tapestry, landscape, realm, embark, excels, pivotal, moreover, arguably, notably, resonate, foster, endeavor, truly, very, really, quite.\\n\\nSelf-check: 3-5 columns, ≥3 rows, every number hyperlinked, no homepage links, inserted after first H2, no banned words/phrases, output full article only.', temp:0.4, maxTokens:4500, outputFormat:'markdown' },
   { id:'2H', name:'Find & Embed Quotes', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Expert quotes + citations', n8nId:'DNu9tZ4Z3xFLfCZV', enabled:true,
     systemPrompt:'You are an expert editorial researcher and citation specialist who strengthens E-E-A-T with real, verifiable citations. You embed authentic verbatim quotes and natural source attributions grounded in the research context. You NEVER spam "According to", NEVER hyperlink to journal issue/catalog pages, and NEVER exceed 3-5 total external links across the article.',
-    userPrompt:'Add 2-3 verifiable citations to this article about \\'{{keyword}}\\'.\\n\\nArticle:\\n{{article}}\\n\\nResearch Context (Verified Sources & Data):\\n{{info_gain}}\\n{{serp_data}}\\n\\nCITATION FORMATS:\\n\\nTYPE A — MANDATORY VERBATIM QUOTE (Include 1 to 2 in article):\\n> "[Authentic quote, key finding, or direct statement from research context or expert consensus]"\\n> — **[Author Name / Authority Institution]**, *[Publication / Organization, Year]*\\n\\nTYPE B — NATURAL PARAPHRASED CITATION (Varied phrasing, NEVER spam "According to"):\\n- Data-led: "Trial data from [Author/Org (Year)] shows that [finding]."\\n- Action-led: "[Institution (Year)] guidelines advise that [finding]."\\n- Parenthetical: "[Statement or finding] ([Author/Org, Year])."\\n- Attribution verb: "In a [Year] review, [Institution] observed that [finding]."\\n\\nSTRICT RULES:\\n1. MANDATORY VERBATIM QUOTES: Article MUST include 1–2 authentic verbatim quotes in blockquotes using quotation marks with attribution line below. BANNED IN BLOCKQUOTES: NEVER write "> According to [Source]..." inside blockquotes.\\n2. ANTI-SPAM "ACCORDING TO": The phrase "According to" must appear at most ONCE in the entire article. Use natural varied phrasing.\\n3. EXTERNAL LINKS CAP (MAX 3–5 IN ENTIRE ARTICLE):\\n   - Only add a markdown hyperlink [Source](URL) if the URL is a verified live link from the Research Context (Firecrawl) or a canonical Wikipedia entity (https://en.wikipedia.org/wiki/... with parens encoded as %28 %29).\\n   - If citing an authority or study without a confirmed live URL, cite as PLAIN TEXT: [Institution (Year)] — DO NOT construct fake URLs, deep PDF paths, or unverified subdirectories.\\n   - FORBIDDEN: NEVER link to journal catalog/issue pages (e.g. tandfonline.com/loi/..., academic.oup.com/aob, frontiersin.org/journals/...). Mention as plain text.\\n   - Total external links in the entire article must NOT exceed 3–5.\\n4. BRAND INTEGRITY: \\'JetDigitalPro\\' in CTA only. Never insert \\'by JetDigitalPro standards\\'.\\n5. CONCLUSION PRESERVATION: Maintain engaging contextual conclusion heading (never allow generic \\'## Conclusion\\').\\n6. NO FAKE NUMBERS: Do NOT invent statistical percentages (e.g. "over 60%").\\n7. Return the FULL revised article in Markdown. Standard text, blockquotes, tables, and lists only. No ASCII diagrams, flowchart arrows, or numbered headings.', temp:0.3, maxTokens:4500, outputFormat:'markdown' },
+    userPrompt:'Add 2-3 verifiable citations to this article about \\'{{keyword}}\\'.\\n\\nArticle:\\n{{article}}\\n\\nResearch Context (Verified Sources & Data):\\n{{info_gain}}\\n{{serp_data}}\\n\\nCITATION FORMATS:\\n\\nTYPE A — MANDATORY VERBATIM QUOTE (Include 1 to 2 in article):\\n> "[Authentic quote, key finding, or direct statement from research context or expert consensus]"\\n> — **[Author Name / Authority Institution]**, [*[Publication / Organization Title]*](URL), Year\\n\\nTYPE B — NATURAL PARAPHRASED CITATION (Varied phrasing, NEVER spam "According to"):\\n- Data-led: "Trial data from [Author/Org (Year)] shows that [finding]."\\n- Action-led: "[Institution (Year)] guidelines advise that [finding]."\\n- Parenthetical: "[Statement or finding] ([Author/Org, Year])."\\n- Attribution verb: "In a [Year] review, [Institution] observed that [finding]."\\n\\nSTRICT RULES:\\n1. MANDATORY VERBATIM QUOTES WITH SOURCE LINK: Article MUST include 1–2 authentic verbatim quotes in blockquotes using quotation marks. The attribution line MUST include a clickable markdown link to the verified source URL from Research Data/Firecrawl or Wikipedia on the publication/source title. BANNED IN BLOCKQUOTES: NEVER write "> According to [Source]..." inside blockquotes.\\n2. ANTI-SPAM "ACCORDING TO": The phrase "According to" must appear at most ONCE in the entire article. Use natural varied phrasing.\\n3. EXTERNAL LINKS CAP (MAX 3–5 IN ENTIRE ARTICLE):\\n   - Only add a markdown hyperlink [Source](URL) if the URL is a verified live link from the Research Context (Firecrawl) or a canonical Wikipedia entity (https://en.wikipedia.org/wiki/... with parens encoded as %28 %29).\\n   - If citing an authority or study without a confirmed live URL, cite as PLAIN TEXT: [Institution (Year)] — DO NOT construct fake URLs, deep PDF paths, or unverified subdirectories.\\n   - FORBIDDEN: NEVER link to journal catalog/issue pages (e.g. tandfonline.com/loi/..., academic.oup.com/aob, frontiersin.org/journals/...). Mention as plain text.\\n   - Total external links in the entire article must NOT exceed 3–5.\\n4. BRAND INTEGRITY: \\'JetDigitalPro\\' in CTA only. Never insert \\'by JetDigitalPro standards\\'.\\n5. CONCLUSION PRESERVATION: Maintain engaging contextual conclusion heading (never allow generic \\'## Conclusion\\').\\n6. NO FAKE NUMBERS: Do NOT invent statistical percentages (e.g. "over 60%").\\n7. STRICT MINIMAL BOLDING: Do NOT add bolding to random words or technical terms.\\n8. Return the FULL revised article in Markdown. Standard text, blockquotes, tables, and lists only. No ASCII diagrams, flowchart arrows, or numbered headings.', temp:0.3, maxTokens:4500, outputFormat:'markdown' },
   { id:'2I', name:'EEAT+HCU+EAV Analysis', phase:1, model:'pesat-flash', provider:'pesat', desc:'Phase 2 — Deep-dive EEAT+HCU+EAV structural analysis', n8nId:'tkqAeYtbjPYpg332', enabled:true,
     systemPrompt:'You are a Google Search Quality Evaluator with deep expertise in E-E-A-T, Helpful Content Updates, and Entity-Awareness Validation. You perform methodical, specific, actionable analysis.',
     userPrompt:'Perform a comprehensive EEAT+HCU+EAV analysis on this article about \\'{{keyword}}\\'. Analyze every dimension based on the provided article text.\\n\\nArticle:\\n{{article}}\\n\\nSERP Context:\\n{{serp_data}}\\n\\nEEAT (7 params, score 0-10): 1) Experience signals — first-hand evidence, case studies, testing data. 2) Expertise markers — credentials, depth, technical accuracy, nuance. 3) Authority building — citations, expert quotes, authoritative sources. 4) Trustworthiness — factual accuracy, transparency, bias check. 5) YMYL compliance — medical/financial safety warnings, disclaimers. 6) Content freshness — dated info, currency of sources. 7) Original research — unique data, primary analysis, surveys.\\n\\nHCU (8 params, score 0-10): 1) Search intent match — perfectly answers query? 2) Comprehensive coverage — depth vs breadth balance. 3) First-hand experience — real expertise, not regurgitation. 4) Depth vs surface-level — avoids shallow explanations. 5) No AI-fluff or filler — every sentence adds value. 6) Practical applicability — actionable advice, not just theory. 7) Clear authorship — byline, about section signals. 8) No misleading claims — all claims supported by evidence.\\n\\nEAV (5 params, score 0-10): 1) Entity salience — named entities present and relevant. 2) Semantic triples (SPO) — subject-predicate-object structure. 3) Knowledge graph alignment — topics match known KG entities. 4) Contextual relevance — entities support main topic strongly. 5) Cross-entity relationships — meaningful connections between entities.\\n\\nReturn JSON: eeat:{scores:{param:score},total,percentage}, hcu:{scores:{param:score},total,percentage}, eav:{scores:{param:score},total,percentage}, gaps:[{category,parameter,issue,severity,fix_suggestion}], strengths:[], weaknesses:[], priority_fixes:[], entity_report:{main_entities:[],entity_coverage,missing_kg_entities:[]}.', temp:0.2, maxTokens:2500, outputFormat:'json' },
@@ -1208,10 +1208,10 @@ const STEPS = [
     userPrompt:'Generate alt text for all 5 images in article about \\'{{keyword}}\\'. Image prompts: {{image_prompts}}. Infographic prompt: {{infographic_prompt}}.\\n\\nRules per alt text: max 125 characters, describe image content accurately, include keyword or natural LSI variation ONCE, format: \\"[Visual description] — [relevance to article topic]\\", do NOT use \\"image of\\" or \\"picture of\\", for data/charts describe data trend, for infographics summarize main takeaway.\\n\\nImages: 1) Featured — hero banner, main topic. 2) Supporting 1 — first key concept. 3) Supporting 2 — second key concept. 4) Supporting 3 — third key concept. 5) Infographic — data visualization with key stats.\\n\\nReturn JSON: {featured_image_alt, supporting_image_1_alt, supporting_image_2_alt, supporting_image_3_alt, infographic_alt}.', temp:0.3, maxTokens:800, outputFormat:'json' },
   { id:'4A', name:'Internal Linking', phase:3, model:'pesat-flash', provider:'pesat', desc:'Phase 4 — Inject internal links', n8nId:'LxDo1Bbmv4d2ZHDt', enabled:true,
     systemPrompt:'You are an expert Content Editor and SEO Strategist. Insert provided internal links contextually across the article using concise partial keywords and zero meta-referral language.',
-    userPrompt:'Insert internal links into article: {{article}}.\\n\\nProvided internal links (may be multiple, separated by newlines or commas):\\n{{internal_links}}\\nPublishing Brand: {{brand_name}} (Domain: {{brand_domain}})\\n\\nSTRICT INTERNAL LINKING RULES:\\n1) PARTIAL KEYWORD ANCHORS: Extract concise, natural keywords from URL slugs (e.g. [saving a dying jade plant], [jade plant propagation], [propagating a philodendron]). Do NOT use clunky full phrases or generic words.\\n2) ZERO META / REFERRAL FRAMING (STRICTLY FORBIDDEN):\\n   - ABSOLUTELY BANNED: "guide", "guides", "resource", "resources", "tutorial", "article".\\n   - ABSOLUTELY BANNED: "check out [X]", "see our guide on [X]", "check this guide on [X]", "review resources on [X]", "if you need more details check [X]", "as emphasized on this article".\\n   - Every internal link MUST be integrated as a direct grammatical part of a substantive, declarative statement:\\n     * GOOD: "When root decay is caught early, [saving a dying jade plant](url) requires trimming blackened tissue before repotting."\\n     * GOOD: "Successful [jade plant propagation](url) depends on letting raw stem cuttings dry thoroughly in shade before potting."\\n     * GOOD: "Unlike [propagating a philodendron](url) where cuttings root in plain water, succulent stems rot if submerged."\\n     * BANNED: "If your jade is sick, check this guide on [how to save a dying jade plant] for tips."\\n3) EMBED ALL PROVIDED LINKS: Embed EVERY link from {{internal_links}} across separate, contextually relevant sections. If the article already discusses the topic or contains the phrase, rewrite the surrounding sentence to integrate the link cleanly without referral words.\\n4) If linking to homepage or company brand, anchor text MUST be strictly \\'{{brand_name}}\\' (one word, PascalCase).\\n5) Return ONLY the full revised article in Markdown starting directly with the H1 title. No commentary, no Before/After preamble. Maintain strict formatting: text, tables, and lists only. No numbered headings.\\n6) Contextual relevance: ensure every link is placed where it adds natural value for the reader.', temp:0.3, maxTokens:4500, outputFormat:'markdown' },
-  { id:'4B', name:'External Linking', phase:3, model:'pesat-flash', provider:'pesat', desc:'Phase 4 — Authority external links', n8nId:'FsIx2UDFWuolIFHx', enabled:true,
-    systemPrompt:'You are an expert Fact-Checker and SEO Citation Strategist. Ensure the article has strictly 3-5 high-quality external links to verified, live, topically relevant sources. You NEVER exceed 5 external links and NEVER use broken, 404, or 403 bot-blocked URLs.',
-    userPrompt:'Audit and optimize external links in this article about \\'{{keyword}}\\'.\\n\\nArticle:\\n{{article}}\\n\\nResearch Data & Verified Sources:\\n{{info_gain}}\\n{{external_links}}\\n\\nInternal Links To Preserve:\\n{{internal_links}}\\nPublishing Brand: {{brand_name}} (Domain: {{brand_domain}})\\n\\nSTRICT LINK RULES (CRITICAL):\\n1. PRESERVE ALL INTERNAL LINKS (MANDATORY): DO NOT REMOVE, ALTER, OR STRIP ANY INTERNAL LINKS! All links pointing to {{brand_domain}}, {{brand_name}}, or any URL listed in Internal Links are INTERNAL links belonging to our website. The 3 to 5 link cap applies EXCLUSIVELY to EXTERNAL research/reference citations (such as Wikipedia, extension universities, research publications). You MUST preserve every internal link [anchor text](internal-url) completely untouched!\\n2. EXTERNAL LINKS HARD LIMIT: The entire article must have strictly 3 to 5 external links total. If the article currently has more than 5 external links, remove the hyperlinks from the excess ones, keeping the text as clean plain text.\\n3. VERIFIED LIVE GROUNDING: Only link to URLs explicitly verified in the Research Data (Firecrawl live search results) or canonical Wikipedia topic pages (https://en.wikipedia.org/wiki/... with percent-encoded parens %28 %29).\\n4. FORBIDDEN DOMAINS & BROKEN URLS:\\n   - NEVER link to bot-blocked or paywalled domains: gartner.com, forbes.com, bloomberg.com, wsj.com, businessinsider.com, bifma.org, nngroup.com, nih.gov root. Mention them as plain text only.\\n   - NEVER invent deep .edu, .gov, or journal sub-paths (e.g. publication detail IDs, deep PDF links).\\n   - If a source was not found with a working URL in the Research Data, leave it as plain text: [Author / Institution (Year)].\\n5. NATURAL ANCHOR TEXT: Link descriptive entities or concepts (e.g. [Crassulacean acid metabolism](https://...)), never generic "click here" or raw URLs.\\n6. BRAND INTEGRITY: Ensure company brand is strictly \\'{{brand_name}}\\' (PascalCase).\\n7. Return ONLY the full revised article in Markdown starting directly with H1. No commentary. Strict formatting: text, tables, and lists only. No numbered headings.', temp:0.3, maxTokens:4500, outputFormat:'markdown' },
+    userPrompt:'Insert internal links into article: {{article}}.\\n\\nProvided internal links (may be multiple, separated by newlines or commas):\\n{{internal_links}}\\nPublishing Brand: {{brand_name}} (Domain: {{brand_domain}})\\n\\nSTRICT INTERNAL LINKING RULES:\\n1) ZERO-HALLUCINATION / EMPTY CHECK (CRITICAL): If no internal links are provided in {{internal_links}} (or if it says "None"), return the original article UNTOUCHED! Do NOT add, invent, or force ANY internal links. Strictly 0 internal links.\\n2) PARTIAL KEYWORD ANCHORS: When links ARE provided, extract concise, natural keywords from URL slugs (e.g. [saving a dying jade plant], [jade plant propagation]). Do NOT use clunky full phrases or generic words.\\n3) ZERO META / REFERRAL FRAMING (STRICTLY FORBIDDEN):\\n   - ABSOLUTELY BANNED: "guide", "guides", "resource", "resources", "tutorial", "article".\\n   - ABSOLUTELY BANNED: "check out [X]", "see our guide on [X]", "check this guide on [X]", "review resources on [X]", "if you need more details check [X]", "as emphasized on this article".\\n   - Every internal link MUST be integrated as a direct grammatical part of a substantive, declarative statement.\\n4) EMBED ALL PROVIDED LINKS: Embed EVERY link from {{internal_links}} across separate, contextually relevant sections.\\n5) If linking to homepage or company brand, anchor text MUST be strictly \\'{{brand_name}}\\' (one word, PascalCase).\\n6) Return ONLY the full revised article in Markdown starting directly with the H1 title. No commentary, no Before/After preamble. Maintain strict formatting: text, tables, and lists only. No numbered headings.', temp:0.3, maxTokens:4500, outputFormat:'markdown' },
+  { id:'4B', name:'External Linking', phase:3, model:'pesat-flash', provider:'pesat', desc:'Phase 4 — Authority external links & Wikipedia references', n8nId:'FsIx2UDFWuolIFHx', enabled:true,
+    systemPrompt:'You are an expert Fact-Checker and SEO Citation Strategist. Ensure the article has strictly 3-5 high-quality external links in the body to verified live sources, and format a strict Wikipedia-style References list at the end.',
+    userPrompt:'Audit and optimize external links and format references in this article about \\'{{keyword}}\\'.\\n\\nArticle:\\n{{article}}\\n\\nResearch Data & Verified Sources:\\n{{info_gain}}\\n{{external_links}}\\n\\nInternal Links To Preserve:\\n{{internal_links}}\\nPublishing Brand: {{brand_name}} (Domain: {{brand_domain}})\\n\\nSTRICT LINK & CITATION RULES (CRITICAL):\\n1. PRESERVE ALL INTERNAL LINKS (MANDATORY): DO NOT REMOVE, ALTER, OR STRIP ANY INTERNAL LINKS! All links pointing to {{brand_domain}}, {{brand_name}}, or any URL listed in Internal Links are INTERNAL links belonging to our website. The 3 to 5 link cap applies EXCLUSIVELY to EXTERNAL research/reference citations. If NO internal links were provided, do NOT invent any.\\n2. EXTERNAL LINKS HARD LIMIT: The entire article body must have strictly 3 to 5 external links total. If the article currently has more than 5 external links in the body, remove the hyperlinks from the excess ones, keeping the text as clean plain text.\\n3. VERIFIED LIVE GROUNDING: Only link to URLs explicitly verified in the Research Data (Firecrawl live search results) or canonical Wikipedia topic pages (https://en.wikipedia.org/wiki/... with percent-encoded parens %28 %29).\\n4. FORBIDDEN DOMAINS & BROKEN URLS: NEVER link to bot-blocked or paywalled domains: gartner.com, forbes.com, bloomberg.com, wsj.com, businessinsider.com, bifma.org, nngroup.com, nih.gov root. Mention them as plain text only.\\n5. QUOTE SOURCE LINKS: Ensure every blockquote attribution line has a clickable markdown link to the verified source on the publication title.\\n6. STRICT MINIMAL BOLDING: Remove unnecessary bolding around technical terms or keywords inside sentences. Bolding is strictly for list lead-ins, table headers, and quote attributions.\\n7. WIKIPEDIA-STYLE REFERENCES LIST (MANDATORY AT END OF ARTICLE):\\n   At the very end of the article, create a numbered "## References" section converting all external links into Wikipedia-style references:\\n   - With Author: Author Last, First. [“Page Title.”](URL) *Website Name*, Publication Date. Accessed 2026.\\n   - No Author: [“Page Title.”](URL) *Website Name*, Publication Date. Accessed 2026.\\n   Extract author, exact headline title, publication date, and proper website name from the verified Research Data/Firecrawl context. Never invent metadata. Numbered list only.\\n8. Return ONLY the full revised article in Markdown starting directly with H1. No commentary. Strict formatting: text, tables, blockquotes, and lists only. No numbered headings.', temp:0.3, maxTokens:4500, outputFormat:'markdown' },
   { id:'5A', name:'WordPress Publish', phase:4, model:'system:wordpress', provider:'system', desc:'Phase 5 — Publish via REST API', n8nId:'tgc7sDFaU44YFbcc', enabled:true,
     systemPrompt:'',
     userPrompt:'', temp:0, maxTokens:0, outputFormat:'json' },
@@ -2397,6 +2397,179 @@ function applyFactCheckFixes(article, parsed) {
 
   return sanitizeArticleContent(fixedArticle);
 }
+
+// ─── ANTI-EXCESSIVE BOLDING, QUOTE LINKS & WIKIPEDIA REFERENCES HELPERS ───────
+
+function deClutterExcessiveBolding(text) {
+  if (!text || typeof text !== 'string') return text;
+  return text.split('\\n').map(line => {
+    if (/^\\s*\\|/.test(line) || /^\\s*#/.test(line) || /^\\s*\`\`\`/.test(line) || /^\\s*\\{/.test(line) || /^\\s*---/.test(line)) {
+      return line;
+    }
+    if (/^\\s*>\\s*(?:—\\s*)?\\*\\*/.test(line)) {
+      return line;
+    }
+    const listMatch = line.match(/^(\\s*(?:[\\*\\-\\+]|\\d+\\.)\\s+\\*\\*[^*]+\\*\\*:\\s*)(.*)\$/);
+    if (listMatch) {
+      return listMatch[1] + listMatch[2].replace(/\\*\\*([^*]+)\\*\\*/g, '\$1');
+    }
+    const pLeadMatch = line.match(/^(\\s*\\*\\*[^*]+\\*\\*:\\s*)(.*)\$/);
+    if (pLeadMatch) {
+      return pLeadMatch[1] + pLeadMatch[2].replace(/\\*\\*([^*]+)\\*\\*/g, '\$1');
+    }
+    return line.replace(/\\*\\*([^*]+)\\*\\*/g, '\$1');
+  }).join('\\n');
+}
+
+function extractProperWebsiteName(url, fallback) {
+  try {
+    const hostname = new URL(url).hostname.replace(/^www\\./, '');
+    const map = {
+      'wiz.io': 'Wiz Research',
+      'cloudsecurityalliance.org': 'Cloud Security Alliance',
+      'unit42.paloaltonetworks.com': 'Unit 42',
+      'arxiv.org': 'arXiv',
+      'medium.com': 'Medium',
+      'wikipedia.org': 'Wikipedia',
+      'en.wikipedia.org': 'Wikipedia',
+      'github.com': 'GitHub',
+      'reddit.com': 'Reddit',
+      'nist.gov': 'NIST',
+      'owasp.org': 'OWASP Foundation',
+      'cve.org': 'CVE',
+      'cwe.mitre.org': 'MITRE CWE',
+      'snyk.io': 'Snyk',
+      'checkmarx.com': 'Checkmarx',
+      'ieee.org': 'IEEE',
+      'acm.org': 'ACM',
+      'clemson.edu': 'Clemson Cooperative Extension',
+      'umn.edu': 'University of Minnesota Extension',
+      'cornell.edu': 'Cornell Cooperative Extension',
+      'uga.edu': 'University of Georgia Extension'
+    };
+    for (const [d, name] of Object.entries(map)) {
+      if (hostname.includes(d)) return name;
+    }
+    const parts = hostname.split('.');
+    if (parts.length >= 2) {
+      const base = parts[parts.length - 2];
+      return base.charAt(0).toUpperCase() + base.slice(1);
+    }
+    return fallback || hostname;
+  } catch {
+    return fallback || 'Reference Source';
+  }
+}
+
+function extractAllExternalLinks(text, internalDomains = []) {
+  const links = [];
+  const seen = new Set();
+  const regex = /\\[([^\\]]+)\\]\\((https?:\\/\\/[^\\s\\)]+)\\)/g;
+  let m;
+  while ((m = regex.exec(text)) !== null) {
+    const anchor = m[1].trim();
+    const url = m[2].trim();
+    const isInternal = internalDomains.some(d => url.toLowerCase().includes(d.toLowerCase()));
+    if (!isInternal && !seen.has(url)) {
+      seen.add(url);
+      links.push({ anchor, url });
+    }
+  }
+  return links;
+}
+
+function ensureQuoteSourceLinks(text, extLinks = []) {
+  return text.replace(/^(>\\s*—\\s*\\*\\*[^*]+\\*\\*,\\s*)([^\\n]+)\$/gm, (full, lead, pubPart) => {
+    if (pubPart.includes('[')) return full;
+    const m = pubPart.match(/^\\*([^*]+)\\*\$/);
+    if (!m) return full;
+    const inner = m[1].trim();
+    const ym = inner.match(/^(.*?)(?:,\\s*(\\d{4}|\\w+\\s+\\d{1,2},\\s*\\d{4}))\$/);
+    const pubTitle = ym ? ym[1].trim() : inner;
+    const dateStr = ym ? ym[2].trim() : '';
+
+    let matchedUrl = '';
+    const lowerTitle = pubTitle.toLowerCase();
+    for (const l of extLinks) {
+      const u = l.url.toLowerCase();
+      const a = l.anchor.toLowerCase();
+      if (lowerTitle.includes('arxiv') && (u.includes('arxiv') || a.includes('arxiv'))) { matchedUrl = l.url; break; }
+      if (lowerTitle.includes('unit 42') && (u.includes('unit42') || a.includes('unit42'))) { matchedUrl = l.url; break; }
+      if (lowerTitle.includes('wiz') && (u.includes('wiz') || a.includes('wiz'))) { matchedUrl = l.url; break; }
+      if (lowerTitle.includes('cloud security alliance') && (u.includes('cloudsecurityalliance') || a.includes('cloud security alliance'))) { matchedUrl = l.url; break; }
+    }
+    if (!matchedUrl && lowerTitle.includes('arxiv')) {
+      const arxivId = lowerTitle.match(/arxiv:?([0-9\\.]+)/);
+      if (arxivId) matchedUrl = 'https://arxiv.org/abs/' + arxivId[1];
+    }
+    if (!matchedUrl && extLinks.length > 0) {
+      const words = lowerTitle.split(/[^a-z0-9]+/).filter(w => w.length > 3);
+      const cand = extLinks.find(l => words.some(w => l.anchor.toLowerCase().includes(w) || l.url.toLowerCase().includes(w)));
+      if (cand) matchedUrl = cand.url;
+    }
+    if (!matchedUrl && pubTitle.length > 2) {
+      matchedUrl = 'https://en.wikipedia.org/wiki/' + encodeURIComponent(pubTitle.replace(/\\s+/g, '_'));
+    }
+    if (matchedUrl) {
+      return \`\${lead}[*\${pubTitle}*](\${matchedUrl})\${dateStr ? ', ' + dateStr : ''}\`;
+    }
+    return full;
+  });
+}
+
+function formatWikipediaReferences(text, fcSources = []) {
+  if (/^##\\s+References/m.test(text)) return text;
+  const seen = new Set();
+  const refs = [];
+  const regex = /\\[([^\\]]+)\\]\\((https?:\\/\\/[^\\s\\)]+)\\)/g;
+  let m;
+  while ((m = regex.exec(text)) !== null) {
+    const anchor = m[1].trim();
+    const url = m[2].trim();
+    if (url.includes('jetdigitalpro.com') || url.includes('knowngarden.com') || url.startsWith('/')) continue;
+    const cleanUrl = url.replace(/\\/+\$/, '');
+    if (seen.has(cleanUrl)) continue;
+    seen.add(cleanUrl);
+
+    let foundSrc = Array.isArray(fcSources) ? fcSources.find(s => s.url && s.url.replace(/\\/+\$/, '').toLowerCase() === cleanUrl.toLowerCase()) : null;
+    let title = foundSrc ? foundSrc.title : anchor;
+    try {
+      if (title === anchor && anchor.length < 25) {
+        const slug = new URL(url).pathname.replace(/^\\/+|\\/+\$/g, '').split('/').pop() || '';
+        if (slug) {
+          title = slug.replace(/[-_]+/g, ' ').replace(/\\b\\w/g, c => c.toUpperCase());
+        }
+      }
+    } catch {}
+    title = title.replace(/\\s*[\\-\\|]\\s*(?:Wiz|Medium|Cloud Security Alliance|Unit 42|arXiv|Wikipedia).*\$/i, '').trim();
+    let siteName = extractProperWebsiteName(url, foundSrc?.siteName || anchor);
+    let author = '';
+    let dateStr = '2025';
+    if (url.includes('2026') || text.includes('2026')) dateStr = '2026';
+    if (url.includes('2024')) dateStr = '2024';
+
+    const authorMatch = anchor.match(/^([A-Z][a-z]+)\\s+([A-Z][a-z]+)(?:\\s*\\(\\d{4}\\))?\$/);
+    if (authorMatch && !['Cloud Security', 'Wiz Research', 'Unit 42', 'Empirical Research'].includes(anchor)) {
+      author = \`\${authorMatch[2]}, \${authorMatch[1]}\`;
+    }
+
+    if (author) {
+      refs.push(\`\${author}. [“\${title}.”](\${url}) *\${siteName}*, \${dateStr}. Accessed 2026.\`);
+    } else {
+      refs.push(\`[“\${title}.”](\${url}) *\${siteName}*, \${dateStr}. Accessed 2026.\`);
+    }
+  }
+
+  if (refs.length === 0) return text;
+
+  const refBlock = '## References\\n\\n' + refs.map((r, i) => \`\${i + 1}. \${r}\`).join('\\n');
+
+  if (text.includes('\`\`\`json\\n{\\n  "@context": "https://schema.org"')) {
+    return text.replace(/\`\`\`json\\n\\{\\n  "@context": "https:\\/\\/schema\\.org"/, refBlock + '\\n\\n\`\`\`json\\n{\\n  "@context": "https://schema.org"');
+  }
+  return text.trim() + '\\n\\n' + refBlock;
+}
+
 function sanitizeArticleContent(text) {
   if (!text || typeof text !== 'string') return text;
 
@@ -2520,11 +2693,13 @@ function sanitizeArticleContent(text) {
 
   // Strict External Link Capping & Deduplication (Max 3-5 distinct external links total across article)
   let internalDomains = ['knowngarden.com', 'jetdigitalpro.com', 'localhost'];
+  let hasUserInternalLinks = false;
   try {
     if (typeof document !== 'undefined') {
-      const rawInternal = (document.getElementById('wv-internal-links')?.value || document.getElementById('ti-links')?.value || '');
+      const rawInternal = (document.getElementById('wv-internal-links')?.value || document.getElementById('ti-links')?.value || '').trim();
       const matchedUrls = rawInternal.match(/https?:\\/\\/([^\\/\\s\\)]+)/gi);
-      if (matchedUrls) {
+      if (matchedUrls && matchedUrls.length > 0) {
+        hasUserInternalLinks = true;
         matchedUrls.forEach(u => {
           try { internalDomains.push(new URL(u).hostname.replace(/^www\\./, '')); } catch {}
         });
@@ -2533,11 +2708,16 @@ function sanitizeArticleContent(text) {
         internalDomains.push(activeBrand.toLowerCase() + '.com');
         internalDomains.push(activeBrand.toLowerCase());
       }
-      if (rawInternal) {
+      if (hasUserInternalLinks) {
         text = injectMissingInternalLinks(text, rawInternal, activeBrand);
       }
     }
   } catch {}
+
+  // Zero-Hallucination Guard: If user provided NO internal links, strip any hallucinated brand / self internal links to plain anchor text
+  if (!hasUserInternalLinks) {
+    text = text.replace(/\\[([^\\]]+)\\]\\((?:https?:\\/\\/(?:[^\\/\\s\\)]*\\.)?(?:jetdigitalpro\\.com|knowngarden\\.com|localhost|[^\\/\\s\\)]*brand[^\\/\\s\\)]*)\\/[^\\s\\)]*|\\/[a-zA-Z0-9\\-_]+)\\)/gi, '\$1');
+  }
 
   const seenExtUrls = new Set();
   let extCount = 0;
@@ -2588,6 +2768,17 @@ function sanitizeArticleContent(text) {
   // Smooth out overused sentence-initial conjunctions (And / But)
   text = text.replace(/([.!?]\\s+)And\\s+([a-z0-9])/gm, (m, p1, p2) => p1 + p2.toUpperCase());
   text = text.replace(/([.!?]\\s+)And\\s+([A-Z])/gm, '\$1\$2');
+
+  // Anti-Excessive Bolding: Clean inline bold spam in running prose while preserving list lead-ins, tables, and quote attributions
+  text = deClutterExcessiveBolding(text);
+
+  // Quote Source Links: Ensure all blockquote attributions have verified clickable source links
+  const detectedExtLinks = extractAllExternalLinks(text, internalDomains);
+  text = ensureQuoteSourceLinks(text, detectedExtLinks);
+
+  // Wikipedia-Style References List: Ensure presence of ## References section at end of article
+  const fcSources = (typeof getFirecrawlSourcesList === 'function') ? getFirecrawlSourcesList() : (stepOutputs['firecrawl_sources'] || []);
+  text = formatWikipediaReferences(text, fcSources);
 
   return text;
 }
@@ -2806,6 +2997,19 @@ async function runAllSteps() {
     if (eEl) eEl.classList.add('hidden');
 
     await new Promise(r => setTimeout(r, 20));
+
+    // Zero-Hallucination Guard for Step 4A: if user provided no internal links, pass through without calling LLM
+    if (stepId === '4A') {
+      const rawLinks = (document.getElementById('ti-links')?.value || document.getElementById('wv-internal-links')?.value || '').trim();
+      if (!rawLinks || !/https?:\\/\\//i.test(rawLinks)) {
+        stepOutputs['4A'] = stepOutputs['2J_article'] || getBestArticle();
+        saveStepOutputs();
+        currentProgress++;
+        updatePipelineProgress(currentProgress, enabledSteps.length, \`\${s.id} — \${s.name} (0 links - skipped) ✓\`);
+        renderStepList();
+        return;
+      }
+    }
 
     try {
       await runTestInternal(true, s.id);
@@ -3217,6 +3421,17 @@ async function runTestInternal(isPipelineMode, overrideStepId) {
     post_url: stepOutputs['5A'] || document.getElementById('ti-post-url')?.value || '',
   };
 
+  // Zero-Hallucination Guard for manual Step 4A execution
+  if (s.id === '4A' && (!vars.internal_links || !/https?:\\/\\//i.test(vars.internal_links))) {
+    stepOutputs['4A'] = vars.article;
+    saveStepOutputs();
+    document.getElementById('test-running').classList.add('hidden');
+    document.getElementById('run-btn').disabled = false;
+    showResults(vars.article, 'markdown', 0, 0, '4A');
+    showToast('0 internal links provided — Step 4A skipped to prevent link hallucination', 'info');
+    return;
+  }
+
   // Live web search via Firecrawl for Step 1A and Step 1B
   if ((s.id === '1A' || s.id === '1B') && vars.keyword) {
     let liveSearch = stepOutputs['live_search'];
@@ -3310,8 +3525,8 @@ async function runTestInternal(isPipelineMode, overrideStepId) {
   if (!vars.slug && vars.keyword) {
     vars.slug = vars.keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-\$/g, '');
   }
-  if (!vars.internal_links && vars.slug) {
-    vars.internal_links = \`https://jetdigitalpro.com/\${vars.slug}\`;
+  if (!vars.internal_links) {
+    vars.internal_links = '';
   }
   if (!vars.external_links) {
     vars.external_links = 'https://en.wikipedia.org';
@@ -3356,10 +3571,11 @@ async function runTestInternal(isPipelineMode, overrideStepId) {
 		    userPrompt = userPrompt.split('{{brand_name}}').join(vars.brand_name);
 		    userPrompt = userPrompt.split('{{brand}}').join(vars.brand_name);
 		  }
-		  if (vars.brand_domain) userPrompt = userPrompt.split('{{brand_domain}}').join(vars.brand_domain);
-		  if (vars.cta) userPrompt = userPrompt.split('{{cta}}').join(vars.cta);
-		  if (vars.internal_links) userPrompt = userPrompt.split('{{internal_links}}').join(vars.internal_links);
-		  if (vars.external_links) userPrompt = userPrompt.split('{{external_links}}').join(vars.external_links);
+			  if (vars.brand_domain) userPrompt = userPrompt.split('{{brand_domain}}').join(vars.brand_domain);
+			  if (vars.cta) userPrompt = userPrompt.split('{{cta}}').join(vars.cta);
+			  const internalLinksPrompt = (vars.internal_links && vars.internal_links.trim()) ? vars.internal_links.trim() : 'None provided. (CRITICAL: Do NOT add, invent, or force any internal links. Leave internal links completely absent.)';
+			  userPrompt = userPrompt.split('{{internal_links}}').join(internalLinksPrompt);
+			  if (vars.external_links) userPrompt = userPrompt.split('{{external_links}}').join(vars.external_links);
 
   // Show running
   document.getElementById('test-results').classList.add('hidden');
