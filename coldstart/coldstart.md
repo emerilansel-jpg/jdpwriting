@@ -664,3 +664,24 @@ Pengujian end-to-end 3 keyword niche berbeda dengan Firecrawl Live Search API & 
   - Known: 1 network error toast dari 1D2 (non-blocking, fallback jalan)
 - **Root cause 1D2:** Bukan timeout (150s cukup), tapi **network drop** saat fetch panjang. Retry 2× sudah ada tapi network persisten. Solusi: tambah retry ke-3 + exponential backoff, atau kurangi input lebih agresif (<2000 chars).
 - **Next:** Run 3× lagi untuk konsistensi; kalau 1D2 masih network drop → tambah retry attempt 3.
+
+---
+
+## 2026-01-12 — Retry 3× + Trim Agresif + Live Test (Network Outage)
+- **Status:** COMPLETED (fixes deployed, test affected by external outage)
+- **Fixes deployed:**
+  1. callLLM retry: 2 → **3 attempts**, backoff **1.5s → 4s** (was fixed 1.5s)
+  2. trimOutlineFor1D2: cap 4000 → **2000 chars** (aggressive, headings + FAQ only)
+- **Commits:** `fe3014b`
+- **Deploy:** 2026-01-12 (434001 bytes)
+- **QA:** speed-quality-qa 12/12 PASS, writer-mode 8/8 PASS, trim unit test PASS
+- **Live test 1 "how to propagate succulents" (images=0, auto-qa ON):**
+  - **1D:** 5 H2, 9154 chars, FAQ ✓ (prompt min 10 H2 — completeness guard flagged tapi tidak block)
+  - **1D2:** FAILED — "Failed to fetch" (retry 3× semua gagal)
+  - **1E:** FAILED — "Failed to fetch" (retry 3× gagal)
+  - **2G:** FAILED — "Empty response choices"
+  - **2I:** timeout (signal aborted)
+  - **Article final:** 1,191 words, 2 H2 (rusak — network outage)
+  - **27/28 steps selesai**, History 4
+- **Root cause:** **PesatRouter API network outage** — bukan bug kode. Retry 3× + exponential backoff sudah aktif tapi network persisten drop. Step kecil (1A-1C) sukses, step besar (1D2, 1E, 2G, 2I) gagal karena response panjang → timeout/drop.
+- **Next:** Tunggu PesatRouter recovery, run 2× lagi untuk konsistensi. Kalau masih gagal → cek PesatRouter status page.
