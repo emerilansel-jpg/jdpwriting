@@ -602,3 +602,20 @@ Pengujian end-to-end 3 keyword niche berbeda dengan Firecrawl Live Search API & 
 - **QA:** speed-quality-qa 12/12, fact-check-autofix, writer-mode, universal-fact-check, cost-usd, inject-internal PASS. test-ui-fixes & search-e2e fail pre-existing (sandbox helper gap / live API asserts).
 - **Deploy:** jdp-pipeline-admin 2026-11-25T09:39:45Z (430677 bytes)
 - **Next:** monitor first live pipeline run for truncation warnings in console
+
+---
+
+## 2026-11-25 — Step 1D Outline Truncation Fix
+- **Status:** COMPLETED
+- **Gejala (laporan user):** Step 1D di jdpwriter.com bermasalah — outline terpotong (min 10 H2 tidak tercapai, FAQ hilang).
+- **Root cause:** `1D.maxTokens:2000` — prompt wajibkan minimum 10 H2 sections + FAQ 3+ Q&A + word allocations per section (~3000-4000 token output) → LLM kehabisan token → outline truncated. Pola identik bug 1D2 sebelumnya (2500→6000).
+- **Secondary bug:** Outline Integrity Guard 1D2 pakai regex `/^##s+/gm` (literal 's') yang tidak pernah match heading `## ` — guard tidak efektif. Diperbaiki ke `/^##\s+/gm`.
+- **Fix:**
+  1. `1D.maxTokens` 2000 → **6000**
+  2. **Outline Completeness Guard** untuk 1D: flag warning jika H2<5 atau FAQ hilang atau len<800 (memberi sinyal ke user + 1D2 punya input lebih baik)
+  3. Regex 1D2 guard diperbaiki `##s+` → `##\s+`
+- **Files touched:** `admin-ui.html`, `worker-deploy/worker.js`
+- **QA:** test-speed-quality-qa 12/12, test-writer-mode-pipeline 8/8, test-fact-check-autofix, test-universal-fact-checking PASS. Unit test guard logic 3/3 PASS.
+- **Deploy:** jdp-pipeline-admin 2026-11-25T10:23:18Z (431665 bytes)
+- **Live verify:** jdpwriter.com loaded → `1D maxTokens:6000`, guard + truncation retry markers present in served worker.
+- **Next:** Run live pipeline 1 keyword untuk verifikasi outline 1D lengkap (≥10 H2 + FAQ) end-to-end.
