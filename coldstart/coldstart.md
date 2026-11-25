@@ -685,3 +685,13 @@ Pengujian end-to-end 3 keyword niche berbeda dengan Firecrawl Live Search API & 
   - **27/28 steps selesai**, History 4
 - **Root cause:** **PesatRouter API network outage** — bukan bug kode. Retry 3× + exponential backoff sudah aktif tapi network persisten drop. Step kecil (1A-1C) sukses, step besar (1D2, 1E, 2G, 2I) gagal karena response panjang → timeout/drop.
 - **Next:** Tunggu PesatRouter recovery, run 2× lagi untuk konsistensi. Kalau masih gagal → cek PesatRouter status page.
+
+---
+
+## 2026-01-12 — TL;DR + TODO untuk Sesi Besok
+- **Status:** COMPLETED
+- **User request:** "catat inti-inti pentingnya dalam tldr dan catat ke to do list ya ke coldstart.md, lanjut untuk sesi besok"
+- **Action:** Update coldstart.md — tambah section TL;DR (ringkasan 7 fixes + live test results) + TODO checklist untuk sesi 2026-01-13
+- **TL;DR covers:** auto-QA mode, maxTokens 1D, timeout per-step, truncation retry, trimOutlineFor1D2, callLLM retry 3×, integrity guard regex
+- **TODO covers:** cek PesatRouter status, run konsistensi 2×, verifikasi 1D2 network, 1D completeness guard, optimasi 1D2 prompt, cleanup history, document fallback
+- **Next session:** Mulai dari TODO #1 (cek PesatRouter status), lalu run 2× untuk validasi semua fix
