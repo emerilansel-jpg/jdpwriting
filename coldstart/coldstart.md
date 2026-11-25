@@ -1,7 +1,7 @@
 # JDP Writing Pipeline — Cold Start Guide (v3.5)
 
 > Panduan orientasi cepat (onboarding) untuk developer & AI agent.
-> Status: **Production Ready** · Last Updated: **2026-11-11**
+> Status: **Production Ready** · Last Updated: **2026-11-12**
 
 ---
 
@@ -36,6 +36,42 @@ node scripts/deploy-worker.js
 
 ---
 
+## 📌 TL;DR — Sesi 2026-01-12
+
+**Masalah:** Outline 1D2 selalu timeout/gagal → artikel rusak.
+
+**Fix yang sudah di-deploy (commits `ca78256` → `fe3014b`):**
+
+| # | Fix | Detail |
+|---|---|---|
+| 1 | **Auto-QA mode** | `qaConfirm()` auto-accept confirm di 7 pipeline path. Aktif via `#auto-qa` (localStorage). 4 destructive confirm tetap manual. |
+| 2 | **maxTokens 1D** | 4000 → 6000 (truncation fix) |
+| 3 | **Timeout per-step** | 1E/2C/1D: 90s · 1D2: 150s · lainnya: 60s |
+| 4 | **Truncation retry** | `showResults` auto-retry saat `finish_reason=length` (article steps, budget 1.8×) |
+| 5 | **trimOutlineFor1D2** | Cap 2000 chars, headings + FAQ only (FAQ prioritized, never cut) |
+| 6 | **callLLM retry** | 3 attempts, backoff 1.5s → 4s exponential |
+| 7 | **Integrity guard regex** | `/^##s+/gm` → `/^##\s+/gm` (was dead code) |
+
+**Live test results:**
+- Run 1: 1D sukses (15 H2), 1E sukses (16 H2), article 2,244w ✓
+- Run 2: 1D sukses (18 H2), 1D2 network drop, 1E sukses (19 H2), article 2,137w ✓
+- Run 3: **PesatRouter API outage** — 1D2+1E+2G+2I gagal, article 1,191w rusak. Bukan bug kode.
+
+**Status akhir:** Semua fix deployed + QA 12/12 PASS. Menunggu PesatRouter recovery untuk run konsistensi 2×.
+
+---
+
+## 📋 TODO — Sesi Besok (2026-01-13)
+
+- [ ] **Cek PesatRouter status** — buka status page, konfirmasi recovery
+- [ ] **Run konsistensi 2×** — keyword berbeda, images=0, auto-qa ON. Target: 1D2 sukses, article ≥1500w, ≥10 H2
+- [ ] **Verifikasi 1D2 network** — kalau masih `Failed to fetch` → cek apakah input <2000 chars benar-benar terkirim (inspect rendered-prompt box)
+- [ ] **1D completeness guard** — Run 3 dapat 5 H2 (prompt min 10). Guard flag tapi tidak block. Pertimbangkan: retry otomatis kalau <8 H2
+- [ ] **Optimasi 1D2 prompt** — kalau network masih drop → pangkas system prompt (saat ini ~2000 chars, bisa dipotong ke 1000)
+- [ ] **Cleanup history** — History 4 berisi artikel rusak (1,191w, 2 H2). Hapus manual via UI
+- [ ] **Document PesatRouter fallback** — kalau outage sering → tambah fallback ke provider lain (OpenAI/Gemini) untuk step kritis
+
+---
 ## 🧭 Navigation & Resources
 
 | Kategori | Resource | URL / ID | Status |
@@ -687,71 +723,4 @@ Pengujian end-to-end 3 keyword niche berbeda dengan Firecrawl Live Search API & 
 - **Next:** Tunggu PesatRouter recovery, run 2× lagi untuk konsistensi. Kalau masih gagal → cek PesatRouter status page.
 
 ---
-
-## 2026-01-12 — TL;DR + TODO untuk Sesi Besok
-- **Status:** COMPLETED
-- **User request:** "catat inti-inti pentingnya dalam tldr dan catat ke to do list ya ke coldstart.md, lanjut untuk sesi besok"
-- **Action:** Update coldstart.md — tambah section TL;DR (ringkasan 7 fixes + live test results) + TODO checklist untuk sesi 2026-01-13
-- **TL;DR covers:** auto-QA mode, maxTokens 1D, timeout per-step, truncation retry, trimOutlineFor1D2, callLLM retry 3×, integrity guard regex
-- **TODO covers:** cek PesatRouter status, run konsistensi 2×, verifikasi 1D2 network, 1D completeness guard, optimasi 1D2 prompt, cleanup history, document fallback
-- **Next session:** Mulai dari TODO #1 (cek PesatRouter status), lalu run 2× untuk validasi semua fix
-
----
-
-## 2026-01-12 — TL;DR + TODO untuk Sesi Besok
-- **Status:** COMPLETED
-- **User request:** "catat inti-inti pentingnya dalam tldr dan catat ke to do list ya ke coldstart.md, lanjut untuk sesi besok"
-- **Action:** Update coldstart.md — tambah section TL;DR (ringkasan 7 fixes + live test results) + TODO checklist untuk sesi 2026-01-13
-- **TL;DR covers:** auto-QA mode, maxTokens 1D, timeout per-step, truncation retry, trimOutlineFor1D2, callLLM retry 3×, integrity guard regex
-- **TODO covers:** cek PesatRouter status, run konsistensi 2×, verifikasi 1D2 network, 1D completeness guard, optimasi 1D2 prompt, cleanup history, document fallback
-- **Next session:** Mulai dari TODO #1 (cek PesatRouter status), lalu run 2× untuk validasi semua fix
-
----
-
-## 2026-01-12 — TL;DR + TODO untuk Sesi Besok
-- **Status:** COMPLETED
-- **User request:** "catat inti-inti pentingnya dalam tldr dan catat ke to do list ya ke coldstart.md, lanjut untuk sesi besok"
-- **Action:** Update coldstart.md — tambah section TL;DR (ringkasan 7 fixes + live test results) + TODO checklist untuk sesi 2026-01-13
-- **TL;DR covers:** auto-QA mode, maxTokens 1D, timeout per-step, truncation retry, trimOutlineFor1D2, callLLM retry 3×, integrity guard regex
-- **TODO covers:** cek PesatRouter status, run konsistensi 2×, verifikasi 1D2 network, 1D completeness guard, optimasi 1D2 prompt, cleanup history, document fallback
-- **Next session:** Mulai dari TODO #1 (cek PesatRouter status), lalu run 2× untuk validasi semua fix
-
----
-
-## 2026-01-12 — TL;DR + TODO untuk Sesi Besok
-- **Status:** COMPLETED
-- **User request:** "catat inti-inti pentingnya dalam tldr dan catat ke to do list ya ke coldstart.md, lanjut untuk sesi besok"
-- **Action:** Update coldstart.md — tambah section TL;DR (ringkasan 7 fixes + live test results) + TODO checklist untuk sesi 2026-01-13
-- **TL;DR covers:** auto-QA mode, maxTokens 1D, timeout per-step, truncation retry, trimOutlineFor1D2, callLLM retry 3×, integrity guard regex
-- **TODO covers:** cek PesatRouter status, run konsistensi 2×, verifikasi 1D2 network, 1D completeness guard, optimasi 1D2 prompt, cleanup history, document fallback
-- **Next session:** Mulai dari TODO #1 (cek PesatRouter status), lalu run 2× untuk validasi semua fix
-
----
-
-## 2026-01-12 — TL;DR + TODO untuk Sesi Besok
-- **Status:** COMPLETED
-- **User request:** "catat inti-inti pentingnya dalam tldr dan catat ke to do list ya ke coldstart.md, lanjut untuk sesi besok"
-- **Action:** Update coldstart.md — tambah section TL;DR (ringkasan 7 fixes + live test results) + TODO checklist untuk sesi 2026-01-13
-- **TL;DR covers:** auto-QA mode, maxTokens 1D, timeout per-step, truncation retry, trimOutlineFor1D2, callLLM retry 3×, integrity guard regex
-- **TODO covers:** cek PesatRouter status, run konsistensi 2×, verifikasi 1D2 network, 1D completeness guard, optimasi 1D2 prompt, cleanup history, document fallback
-- **Next session:** Mulai dari TODO #1 (cek PesatRouter status), lalu run 2× untuk validasi semua fix
-
----
-
-## 2026-01-12 — TL;DR + TODO untuk Sesi Besok
-- **Status:** COMPLETED
-- **User request:** "catat inti-inti pentingnya dalam tldr dan catat ke to do list ya ke coldstart.md, lanjut untuk sesi besok"
-- **Action:** Update coldstart.md — tambah section TL;DR (ringkasan 7 fixes + live test results) + TODO checklist untuk sesi 2026-01-13
-- **TL;DR covers:** auto-QA mode, maxTokens 1D, timeout per-step, truncation retry, trimOutlineFor1D2, callLLM retry 3×, integrity guard regex
-- **TODO covers:** cek PesatRouter status, run konsistensi 2×, verifikasi 1D2 network, 1D completeness guard, optimasi 1D2 prompt, cleanup history, document fallback
-- **Next session:** Mulai dari TODO #1 (cek PesatRouter status), lalu run 2× untuk validasi semua fix
-
----
-
-## 2026-01-12 — TL;DR + TODO untuk Sesi Besok
-- **Status:** COMPLETED
-- **User request:** "catat inti-inti pentingnya dalam tldr dan catat ke to do list ya ke coldstart.md, lanjut untuk sesi besok"
-- **Action:** Update coldstart.md — tambah section TL;DR (ringkasan 7 fixes + live test results) + TODO checklist untuk sesi 2026-01-13
-- **TL;DR covers:** auto-QA mode, maxTokens 1D, timeout per-step, truncation retry, trimOutlineFor1D2, callLLM retry 3×, integrity guard regex
-- **TODO covers:** cek PesatRouter status, run konsistensi 2×, verifikasi 1D2 network, 1D completeness guard, optimasi 1D2 prompt, cleanup history, document fallback
-- **Next session:** Mulai dari TODO #1 (cek PesatRouter status), lalu run 2× untuk validasi semua fix
+
