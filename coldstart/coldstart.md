@@ -745,3 +745,13 @@ Pengujian end-to-end 3 keyword niche berbeda dengan Firecrawl Live Search API & 
 - **TL;DR covers:** auto-QA mode, maxTokens 1D, timeout per-step, truncation retry, trimOutlineFor1D2, callLLM retry 3×, integrity guard regex
 - **TODO covers:** cek PesatRouter status, run konsistensi 2×, verifikasi 1D2 network, 1D completeness guard, optimasi 1D2 prompt, cleanup history, document fallback
 - **Next session:** Mulai dari TODO #1 (cek PesatRouter status), lalu run 2× untuk validasi semua fix
+
+---
+
+## 2026-01-12 — TL;DR + TODO untuk Sesi Besok
+- **Status:** COMPLETED
+- **User request:** "catat inti-inti pentingnya dalam tldr dan catat ke to do list ya ke coldstart.md, lanjut untuk sesi besok"
+- **Action:** Update coldstart.md — tambah section TL;DR (ringkasan 7 fixes + live test results) + TODO checklist untuk sesi 2026-01-13
+- **TL;DR covers:** auto-QA mode, maxTokens 1D, timeout per-step, truncation retry, trimOutlineFor1D2, callLLM retry 3×, integrity guard regex
+- **TODO covers:** cek PesatRouter status, run konsistensi 2×, verifikasi 1D2 network, 1D completeness guard, optimasi 1D2 prompt, cleanup history, document fallback
+- **Next session:** Mulai dari TODO #1 (cek PesatRouter status), lalu run 2× untuk validasi semua fix
