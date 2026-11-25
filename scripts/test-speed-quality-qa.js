@@ -2,7 +2,7 @@ const fs = require('fs');
 const assert = require('assert');
 const vm = require('vm');
 
-console.log('=== COMPREHENSIVE QA TEST SUITE: FULL 23-STEP INTEGRATION & QUALITY ASSURANCE ===\n');
+console.log('=== COMPREHENSIVE QA TEST SUITE: FULL 24-STEP INTEGRATION & QUALITY ASSURANCE ===\n');
 
 const html = fs.readFileSync('admin-ui.html', 'utf8');
 const script = html.slice(html.lastIndexOf('<script>') + 8, html.lastIndexOf('</script>'));
@@ -106,17 +106,20 @@ const sandbox = {
 vm.createContext(sandbox);
 vm.runInContext(script, sandbox);
 
-// 2. All 23 steps must be enabled and active
+// 2. All 24 steps must be enabled and active
 const stepData = vm.runInContext("stepData", sandbox);
 const step2B = stepData.find(s => s.id === '2B');
 const step2E = stepData.find(s => s.id === '2E');
 const step2F = stepData.find(s => s.id === '2F');
+const step1D2 = stepData.find(s => s.id === '1D2');
 assert.strictEqual(step2B.enabled, true, 'Step 2B must be enabled');
 assert.strictEqual(step2E.enabled, true, 'Step 2E must be enabled');
 assert.strictEqual(step2F.enabled, true, 'Step 2F must be enabled');
+assert(step1D2, 'Step 1D2 Outline QA must exist');
+assert.strictEqual(step1D2.enabled, true, 'Step 1D2 must be enabled');
 const totalEnabled = stepData.filter(s => s.enabled).length;
-assert.strictEqual(totalEnabled, 23, `All 23 steps must be active (found ${totalEnabled})`);
-console.log('2. Full 23-Step Activation: ✅ PASS (100% of pipeline steps enabled & active)');
+assert.strictEqual(totalEnabled, 24, `All 24 steps must be active (found ${totalEnabled})`);
+console.log('2. Full 24-Step Activation: ✅ PASS (100% of pipeline steps enabled & active, incl. 1D2 Outline QA)');
 
 // 3. Test Step 2B Intro Stitching (mergeIntroIntoArticle)
 const baseArticle1E = `# How to Calibrate an Espresso Machine: Complete Guide
@@ -220,7 +223,7 @@ console.log('8. Cumulative Upstream Article Chaining (1E -> 2B -> 2C -> 2D -> 2E
 const sampleWithCommas = `{"score": 95, "verdict": "pass",}`;
 const parsed = sandbox.safeParseJSON(sampleWithCommas);
 assert.strictEqual(parsed.score, 95, 'safeParseJSON must tolerate trailing commas');
-assert(html.includes("timeoutMs = (currentModel === 'pesat-x-jev' || ['1E','2C'].includes(curStepId)) ? 90000 : 60000"), 'Network timeout guard must be active');
+assert(html.includes("timeoutMs = (currentModel === 'pesat-x-jev' || ['1E','2C','1D','1D2'].includes(curStepId)) ? 90000 : 60000"), 'Network timeout guard must be active for 1E/2C/1D/1D2');
 console.log('9. Network Timeout Guard & Robust JSON Parsing: ✅ PASS');
 
 // 10. Test Thread-Safe Step ID in showResults & callLLM (No Concurrency Race Condition)
@@ -252,4 +255,45 @@ const bylineMatches = bundleOutput.match(/\*By CoffeeCrafters Editorial Team/g) 
 assert.strictEqual(bylineMatches.length, 1, `Editorial byline must appear exactly once in bundle (found ${bylineMatches.length})`);
 console.log('11. External Links Hard Cap (Max 5) & Byline Deduplication: ✅ PASS');
 
-console.log('\n=== ALL 11 ADVANCED INTEGRATION & QA TESTS PASSED! 🚀 ===');
+
+// 12. Outline Integrity Guard (Step 1D2) — refinement must never shrink the outline
+assert(html.includes('Outline Integrity Guard'), 'showResults must contain Outline Integrity Guard for step 1D2');
+assert(html.includes("activeStepId === '1D2'"), 'Guard must trigger only for step 1D2');
+assert(html.includes("output = stepOutputs['1D']"), 'Guard must revert to original 1D outline on failure');
+
+// Guard logic unit test (mirrors the inline implementation in showResults)
+const countH2 = (t) => (String(t || '').match(/^##\s+/gm) || []).length;
+const origOutline = Array.from({length:12},(_,i)=>'## Section '+i+'\n\nBody text for section '+i+' with enough realistic words to satisfy the length threshold used by the guard. '.repeat(3)).join('\n') + '\n## FAQ Plan\n- Q1\n- Q2\n- Q3';
+function guardReject(output, input) {
+  const inH2 = countH2(input), outH2 = countH2(output);
+  const outLen = (output||'').trim().length, inLen = (input||'').trim().length;
+  const truncated = outLen < Math.floor(inLen * 0.6);
+  const lostSections = inH2 >= 5 && outH2 < inH2;
+  const garbage = outH2 === 0 || outLen < 200;
+  return truncated || lostSections || garbage;
+}
+const goodOutline = origOutline.replace('## Section 3', '## Why the 20-Minute Rule Beats Tossing and Turning at 11 p.m.');
+assert.strictEqual(guardReject(goodOutline, origOutline), false, 'Refined-but-complete outline must PASS the guard');
+const faqOnlyOutline = '## How can I fall asleep faster at night?\n\nShort FAQ text.\n- Q1\n- Q2';
+assert.strictEqual(guardReject(faqOnlyOutline, origOutline), true, 'FAQ-only collapsed outline must be REJECTED by the guard');
+const truncatedOutline = origOutline.slice(0, 300);
+assert.strictEqual(guardReject(truncatedOutline, origOutline), true, 'Truncated outline must be REJECTED by the guard');
+
+// 1D2 prompt must be non-destructive and have enough maxTokens to avoid truncation
+assert(step1D2.userPrompt.includes('NEVER fewer'), '1D2 prompt must forbid reducing H2 count');
+assert(step1D2.userPrompt.includes('NON-DESTRUCTIVE'), '1D2 prompt must be explicitly non-destructive');
+// Feedback hardening: unique sections + sharpened question headings
+assert(step1D2.userPrompt.includes('ADD 2-3 NEW UNIQUE INFORMATION-GAIN'), '1D2 must hard-require 2-3 unique info-gain sections');
+assert(step1D2.userPrompt.includes('competitor-paste test'), '1D2 added sections must pass competitor-paste test');
+assert(step1D2.userPrompt.includes('question with a generic noun'), '1D2 must sharpen generic question headings, not only declarative ones');
+// Grounding + transformation pattern + semantic intent hardening
+assert(step1D2.userPrompt.includes('already present in the INPUT OUTLINE'), '1D2 must ground sharpened anchors in input outline / research context (no invention)');
+assert(step1D2.userPrompt.includes('Transformation patterns'), '1D2 must provide a MIX of transformation patterns, not one pattern');
+assert(step1D2.userPrompt.includes('PRESERVE SEMANTIC INTENT'), '1D2 must preserve section topic intent when sharpening');
+assert(step1D2.userPrompt.includes('same transformation pattern as the heading right before'), '1D2 self-check must forbid repeating the same pattern adjacently');
+assert(step1D2.userPrompt.includes('NEVER fewer'), '1D2 prompt must forbid reducing H2 count (kept)');
+assert(step1D2.maxTokens >= 5000, '1D2 maxTokens must be >=5000 to avoid outline truncation (got ' + step1D2.maxTokens + ')');
+
+console.log('12. Outline Integrity Guard + 1D2 Non-Destructive Prompt: ✅ PASS');
+
+console.log('\n=== ALL 12 ADVANCED INTEGRATION & QA TESTS PASSED! 🚀 ===');

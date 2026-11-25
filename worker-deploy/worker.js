@@ -4640,7 +4640,7 @@ async function callLLM(model, systemPrompt, userPrompt, temp, maxTokens, targetS
 
         const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
         const curStepId = (typeof targetStepId === 'string' && targetStepId) ? targetStepId : ((typeof currentStepIdx === 'number' && stepData[currentStepIdx]) ? stepData[currentStepIdx].id : '');
-        const timeoutMs = (currentModel === 'pesat-x-jev' || ['1E','2C'].includes(curStepId)) ? 90000 : 60000;
+        const timeoutMs = (currentModel === 'pesat-x-jev' || ['1E','2C','1D','1D2'].includes(curStepId)) ? 90000 : 60000;
         if (controller) timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
         const res = await fetch('https://api.pesatrouter.com/v1/chat/completions', {
