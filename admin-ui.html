@@ -3758,6 +3758,22 @@ let pipelineRunning = false;
 let pipelineCancelled = false;
 let pipelineTargetStep = -1; // -1 = run all
 
+// QA auto-mode: when ON, all blocking confirm() dialogs return true automatically.
+// Enable via URL hash #auto-qa or localStorage.setItem('jdp_auto_qa','1').
+// Default OFF — human users still get confirmation prompts.
+function autoQaMode() {
+  try {
+    if (location.hash.includes('auto-qa')) { localStorage.setItem('jdp_auto_qa', '1'); return true; }
+    if (localStorage.getItem('jdp_auto_qa') === '1') return true;
+  } catch (e) {}
+  return false;
+}
+// Safe confirm wrapper: in auto-qa mode returns true without showing a dialog.
+function qaConfirm(msg) {
+  if (autoQaMode()) { console.log('[auto-qa] confirm auto-accepted:', msg); return true; }
+  return confirm(msg);
+}
+
 function updatePipelineProgress(current, total, stepName) {
   const pct = total > 0 ? Math.round(((current + 1) / total) * 100) : 0;
   const pBar = document.getElementById('pipeline-progress');
@@ -3804,7 +3820,7 @@ const N8N_HOST_API = 'https://n8n.jetdigitalpro.com';
 const N8N_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1MmM0YmMyYS03YmUxLTQwYzktODRjMi1lOGNmYzEyMTliNWUiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiODViYzFiODQtMThmZC00MDM2LWE5ODQtMDNhNGYyYTE0NTA5IiwiaWF0IjoxNzg4OTQ0OTgyfQ.AfeoBd9QiZ6xI6XPL_prAjc9X4mktwqbzEqJuOOqjJY';
 
 async function stopN8nExecution() {
-  if (!confirm('Hentikan semua eksekusi orchestrator/workflow yang sedang berjalan di n8n VPS sekarang?')) return;
+  if (!qaConfirm('Hentikan semua eksekusi orchestrator/workflow yang sedang berjalan di n8n VPS sekarang?')) return;
   const btn = document.getElementById('stop-n8n-btn');
   if (btn) btn.disabled = true;
   showToast('⏳ Memeriksa proses berjalan di server...');
@@ -3868,7 +3884,7 @@ async function runAllSteps() {
     return;
   }
 
-  if (!confirm(`Run ALL enabled steps from 1A to finish for "${kw}"? This will execute the optimized pipeline.`)) return;
+  if (!qaConfirm(`Run ALL enabled steps from 1A to finish for "${kw}"? This will execute the optimized pipeline.`)) return;
 
   pipelineRunning = true;
   pipelineCancelled = false;
@@ -3958,7 +3974,7 @@ async function runAllSteps() {
                 saveStepOutputs();
                 showToast(`✓ Step 2K Evaluator Gate passed (${evalData.overall_score}/100)`, 'success');
               } else {
-                if (typeof confirm === 'function' && !confirm(`⚠️ Step 2K Evaluator Gate: Skor ${evalData.overall_score || 0}/100 (< 70). Tetap lanjutkan ke pembuatan prompt gambar (Phase 3)?`)) {
+                if (typeof qaConfirm === 'function' && !qaConfirm(`⚠️ Step 2K Evaluator Gate: Skor ${evalData.overall_score || 0}/100 (< 70). Tetap lanjutkan ke pembuatan prompt gambar (Phase 3)?`)) {
                   showToast(`Pipeline dihentikan pada Gate 2K (Skor: ${evalData.overall_score || 0}/100)`, 'warning');
                   pipelineCancelled = true;
                   return;
@@ -4186,7 +4202,7 @@ async function runToHere() {
   if (pipelineRunning) return;
   syncInputsFromWriter();
   const stepName = stepData[currentStepIdx].id;
-  if (!confirm(`Run all steps from 1A to ${stepName} in sequence?`)) return;
+  if (!qaConfirm(`Run all steps from 1A to ${stepName} in sequence?`)) return;
 
   pipelineRunning = true;
   pipelineCancelled = false;
@@ -4238,7 +4254,7 @@ async function runToHere() {
         }
       }
       showToast(`✗ Step ${stepData[i].id} failed: ${err.message}`);
-      if (!confirm(`Step ${stepData[i].id} failed. Continue?`)) break;
+      if (!qaConfirm(`Step ${stepData[i].id} failed. Continue?`)) break;
       currentProgress++;
     }
   }
@@ -6108,7 +6124,7 @@ async function downloadAllImagesZip() {
       return;
     }
     const count = getActiveImageCount();
-    if (confirm(`Belum ada gambar yang siap diunduh. Generate ${count} gambar sekarang via PesatRouter lalu unduh ZIP otomatis?`)) {
+    if (qaConfirm(`Belum ada gambar yang siap diunduh. Generate ${count} gambar sekarang via PesatRouter lalu unduh ZIP otomatis?`)) {
       showToast('🎨 Men-generate gambar PesatRouter...', 'info');
       await generateAllImagesManual();
       validKeys = Object.keys(generatedImages || {}).filter(k => generatedImages[k]?.b64_json && generatedImages[k]?.status === 'ready');
@@ -6158,7 +6174,7 @@ async function downloadAllImagesSeparately() {
       showToast('Prompt gambar (Step 3A) belum tersedia.', 'warning');
       return;
     }
-    if (confirm('Belum ada gambar yang siap diunduh. Generate gambar sekarang via PesatRouter?')) {
+    if (qaConfirm('Belum ada gambar yang siap diunduh. Generate gambar sekarang via PesatRouter?')) {
       await generateAllImagesManual();
       validKeys = Object.keys(generatedImages || {}).filter(k => generatedImages[k]?.b64_json && generatedImages[k]?.status === 'ready');
     }
