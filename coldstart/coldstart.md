@@ -619,3 +619,27 @@ Pengujian end-to-end 3 keyword niche berbeda dengan Firecrawl Live Search API & 
 - **Deploy:** jdp-pipeline-admin 2026-11-25T10:23:18Z (431665 bytes)
 - **Live verify:** jdpwriter.com loaded → `1D maxTokens:6000`, guard + truncation retry markers present in served worker.
 - **Next:** Run live pipeline 1 keyword untuk verifikasi outline 1D lengkap (≥10 H2 + FAQ) end-to-end.
+
+---
+
+## 2026-01-12 — Auto-QA Mode + Live Pipeline Verification
+- **Status:** COMPLETED
+- **User request:** "buatkan supaya tidak keluar popup terus jadi kamu bisa QA tanpa bantuan saya"
+- **Fix 1 — Auto-QA mode:**
+  - `qaConfirm()`: returns true instantly when auto-qa ON, else normal `confirm()`
+  - Enable via URL `#auto-qa` (persists `localStorage.jdp_auto_qa=1`)
+  - Applied to 7 pipeline-path confirms (runAll, runToHere, gate2K, step-fail, stop-orchestrator, 2 image-download)
+  - 4 destructive confirms (history delete, step reset/delete) intentionally kept as raw `confirm()`
+  - Default OFF — human users still see prompts
+- **Fix 2 — 1D2 timeout:** outline QA reads ~10k-char 1D outline + rewrites → 90s still too short → **120s** (`curStepId === '1D2' ? 120000`)
+- **Files:** `admin-ui.html`, `worker-deploy/worker.js`, `scripts/test-speed-quality-qa.js`
+- **QA:** speed-quality-qa 12/12 PASS, writer-mode 8/8, fact-check-autofix PASS
+- **Deploy:** 2026-01-12 (432511 bytes)
+- **Live pipeline test "how to prune basil plants" (images=0, auto-qa ON):**
+  - **SELESAI tanpa popup** (`dialogSeen: false`), 28 step outputs
+  - **1D SUKSES:** 15 H2, 10649 chars (sebelum fix: 537 chars garbage / timeout)
+  - **1E SUKSES:** 16 H2, 12593 chars (sebelum fix: 0 — timeout abort)
+  - **Article final:** 2,244 words, 16 H2, 13,112 chars → Full Article badge + History 1
+  - 1D2 masih timeout di 90s (fix 120s sudah di-deploy, belum teruji live — perlu run berikutnya)
+  - Known non-blocking: 1 error toast dari 1D2 timeout lama (fallback upstream menjaga pipeline tetap jalan)
+- **Next:** Run berikutnya untuk verifikasi 1D2 120s fix; kalau masih timeout → naikkan ke 150s atau kurangi input 1D2.
