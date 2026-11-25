@@ -223,7 +223,7 @@ console.log('8. Cumulative Upstream Article Chaining (1E -> 2B -> 2C -> 2D -> 2E
 const sampleWithCommas = `{"score": 95, "verdict": "pass",}`;
 const parsed = sandbox.safeParseJSON(sampleWithCommas);
 assert.strictEqual(parsed.score, 95, 'safeParseJSON must tolerate trailing commas');
-assert(html.includes("timeoutMs = (currentModel === 'pesat-x-jev' || ['1E','2C','1D','1D2'].includes(curStepId)) ? 90000 : 60000"), 'Network timeout guard must be active for 1E/2C/1D/1D2');
+assert(html.includes("const timeoutMs = (currentModel === 'pesat-x-jev' || ['1E','2C','1D'].includes(curStepId)) ? 90000 : (curStepId === '1D2' ? 120000 : 60000)"), 'Network timeout guard must be active: 90s for 1E/2C/1D, 120s for 1D2');
 console.log('9. Network Timeout Guard & Robust JSON Parsing: ✅ PASS');
 
 // 10. Test Thread-Safe Step ID in showResults & callLLM (No Concurrency Race Condition)
