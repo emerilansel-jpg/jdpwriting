@@ -643,3 +643,24 @@ Pengujian end-to-end 3 keyword niche berbeda dengan Firecrawl Live Search API & 
   - 1D2 masih timeout di 90s (fix 120s sudah di-deploy, belum teruji live — perlu run berikutnya)
   - Known non-blocking: 1 error toast dari 1D2 timeout lama (fallback upstream menjaga pipeline tetap jalan)
 - **Next:** Run berikutnya untuk verifikasi 1D2 120s fix; kalau masih timeout → naikkan ke 150s atau kurangi input 1D2.
+
+---
+
+## 2026-01-12 — 1D2 Outline Fix + Live Pipeline Test 2
+- **Status:** COMPLETED
+- **Fixes deployed:**
+  1. `trimOutlineFor1D2()`: strips body text, keeps H2/H3 + FAQ (prioritized). Cap 4500 chars. Applied only to step 1D2.
+  2. 1D2 timeout: 90s → 120s → **150s** (headroom for large prompts)
+  3. Outline Integrity Guard regex: `/^##s+/gm` → `/^##\s+/gm` (was literal 's', guard was dead code)
+- **Commits:** `043a2c3` (trim + timeout + regex)
+- **Deploy:** 2026-01-12 (434001 bytes)
+- **QA:** speed-quality-qa 12/12 PASS, writer-mode 8/8 PASS, trim unit test PASS
+- **Live test 2 "how to propagate succulents" (images=0, auto-qa ON):**
+  - **SELESAI tanpa popup**, 29 step outputs, History 2
+  - **1D:** 18 H2, 8724 chars, FAQ ✓
+  - **1D2:** FAILED — "Failed to fetch" (network drop, bukan timeout). Retry 2× sudah ada di callLLM, network persisten drop. Pipeline lanjut via fallback upstream.
+  - **1E:** 19 H2, 11160 chars ✓
+  - **Article final:** 2,137 words, 19 H2, 13,616 chars ✓
+  - Known: 1 network error toast dari 1D2 (non-blocking, fallback jalan)
+- **Root cause 1D2:** Bukan timeout (150s cukup), tapi **network drop** saat fetch panjang. Retry 2× sudah ada tapi network persisten. Solusi: tambah retry ke-3 + exponential backoff, atau kurangi input lebih agresif (<2000 chars).
+- **Next:** Run 3× lagi untuk konsistensi; kalau 1D2 masih network drop → tambah retry attempt 3.
