@@ -4346,7 +4346,41 @@ async function runTestInternal(isPipelineMode, overrideStepId) {
   const activeBrandName = getActiveBrand();
   const activeBrandDomain = inferBrandDomain(internalLinksVal) || (activeBrandName.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com');
 
+  // ponytail: 1D2 receives outline as {{outline}}. Full 1D outline (~10k chars) blows up
+  // the prompt → model takes >120s → AbortController kills the fetch.
+  // 1D2 only needs H2/H3 headings + FAQ entries to sharpen — strip body text.
+  // FAQ block is prioritized (captured first) so it never gets cut by the char cap.
+  const trimOutlineFor1D2 = (t) => {
+    const s = String(t || '');
+    if (s.length <= 4000) return s;
+    const lines = s.split('\n');
+    // Pass 1: collect FAQ block (lines from "## FAQ" to end).
+    const faqLines = [];
+    let inFaq = false;
+    for (const line of lines) {
+      if (/^##\s+FAQ/i.test(line)) inFaq = true;
+      if (inFaq) faqLines.push(line);
+    }
+    // Pass 2: collect heading lines (H2/H3) until budget is reached.
+    // Reserve room for FAQ block first.
+    const faqBlock = faqLines.join('\n');
+    const headingBudget = Math.max(1500, 4000 - faqBlock.length - 100);
+    const headingLines = [];
+    let used = 0;
+    for (const line of lines) {
+      if (/^#{1,4}\s/.test(line)) {
+        headingLines.push(line);
+        used += line.length + 1;
+        if (used > headingBudget) break;
+      }
+    }
+    const trimmed = headingLines.join('\n') + (faqBlock ? '\n\n' + faqBlock : '');
+    return trimmed.length > 500 ? trimmed.slice(0, 4500) : s.slice(0, 4000);
+  };
+
   // Substitute variables with robust pipeline fallback chaining
+  const rawOutline1D2 = stepOutputs['1D2'] || stepOutputs['1D'] || (document.getElementById('ti-outline')?.value || '');
+  const outlineFor1D2 = (s.id === '1D2') ? trimOutlineFor1D2(rawOutline1D2) : rawOutline1D2;
   const vars = {
     keyword: (document.getElementById('ti-keyword')?.value || document.getElementById('wv-keyword')?.value || '').trim(),
     brand: activeBrandName,
@@ -4373,7 +4407,7 @@ async function runTestInternal(isPipelineMode, overrideStepId) {
     info_gain: stepOutputs['1B'] || (document.getElementById('ti-info-gain')?.value || ''),
     live_search_data: stepOutputs['live_search'] || (document.getElementById('ti-live-search') ? document.getElementById('ti-live-search').value : ''),
     lsi_keywords: stepOutputs['1C'] || (document.getElementById('ti-lsi')?.value || ''),
-    outline: stepOutputs['1D2'] || stepOutputs['1D'] || (document.getElementById('ti-outline')?.value || ''),
+    outline: outlineFor1D2,
     eeat_hcu_eav_analysis: stepOutputs['2I'] || (document.getElementById('ti-eeat')?.value || ''),
     quality_fact_check: stepOutputs['2J'] || (document.getElementById('ti-quality')?.value || ''),
     seo_geo_evaluator: stepOutputs['2K'] || (document.getElementById('ti-evaluator')?.value || ''),
@@ -4653,8 +4687,8 @@ async function callLLM(model, systemPrompt, userPrompt, temp, maxTokens, targetS
 
         const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
         const curStepId = (typeof targetStepId === 'string' && targetStepId) ? targetStepId : ((typeof currentStepIdx === 'number' && stepData[currentStepIdx]) ? stepData[currentStepIdx].id : '');
-        // ponytail: 1D2 outline QA reads full 1D outline (~10k chars) + rewrites — needs 120s.
-        const timeoutMs = (currentModel === 'pesat-x-jev' || ['1E','2C','1D'].includes(curStepId)) ? 90000 : (curStepId === '1D2' ? 120000 : 60000);
+        // ponytail: 1D2 outline QA reads trimmed 1D outline + rewrites — needs 150s.
+        const timeoutMs = (currentModel === 'pesat-x-jev' || ['1E','2C','1D'].includes(curStepId)) ? 90000 : (curStepId === '1D2' ? 150000 : 60000);
         if (controller) timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
         const res = await fetch('https://api.pesatrouter.com/v1/chat/completions', {
@@ -4768,7 +4802,7 @@ async function showResults(result, model, elapsed, outputFormat, stepIdOverride)
   // revert to the original outline so 1E/2A always receive a structurally complete plan.
   if (activeStepId === '1D2' && stepOutputs['1D']) {
     try {
-      const countH2 = (t) => (String(t || '').match(/^##s+/gm) || []).length;
+      const countH2 = (t) => (String(t || '').match(/^##\s+/gm) || []).length;
       const inH2 = countH2(stepOutputs['1D']);
       const outH2 = countH2(output);
       const outLen = (output || '').trim().length;
