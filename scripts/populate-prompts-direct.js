@@ -10,7 +10,7 @@ const html = fs.readFileSync('admin-ui.html', 'utf8');
 const scripts = [...html.matchAll(/<script[\s\S]*?>([\s\S]*?)<\/script>/g)];
 const mainScript = scripts[scripts.length - 1][1];
 
-const context = { console, setTimeout: () => {}, clearTimeout: () => {}, localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} }, document: { getElementById: () => ({ classList: { add: ()=>{}, remove: ()=>{} }, style: { setProperty: ()=>{} } }), querySelectorAll: () => [], querySelector: () => null } };
+const context = { console, setTimeout: () => {}, clearTimeout: () => {}, localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} }, document: { getElementById: (id) => ({ value: '', textContent: '', classList: { add: ()=>{}, remove: ()=>{}, toggle: ()=>{}, contains: ()=>false }, style: { setProperty: ()=>{} }, dataset: {}, checked: false, options: [], addEventListener(){}, appendChild(){}, focus(){}, click(){}, remove(){}, setAttribute(){}, getAttribute(){return null} }), querySelectorAll: () => [], querySelector: () => null, createElement: () => ({ value:'', textContent:'', classList:{add(){},remove(){}}, style:{setProperty(){}}, appendChild(){}, setAttribute(){}, click(){} }), addEventListener(){}, body: { appendChild(){}, classList:{add(){},remove(){}} } } };
 vm.createContext(context);
 vm.runInContext(mainScript + '\n;globalThis.__STEPS = STEPS;', context);
 const steps = context.__STEPS;
@@ -51,8 +51,8 @@ async function populatePrompts() {
         typeVersion: 4.2,
         position: [300, 300],
         parameters: {
-          method: 'POST',
-          url: `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/PROMPTS!A2:append?valueInputOption=USER_ENTERED`,
+          method: 'PUT',
+          url: `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/PROMPTS!A2?valueInputOption=USER_ENTERED`,
           authentication: 'predefinedCredentialType',
           nodeCredentialType: 'googleSheetsOAuth2Api',
           sendBody: true,
@@ -77,7 +77,7 @@ async function populatePrompts() {
   const c = await fetch(`${N8N_URL}/api/v1/workflows`, { method: 'POST', headers, body: JSON.stringify(wf) }).then(r => r.json());
   await fetch(`${N8N_URL}/api/v1/workflows/${c.id}/activate`, { method: 'POST', headers });
 
-  console.log('Sending all 23 prompt rows to Google Sheets PROMPTS tab...');
+  console.log('Sending all 24 prompt rows to Google Sheets PROMPTS tab...');
   const res = await fetch(`${N8N_URL}/webhook/populate-all-prompts-direct-api`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

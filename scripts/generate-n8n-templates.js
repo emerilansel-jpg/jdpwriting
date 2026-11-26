@@ -10,6 +10,7 @@ const steps = [
   { id: '1B', name: 'Information Gain', outputVar: 'info_gain', file: 'step-1b-info-gain.json' },
   { id: '1C', name: 'LSI Keywords', outputVar: 'lsi_keywords', file: 'step-1c-lsi-keywords.json' },
   { id: '1D', name: 'Outline Creation', outputVar: 'outline', file: 'step-1d-outline.json' },
+  { id: '1D2', name: 'Outline QA & Sharpening', outputVar: 'outline', file: 'step-1d2-outline-qa.json' },
   { id: '1E', name: 'Generate Article', outputVar: 'article', file: 'step-1e-article.json' },
   { id: '2A', name: 'Title & Meta', outputVar: 'title_meta', file: 'step-2a-title-meta.json' },
   { id: '2B', name: 'Intro Rewrite', outputVar: 'article', file: 'step-2b-intro-rewrite.json' },

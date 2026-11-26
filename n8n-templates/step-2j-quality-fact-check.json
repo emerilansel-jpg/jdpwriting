@@ -35,7 +35,7 @@
         300
       ],
       "parameters": {
-        "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '2J';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: (step[2] === 'pesat-flash' || !step[2]) ? 'pesat-x-jev' : step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'quality_fact_check'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
+        "jsCode": "const items = $input.all();\nconst sheetItem = items.find(i => i.json && Array.isArray(i.json.data));\nconst inputItem = items.find(i => i.json && !Array.isArray(i.json.data));\nif (!sheetItem) throw new Error('Prompt data not found');\nconst rows = sheetItem.json.data;\nconst stepId = (inputItem && inputItem.json.step_id) ? inputItem.json.step_id : '2J';\nconst step = rows.find(r => r[0] === stepId);\nif (!step) throw new Error('Step ' + stepId + ' not found');\nconst cfg = {\n  step_id: step[0],\n  step_name: step[1],\n  model: step[2],\n  temperature: parseFloat(step[3]) || 0.7,\n  max_tokens: parseInt(step[4]) || 2000,\n  output_format: step[5],\n  system_prompt: step[6],\n  user_prompt: step[7],\n  enabled: step[8] === 'TRUE' || step[8] === true,\n  llm_url: 'https://api.pesatrouter.com/v1/chat/completions',\n  credential: 'pesatrouter-api-key',\n  output_variable: 'quality_fact_check'\n};\nconst input = (inputItem && inputItem.json) || {};\nreturn [{\n  json: {\n    ...input,\n    ...cfg\n  }\n}];"
       }
     },
     {
@@ -63,7 +63,10 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}",
+        "options": {
+          "timeout": 150000
+        }
       },
       "credentials": {
         "httpHeaderAuth": "={{ $json.credential }}"

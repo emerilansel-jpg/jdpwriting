@@ -463,3 +463,21 @@ Pengujian end-to-end 3 keyword niche berbeda dengan Firecrawl Live Search API & 
 - **Files touched:** `scripts/test-search-failover.js`, `scripts/test-search-e2e-live.js`, `scripts/test-ui-fixes.js`, `coldstart.md`
 - **Verification (full regression):** speed-quality-qa 12/12 · writer-mode · fact-check-autofix · universal-fact-check · pesat-x-jev-history · cost-usd 7/7 · qa-pipeline-tool 9/9 · ui-fixes ALL · search-failover **49/49** · search-e2e-live **6/6** — semua PASS.
 - **Next:** (1) Run E2E live pipeline "how to sleep fast" (PesatRouter outage sesi lalu). (2) n8n orchestrator belum punya node 1D2. (3) Commit.
+
+---
+
+## 2026-11-26 — n8n 1D2 Wiring + E2E Live Pipeline
+
+- **Status:** IN PROGRESS · **Scope:** n8n orchestrator + simulate resilience (admin-ui hanya n8nId)
+- **n8n 1D2 (fix lama: "orchestrator belum punya node 1D2"):**
+  - Sub-workflow `JDP Step 1D2 — Outline QA & Sharpening` dibuat (clone struktur 1D, id `EjN5G4w0LubekfCY`), activated. find_config baca baris `1D2` dari PROMPTS sheet; call_llm timeout 150s.
+  - Orchestrator `cQiEML8ZSa1UcmqH` di-wire: `Merge 1D → Step 1D2 → Merge 1D2 → Step 1E`.
+  - `admin-ui.html` STEPS 1D2 `n8nId` diisi `EjN5G4w0LubekfCY`.
+  - Template `n8n-templates/step-1d2-outline-qa.json` di-generate; generic call_llm `options.timeout: 150000` di semua step.
+- **simulate-full-pipeline.js resilience (E2E live):**
+  - callLLM: timeout 150s + retry 3x backoff utk Cloudflare 524/timeout (sebelumnya hard-fail).
+  - Step 1D2 trim outline spt admin-ui (cap ~2000 chars: H2/H3 + FAQ) — prompt 27k chars menyebabkan 524.
+  - Step-level try/catch: gagal LLM → fallback ke upstream, pipeline lanjut.
+- **BLOCKED:** credential n8n `google-sheets-jdp` OAuth revoked (refresh token expired) → `populate-prompts-direct` + orchestrator `Read INPUT Row` gagal. **User perlu reconnect Google di n8n UI** sebelum jalur n8n end-to-end jalan. Baris PROMPTS `1D2` belum terisi.
+- **E2E "how to sleep fast" (run5, live, 17 step):** 16/17 sukses (retry 524 menang di 1C/1D/1D2/1E). 1D2 OK (trim 2028 chars, output 2572). 1E 2008 kata. **2K: SEO 83 / GEO 75 / overall 79 / pass=false** — blockers: kutipan blockquote kemungkinan fabrikasi, `{{brand_name}}` belum diresolve, link NIH belum terpakai, 4/5 referensi Wikipedia. 2H gagal 3x 524 → fallback upstream (pipeline tetap lanjut).
+- **Next:** (1) Reconnect Google credential n8n (`google-sheets-jdp`). (2) Run `populate-prompts-direct.js` (PUT overwrite, aman re-run) utk isi baris PROMPTS `1D2`. (3) E2E via webhook n8n (orchestrator sudah wire 1D2). (4) Iterasi quality utk 2K pass (fix blockers).

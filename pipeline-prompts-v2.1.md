@@ -1,6 +1,6 @@
 # JDP Pipeline v2.1 — Prompt Templates Reference
 
-> Complete reference for all 23 steps in the autonomous research-to-publish pipeline.
+> Complete reference for all 24 steps in the autonomous research-to-publish pipeline.
 > Last updated: June 2026
 > **Version 2.1** — Granular Phase 2 (EEAT/HCU/EAV + Quality/Fact Check + SEO/GEO Evaluator) + Consolidated Phase 3 (Image Prompts + Infographic + Alt Text)
 

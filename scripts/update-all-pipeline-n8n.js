@@ -22,6 +22,7 @@ const outputVarMap = {
   '1B': 'info_gain',
   '1C': 'lsi_keywords',
   '1D': 'outline',
+  '1D2': 'outline',
   '1E': 'article',
   '2A': 'title_meta',
   '2B': 'intro_rewrite',         // Snippet: do NOT overwrite article

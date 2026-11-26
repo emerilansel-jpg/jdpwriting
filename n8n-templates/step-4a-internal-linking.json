@@ -63,7 +63,10 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}"
+        "jsonBody": "={{ JSON.stringify({ model: $json.model, temperature: $json.temperature, max_tokens: $json.max_tokens, messages: [{role: 'system', content: $json.system_prompt}, {role: 'user', content: $json.user_prompt}] }) }}",
+        "options": {
+          "timeout": 150000
+        }
       },
       "credentials": {
         "httpHeaderAuth": "={{ $json.credential }}"

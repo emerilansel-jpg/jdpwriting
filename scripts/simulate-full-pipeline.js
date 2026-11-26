@@ -24,7 +24,7 @@ const STEPS = context.__STEPS;
 const upstreamMap = context.__upstreamMap;
 const PESAT_API_KEY = 'sk-pesat-3c2f89bd9a72302375f8e10ef9eba726891a81513f907dfb';
 
-async function callLLM(model, systemPrompt, userPrompt, temp, maxTokens) {
+async function callLLM(model, systemPrompt, userPrompt, temp, maxTokens, _retry = 0) {
   let targetModel = model;
   if (model.includes('deepseek') || model.includes('gpt-4o') || model.includes('claude') || model.includes('gemini')) {
     if (model.includes('mini') || model.includes('haiku') || model.includes('lite')) {
@@ -78,8 +78,19 @@ async function callLLM(model, systemPrompt, userPrompt, temp, maxTokens) {
       });
     });
     req.on('error', reject);
+    // Cloudflare 524 (origin timeout) — retry 1x sebelum gagal
+    req.setTimeout(150000, () => {
+      req.destroy();
+      reject(new Error('timeout 150s'));
+    });
     req.write(payload);
     req.end();
+  }).catch(err => {
+    if (_retry < 3 && (String(err.message).includes('524') || String(err.message).includes('timeout'))) {
+      console.log(`  ⚠ ${err.message} — retry ${_retry + 1}/3...`);
+      return callLLM(model, systemPrompt, userPrompt, temp, maxTokens, _retry + 1);
+    }
+    throw err;
   });
 }
 
@@ -127,7 +138,7 @@ async function simulatePipeline(keyword, cta) {
     slug: ''
   };
 
-  const stepsToTest = STEPS.filter(s => ['1A','1B','1C','1D','1E','2A','2B','2C','2D','2E','2F','2G','2H','2I','2J','2K'].includes(s.id));
+  const stepsToTest = STEPS.filter(s => ['1A','1B','1C','1D','1D2','1E','2A','2B','2C','2D','2E','2F','2G','2H','2I','2J','2K'].includes(s.id));
 
   for (const s of stepsToTest) {
     console.log(`\n--- Step ${s.id} (${s.name}) [Model: ${s.model}] ---`);
@@ -184,6 +195,31 @@ async function simulatePipeline(keyword, cta) {
       inputs.slug = inputs.keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     }
 
+    // 1D2: trim outline spt admin-ui (cap ~2000 chars: H2/H3 + FAQ) — prompt 27k chars timeout
+    if (s.id === '1D2' && inputs.outline && inputs.outline.length > 2000) {
+      const lines = inputs.outline.split('\n');
+      const faqLines = [];
+      let inFaq = false;
+      for (const line of lines) {
+        if (/^##\s+FAQ/i.test(line)) inFaq = true;
+        if (inFaq) faqLines.push(line);
+      }
+      const faqBlock = faqLines.join('\n');
+      const headingBudget = Math.max(800, 2000 - faqBlock.length - 50);
+      const headingLines = [];
+      let used = 0;
+      for (const line of lines) {
+        if (/^#{1,4}\s/.test(line)) {
+          headingLines.push(line);
+          used += line.length + 1;
+          if (used > headingBudget) break;
+        }
+      }
+      const trimmed = headingLines.join('\n') + (faqBlock ? '\n\n' + faqBlock : '');
+      inputs.outline = trimmed.length > 300 ? trimmed.slice(0, 2200) : inputs.outline.slice(0, 2000);
+      console.log(`  1D2 outline trimmed: ${inputs.outline.length} chars`);
+    }
+
     let userPrompt = s.userPrompt;
     for (const [k, v] of Object.entries(inputs)) {
       userPrompt = userPrompt.split('{{' + k + '}}').join(v || '');
@@ -191,7 +227,21 @@ async function simulatePipeline(keyword, cta) {
 
     console.log(`Prompt length: ${userPrompt.length} chars. Calling LLM...`);
     const t0 = Date.now();
-    const res = await callLLM(s.model, s.systemPrompt, userPrompt, s.temp, s.maxTokens);
+    let res;
+    try {
+      res = await callLLM(s.model, s.systemPrompt, userPrompt, s.temp, s.maxTokens);
+    } catch (err) {
+      console.log(`  ✗ Step ${s.id} gagal setelah retry: ${String(err.message).slice(0, 80)} — fallback ke upstream.`);
+      // Snippet steps: keep prior article; full-draft steps: keep article; JSON steps: empty
+      if (['1E','2C','2D','2G','2H','4A','4B'].includes(s.id)) {
+        stepOutputs[s.id] = inputs.article || stepOutputs['1E'] || '';
+      } else if (['2B','2F'].includes(s.id)) {
+        stepOutputs[s.id] = inputs.article || '';
+      } else {
+        stepOutputs[s.id] = '';
+      }
+      continue;
+    }
     const duration = ((Date.now() - t0) / 1000).toFixed(1);
     console.log(`✓ Returned in ${duration}s (${res.output.length} chars)`);
 
