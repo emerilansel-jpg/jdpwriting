@@ -493,3 +493,15 @@ Pengujian end-to-end 3 keyword niche berbeda dengan Firecrawl Live Search API & 
 - **E2E n8n webhook `pipeline-orchestrator` "how to sleep fast" (run3):** HTTP 200, 199s. **Exec 212: 1A→1D2→1E→2A..2K→3A..3C→4A→4B→5A semua SUCCESS**, 6A error (Bug 3, sudah fix). 2K gate: **evaluator 85, SEO 85 / GEO 82 / overall 84, action=proceed**. HISTORY row baru: `2026-11-26T08:49:43`, seo 85, geo 82, ov 84, status Completed.
 - **Verifikasi tambahan:** return 6A compiles; deploy template output regex compiles; HISTORY 4 rows (3 lama + 1 baru run3).
 - **Next:** (1) Re-fire E2E utk 6A full success (optional - GSC config kosong, akan throw `GSC site URL not configured`). (2) Isi CONFIG `gsc_site_url`/`gsc_service_account_*` bila mau indexing aktif. (3) Iterasi quality 2K pass (blockers run5: kutipan, {{brand_name}}, external links). (4) Commit.
+
+---
+
+## 2026-11-26 — Deploy Worker + Push (sesi E2E n8n)
+
+- **Status:** COMPLETED · **Scope:** rebuild+deploy Cloudflare Worker + push semua commit sesi ini
+- **Worker:** `build-worker.js` inject `INTERNAL_SEARCH_KEYS` dari `.env` (firecrawl x2 + tavily) ke placeholder — keys tidak bocor ke `admin-ui.html`. Rebuild embed `1D2 n8nId: EjN5G4w0LubekfCY` (sebelumnya `''` di worker lama).
+- **Deploy:** `node scripts/deploy-worker.js` → `jdp-pipeline-admin` Cloudflare Worker, `2026-11-26T09:10:40Z`. Verifikasi prod: HTTP 200, `1D2 n8nId` present, `INTERNAL_SEARCH_KEYS` ter-inject, placeholder `__INTERNAL_SEARCH_KEYS__` hilang.
+- **Push:** `git push origin main` → `bc31c70..5382163`. Commit sesi ini: `c040716` (1D2 wiring + resilience), `c252c2b` (credential resolved + PROMPTS 1D2), `da9debf` (deploy escape + E2E results), `5382163` (worker rebuild+deploy).
+- **Regression final:** failover 49/49 · ui-fixes ALL · speed-quality-qa 12/12 · build-worker syntax OK.
+- **E2E n8n status:** exec 212 `1A..5A SUCCESS` (1D2 success), 2K gate 85/82/84 proceed, HISTORY row baru. 6A `return $input` fixed via n8n API. GSC config dibiarkan kosong (user: indexing tidak prioritas).
+- **Next:** (1) Iterasi quality 2K pass (blockers: kutipan blockquote, `{{brand_name}}`, external links). (2) Optional: isi CONFIG GSC bila mau indexing. (3) Next E2E run utk bukti 6A full success.
