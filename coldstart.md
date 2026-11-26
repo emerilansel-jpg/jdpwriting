@@ -34,6 +34,47 @@ node scripts/deploy-worker.js
 ```
 10. **Cek Output**: Hasil otomatis tersimpan di Google Sheets tab `HISTORY` (~2.000–2.800 kata + 5 prompt gambar + asset visual) dengan 100% lolos Evaluator SEO/GEO.
 
+## 📌 TL;DR — Sesi 2026-11-26 (n8n 1D2 + E2E Live)
+
+**Masalah awal:** Orchestrator n8n belum punya node 1D2 · credential Google Sheets revoked · parse_result 22 workflow regex rusak · 6A `$input` hilang.
+
+**Yang sudah selesai (4 entry log di bawah):**
+
+| # | Hasil | Bukti |
+|---|---|---|
+| 1 | **n8n 1D2 wired** | Sub-workflow `EjN5G4w0LubekfCY` active; orchestrator `Merge 1D → Step 1D2 → Merge 1D2 → Step 1E` |
+| 2 | **Credential resolved** | User reconnect `google-sheets-jdp` → populate 24 rows PROMPTS (incl `1D2`) |
+| 3 | **3 bug fix** | parse_result regex 22 wf · 1D2 find_config hardcoded · 6A `$input` |
+| 4 | **E2E n8n webhook sukses** | Exec 212: **1A..5A SUCCESS**, 2K gate **85/82/84 proceed**, HISTORY row baru |
+| 5 | **Worker deployed + pushed** | Cloudflare `2026-11-26T09:10:40Z` · `bc31c70..722b823` |
+
+**Regression:** failover 49/49 · ui-fixes ALL · speed-quality-qa 12/12 — PASS.
+
+---
+
+## 📋 TODO — Sesi Besok
+
+**Prioritas utama:**
+
+- [ ] **2K quality: iterasi ke `pass=true`** — Run5 simulate `overall 79 / pass=false`. Blockers: (a) kutipan blockquote kemungkinan fabrikasi, (b) `{{brand_name}}` belum diresolve di artikel, (c) link NIH direncanakan tapi belum dipakai, (d) 4/5 referensi Wikipedia. Fix di prompt 1E/2H/4B + sanitizer.
+- [ ] **E2E n8n run ulang (konsistensi)** — Exec 212 sudah `1A..5A SUCCESS` tapi 6A error saat itu (sudah di-fix). Run 1× lagi utk bukti full pipeline `1A→6A` tanpa error. Keyword baru, `images=0`.
+- [ ] **Verifikasi `brand_name` resolution** — Cek input `brand_name` dari webhook/UI diteruskan ke step 1E/2F (CTA). Kalau tidak, tambah di orchestrator `Initialize Accumulator` / `prepare_vars`.
+
+**Optional / bila sempat:**
+
+- [ ] **6A GSC** — biarkan kosong dulu (user: indexing tidak prioritas). Bila mau aktif: isi CONFIG `gsc_site_url` + `gsc_service_account_email` + `gsc_service_account_key`.
+- [ ] **2H 524 resilience** — Run5 simulate: 2H gagal 3× `524` → fallback upstream. Cek perlu retry ke-4 atau trim input 2H.
+- [ ] **Nav table `coldstart/coldstart.md` arsip** — file lama (2026-11-12) masih punya TODO `2026-01-13` basi. Tandai archive / hapus TODO lama.
+
+**Known good state sesi ini:**
+
+- E2E n8n exec 212: `1A→1D2→1E→2A..2K→3A..3C→4A→4B→5A` semua SUCCESS.
+- HISTORY row `2026-11-26T08:49:43` — seo 85, geo 82, ov 84, Completed.
+- Worker prod: HTTP 200, 1D2 n8nId embedded, `INTERNAL_SEARCH_KEYS` injected.
+- Semua commit sudah push ke `origin/main` (`722b823`).
+
+---
+
 ---
 
 ## 🧭 Navigation & Resources
@@ -44,7 +85,7 @@ node scripts/deploy-worker.js
 | | Research Tool | https://jdpwriter.com/research | 🟢 Live |
 | | Backup Domain | https://www.jdpwriter.com | 🟢 Live |
 | | Legacy UI | https://write.jetdigitalpro.com | 🟡 Deprecated |
-| | Cloudflare Worker | https://jdp-pipeline-admin.emerilansel.workers.dev | 🟢 Live (Deployed 2026-11-04) |
+| | Cloudflare Worker | https://jdp-pipeline-admin.emerilansel.workers.dev | 🟢 Live (Deployed 2026-11-26) |
 | **Engine** | n8n VPS | https://n8n.jetdigitalpro.com | 🟢 Active |
 | | Orchestrator ID | `cQiEML8ZSa1UcmqH` | 🟢 Active |
 | | n8n Webhook | `https://n8n.jetdigitalpro.com/webhook/pipeline-orchestrator` | 🟢 Active |
