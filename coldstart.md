@@ -1,32 +1,38 @@
-# JDP Writing Pipeline — Cold Start Guide (v3.3)
+# JDP Writing Pipeline — Cold Start Guide (v3.5)
 
 > Panduan orientasi cepat (onboarding) untuk developer & AI agent.
-> Status: **Production Ready** · Last Updated: **2026-11-05**
+> Status: **Production Ready** · Last Updated: **2026-11-26**
 
 ---
 
 ## ⚡ Quick Start (TL;DR)
 
 1. **Buka Admin UI**: Akses [jdpwriter.com](https://jdpwriter.com) atau [Cloudflare Worker URL](https://jdp-pipeline-admin.emerilansel.workers.dev)
-2. **Input Data**: Masukkan `keyword` + `internal_links` (opsional: `cta`)
-3. **Format Artikel Terjamin**: Konten hanya memuat teks standar, tabel Markdown, dan list (angka/bullet). ASCII flowchart/kotak panah (`[ A ] ↓ [ B ]`) dilarang keras & disanitasi otomatis.
-4. **Inspect Firecrawl Live Web Data**:
+2. **Input Data**: Masukkan `keyword` + `internal_links` (opsional: `cta`, Brand Name)
+3. **Konfigurasi Gambar AI**: Pilih jumlah gambar yang ingin dibuat (1 Hero Banner, 2, 3, 4 Default, 5 dengan Infografis, atau 0 Prompt Only) dan rasio gambar (16:9).
+4. **Format Artikel Terjamin**: Konten hanya memuat teks standar, tabel Markdown, dan list (angka/bullet). ASCII flowchart/kotak panah (`[ A ] ↓ [ B ]`) dilarang keras & disanitasi otomatis.
+5. **Inspect Firecrawl Live Web Data**:
    - Di Writer Mode: Klik tombol `[🔍 Hasil Firecrawl]` di header untuk melihat sumber web live yang diambil Firecrawl API.
    - Di Developer Mode: Klik tombol `[👁 View Results & JSON]` di Test Panel untuk melihat hasil pencarian, analisis sintesis, dan raw JSON.
    - Di Modal Deliverable: Buka Tab 5 `[🔍 Firecrawl Research & Sources]`.
-5. **Publish Cepat ke CMS**: Gunakan tombol **"Copy Article Only"** di Deliverable Modal untuk menyalin artikel bersih (H1 + E-E-A-T byline + body) tanpa metadata box atau prompt gambar.
-6. **Jalankan via cURL** (Alternatif Headless):
+6. **AI Image Generation & Downloads**:
+   - Gambar AI digenerate otomatis menggunakan **PesatRouter** secara paralel (*concurrent*) dengan alur downstream pipeline.
+   - Preview gambar tampil langsung di kartu **Galeri & Preview Gambar AI** dan Tab 2 Deliverable Modal.
+   - Tombol **[⬇️ Download JPG]** pada tiap kartu untuk mengunduh gambar terpisah.
+   - Tombol **[📦 Download All (.zip)]** untuk mengunduh seluruh gambar dalam 1 arsip ZIP.
+7. **Publish Cepat ke CMS**: Gunakan tombol **"Copy Article Only"** di Deliverable Modal untuk menyalin artikel bersih (H1 + E-E-A-T byline + body) tanpa metadata box atau prompt gambar.
+8. **Jalankan via cURL** (Alternatif Headless):
 ```bash
 curl -X POST https://n8n.jetdigitalpro.com/webhook/pipeline-orchestrator \
   -H "Content-Type: application/json" \
   -d '{"keyword":"how to fertilize jade plant","internal_links":"https://contoh.com/artikel"}'
 ```
-7. **Deploy Worker**:
+9. **Deploy Worker**:
 ```bash
 node scripts/build-worker.js
 node scripts/deploy-worker.js
 ```
-8. **Cek Output**: Hasil otomatis tersimpan di Google Sheets tab `HISTORY` (~2.000–2.800 kata + 5 prompt gambar) dengan 100% lolos Evaluator SEO/GEO.
+10. **Cek Output**: Hasil otomatis tersimpan di Google Sheets tab `HISTORY` (~2.000–2.800 kata + 5 prompt gambar + asset visual) dengan 100% lolos Evaluator SEO/GEO.
 
 ---
 
@@ -69,7 +75,7 @@ node scripts/deploy-worker.js
        ▼
 n8n Orchestrator / Client Engine (cQiEML8ZSa1UcmqH)
   ├── Phase 1: Research & Drafting
-  │     1A SERP → 1B Info Gain (Firecrawl Live Search) → 1C LSI → 1D Outline → 1E Generate (~2800 kata)
+  │     1A SERP → 1B Info Gain (Firecrawl Live Search) → 1C LSI → 1D Outline → 1D2 Outline QA → 1E Generate (~2800 kata)
   ├── Phase 2: Enrichment & Optimization (Integrated Article Assembly)
   │     2A Meta (Concurrent) & 2B Intro (Stitches into 2B_article)
   │     → 2C Originality Rewrite → 2D Fluff Check
@@ -79,7 +85,7 @@ n8n Orchestrator / Client Engine (cQiEML8ZSa1UcmqH)
   ├── Phase 2 Gate, Phase 3 & Phase 4 (Concurrent Downstream Tracks)
   │     ├── Track 1: 2K Evaluator Gate (SEO/GEO Score >= 70)
   │     ├── Track 2 (Links): 4A Internal Links → 4B External Links (3–5 Firecrawl/Wiki URLs)
-  │     └── Track 3 (Visuals): 3A Image Prompts (1+3) → 3B Infographic → 3C Alt Texts
+  │     └── Track 3 (Visuals): 3A Image Prompts (1+3) → Concurrent PesatRouter Image Generation (1–5 images, 16:9 ~1376x768) + 3B Infographic → 3C Alt Texts
   └── Phase 5 & 6: Storage & Indexing
         5A Direct Google Sheets REST API Append ke tab HISTORY → 6A Indexing
   ```
@@ -88,7 +94,7 @@ n8n Orchestrator / Client Engine (cQiEML8ZSa1UcmqH)
 
 ## 🤖 Arsitektur Model: Firecrawl Search vs LLM Synthesis
 
-Sistem penulisan menggunakan kombinasi **Search Engine Retrieval (Firecrawl API)** dan **LLM Reasoning (Pesat Flash / Lite)**:
+Sistem penulisan menggunakan kombinasi **Search Engine Retrieval (Firecrawl API)**, **LLM Reasoning (Pesat Flash / Lite / x-jev)**, dan **AI Image Engine (PesatRouter)**:
 
 - **Integritas Data Firecrawl Murni**: Data live web dari Firecrawl API disimpan verbatim tanpa mutasi/perubahan pada `stepOutputs['raw_firecrawl']` dan `stepOutputs['firecrawl_sources']`. Data mentah tidak boleh diubah oleh LLM, hanya diolah menjadi:
   1. **SERP Intelligence (Step 1A)**: Menganalisis judul, pola heading (H2/H3), content gaps, kelemahan kompetitor, dan search intent dari hasil web riil.
@@ -98,6 +104,7 @@ Sistem penulisan menggunakan kombinasi **Search Engine Retrieval (Firecrawl API)
   - **Developer Mode**: Tombol `[👁 View Results & JSON]` di samping input `{{live_search_data}}` untuk inspect cepat data pencarian saat testing.
   - **Deliverable Bundle Viewer**: Tab 5 `[🔍 Firecrawl Research & Sources]` di modal artikel lengkap.
 - **pesat-flash / pesat-lite**: Bertindak sebagai *Reasoning & Writing LLM*. Menerima data hasil pencarian Firecrawl lalu menyintesisnya menjadi analisis terstruktur JSON atau teks artikel Markdown.
+- **PesatRouter Image Generation API (`POST /v1/images/generations`)**: Menghasilkan gambar resolusi tinggi (1792×1024 16:9 auto-scale ~1376×768) berbasis prompt visual Step 3A & 3B. Wajib header `User-Agent: Mozilla/5.0...` untuk bypass proteksi Cloudflare.
 
 | Step | Kategori | Engine / Model | Peran Web Search & Pemilihan Model |
 |---|---|---|---|
@@ -105,6 +112,7 @@ Sistem penulisan menggunakan kombinasi **Search Engine Retrieval (Firecrawl API)
 | **1B** | **Information Gain** | **Firecrawl API + `pesat-flash`** | **WAJIB WEB SEARCH**: Firecrawl mengambil hasil pencarian Google/web live, `pesat-flash` menyintesis statistik riil, studi empiris, dan celah konten tanpa fabrikasi. |
 | **1C** | LSI Keywords | `pesat-lite` | Menemukan entitas semantik dan kata kunci turunan. |
 | **1D** | Outline Creation | `pesat-flash` | Penalaran outline berbasis data riset 1B (`info_gain`). |
+| **1D2** | **Outline QA & Sharpening** | **`pesat-flash`** | **Post-outline quality gate**: QA & perbaiki outline 1D — 7 langkah (extract proof/friction, swap vague openers, inject contrast, anchor abstract, preserve `?`/statement + Balanced 60/40, tambah 2-4 info-gain sections [edge cases, decision frameworks, post-action verification, hidden costs], macro flow scan) + 7-point checklist (competitor-paste test, zero fluff, ≥70-80% concrete anchor, punctuation parity, promise-to-content match, 6-13 words). Output = revised outline untuk 1E & 2A. |
 | **1E** | **Generate Full Article** | **`pesat-flash`** | **Grounding Downstream**: Menulis ~2.800 kata dari fakta 1B. Scope judul presisi (anti-overpromising). E-E-A-T byline disematkan di bawah H1. Heading penutup wajib kontekstual. Wajib 1-2 verbatim quote otentik bertanda kutip. Maksimal 1x "According to". |
 | **2A, 2C-2E, 2G**| Optimization & Enrichment | `pesat-flash` | Kualitas penulisan, keterbacaan kelas 7, FAQ PAA, tabel Markdown terstruktur. |
 | **2B** | Intro Rewrite | `pesat-lite` | Hook pendek langsung menjawab search intent. |
@@ -114,6 +122,7 @@ Sistem penulisan menggunakan kombinasi **Search Engine Retrieval (Firecrawl API)
 | **2J** | **Fact Check & Link Audit**| **`pesat-x-jev`** | **Model Khusus Fact-Check & Fix**: 4-layer audit untuk deviasi fakta, integritas kutipan verbatim, fidelitas metrik/parameter teknis, dan audit link live web. Dilengkapi token budget limiter testing per artikel (default 4.000 tokens) dengan fallback otomatis ke `pesat-flash`. |
 | **2K** | **Evaluator Gate** | **`pesat-flash`** | Calibrated Quality Gate (baseline 80–95 untuk draf lengkap, pass >= 70). |
 | **3A, 3B, 3C**| Image, Infographic, Alt | `pesat-lite` | Prompt visual & deskripsi alt. |
+| **Phase 3 Visuals** | **AI Image Generation** | **PesatRouter Image API** | **Pembuatan Gambar Otomatis & Paralel**: Endpoint `POST /v1/images/generations` menghasilkan base64 JPEG 16:9 berdasarkan prompt 3A & 3B. Mendukung opsi 1–5 gambar, download terpisah, batch ZIP, dan lightbox preview. |
 | **4A** | **Internal Links** | **`pesat-lite`** | Injeksi multi-internal links kontekstual dari input user. |
 | **4B** | **External Links** | **Firecrawl Data + `pesat-flash`** | **BATAS KETAT 3–5 LINKS**: Memetakan entitas di artikel ke tepat 3–5 URL live Firecrawl / Wikipedia canonical. Sumber lain wajib dicantumkan sebagai plain text. Link katalog/indeks jurnal otomatis dilepas. |
 | **5A** | Save to Sheets | `System` | REST API direct v4 append tab HISTORY. |
@@ -152,6 +161,12 @@ Sistem penulisan menggunakan kombinasi **Search Engine Retrieval (Firecrawl API)
 | **Bold Berlebihan pada Teks Isi (Excessive AI Bold Spam)** | Prompt 1D dan 1E sebelumnya menginstruksikan `bold key statistics and named entities`, menyebabkan model mem-bold puluhan istilah teknis dan nama tools di setiap kalimat. | 1. **Strict Minimal Bolding Mandate**: Hapus aturan bolding istilah pada prompt 1D, 1E, 2C, 2D, 2E. Tetapkan aturan tegas bahwa bold HANYA diizinkan untuk label lead-in bullet list (`* **Label**: text`), header tabel (`\| **Col** \|`), dan atribusi kutipan.<br>2. **Deterministic Bold Cleaner**: Fungsi `deClutterExcessiveBolding()` pada sanitizer secara deterministik melucuti bolding kata di tengah kalimat body teks biasa tanpa merusak list label dan header tabel. |
 | **Kutipan Verbatim Kehilangan Link Referensi** | Format kutipan TYPE A sebelumnya hanya mencantumkan nama publikasi cetak miring tanpa hyperlink (`*Publication, Year*`). | 1. **Mandatory Quote Source Link**: Standarisasi format TYPE A pada prompt 1E, 2H, 2J, dan 4B mewajibkan tautan aktif markdown pada judul sumber: `> — **Author**, [*Publication Title*](URL), Year`.<br>2. **Auto-Link Quote Sanitizer**: Fungsi `ensureQuoteSourceLinks()` otomatis mencocokkan atribusi kutipan dengan tautan riset terverifikasi (Firecrawl/Wikipedia) dan menanam hyperlink jika model melewatkannya. |
 | **Ketiadaan Daftar Pustaka Gaya Wikipedia** | Artikel tidak memiliki rekapitulasi referensi terstruktur di akhir naskah. | 1. **Wikipedia-Style References Prompt**: Injeksi protokol sitasi gaya Wikipedia zero-trust pada Step 4B dan draf artikel akhir.<br>2. **Deterministic References Generator**: Fungsi `formatWikipediaReferences()` secara otomatis mengompilasi seluruh sitasi eksternal menjadi daftar bernomor `## References` di akhir artikel dengan format standar Wikipedia (`Author Last, First. [“Page Title.”](URL) *Website Name*, Publication Date. Accessed 2026`). |
+| **Asset visual sebelumnya hanya berupa teks prompt (gambar belum digenerate langsung)** | Step 3A & 3B menghasilkan teks prompt visual, namun belum terhubung ke API pembuatan gambar langsung; user harus menyalin manual prompt ke platform eksternal. | 1. **Integrasi PesatRouter Image Generation Engine (`POST /v1/images/generations`)**: Otomatis membuat gambar resolusi tinggi (1792×1024 16:9, auto-scaled ke ~1376×768) berbasis output prompt Step 3A & 3B.<br>2. **Cloudflare Bypass Header**: Memasang custom `User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)` untuk lolos proteksi Cloudflare Error 1010.<br>3. **Eksekusi Paralel (Concurrent)**: Begitu Step 3A selesai, proses generate gambar langsung berjalan secara paralel via `Promise.allSettled` bersamaan dengan Step 3B, 3C, Track 2K, dan Track 4 (Link Insertion) sehingga zero idle-time.<br>4. **Opsi Jumlah Gambar Dinamis**: User dapat memilih jumlah gambar yang ingin digenerate (1 Hero Banner, 2, 3, 4 Default, 5 dengan Infografis, atau 0 Prompt Only).<br>5. **Galeri & Preview Gambar**: Thumbnail interaktif di Writer Mode & Visual Deck dengan lightbox modal resolusi penuh.<br>6. **Download Fleksibel**: Tombol **[⬇️ Download JPG]** per gambar dan tombol **[📦 Download All (.zip)]** berbasis in-memory JSZip. |
+| **Infografis (Gambar ke-5) terlewati / tidak ter-generate saat opsi 5 gambar dipilih** | Trigger generasi gambar sebelumnya dipanggil tepat setelah Step 3A selesai, saat itu Step 3B (Infographic Prompt) belum berjalan sehingga `stepOutputs['3B']` masih kosong. | 1. **Two-Stage Parallel Trigger**: Memisahkan pemanggilan generasi gambar menjadi 2 tahap paralel: Step 3A selesai langsung memicu 4 gambar (Hero + 3 Supporting), lalu Step 3B selesai langsung memicu gambar ke-5 (Infografis) secara paralel menyusul yang lain.<br>2. **Sanitizer Prompt Infografis**: Fungsi `cleanInfographicPromptForImage` membersihkan preamble/markdown dari Step 3B agar menghasilkan prompt visual murni untuk PesatRouter.<br>3. **Manual Trigger Safety**: Jika tombol manual `[⚡ Generate Images]` diklik sebelum Step 3B berjalan, sistem otomatis mengeksekusi Step 3B terlebih dahulu lalu men-generate seluruh 5 gambar.<br>4. **Kejelasan UX Alur**: Panel AI IMAGE GENERATION di kartu input hero otomatis dieksekusi bersamaan saat klik tombol utama `[Mulai Pipeline Sekarang]`. Tombol `[⚡ Generate Images]` di dalam kotak berfungsi sebagai shortcut manual/regenerate tanpa mengulang 23 step pipeline. |
+| **Latest Output tidak mengeluarkan gambar / tombol download hilang setelah refresh atau load history** | 1. **Ketiadaan Persistence State**: `generatedImages` sebelumnya hanya berupa variabel RAM global JS tanpa penyimpanan permanen. Saat user refresh halaman atau buka artikel dari History, cache artikel terisi dari localStorage tetapi `generatedImages` kembali kosong `{}`.<br>2. **LocalStorage Quota Risk**: Developer sebelumnya menghapus `generated_images` dari histori (`delete cleanStepOutputs['generated_images']`) untuk menghindari `QuotaExceededError` 5MB localStorage.<br>3. **Header Terlarang Browser**: Upaya set `User-Agent` manual di browser fetch memicu peringatan browser security.<br>4. **Ketiadaan Actionable Fallback**: Modal deliverable tidak merender tombol `[⬇️ Download JPG]` jika `isReady` false, dan tombol ZIP hanya menampilkan warning toast tanpa opsi generate. | 1. **Persistent Image Cache via IndexedDB (`jdp_pipeline_images`)**: Menerapkan penyimpanan asynchronous IndexedDB untuk menyimpan gambar base64 resolusi penuh (16:9 ~1MB/gambar) per slug/ID artikel tanpa batas quota localStorage.<br>2. **Auto-Restore on Init & History**: Fungsi `init()` dan `restoreArticleFromHistory()` otomatis memuat kembali seluruh gambar tersimpan ke `generatedImages` begitu halaman dibuka atau artikel riwayat diklik.<br>3. **Blob URL Direct Download Engine**: Mengonversi base64 ke `Blob` URL (`URL.createObjectURL(blob)`) pada `downloadSingleImage()` untuk mencegah kegagalan browser pada data URL berukuran besar.<br>4. **Interactive Modal Visual Deck**: Jika gambar belum digenerate (misal draf baru/riwayat lama), Tab 2 menampilkan banner panduan dengan tombol **[⚡ Generate Semua Gambar Sekarang]**, placeholder kartu interaktif, serta prompt otomatis untuk generate & download ZIP saat tombol `[Download Images (.zip)]` diklik.<br>5. **Bypass Header Safety**: Header `User-Agent` custom dibatasi hanya untuk runtime non-browser (headless/Node) agar browser fetch berjalan bersih tanpa warning. |
+| **Token & Biaya USD Masih Tercatat saat Halaman Di-refresh / Input Kosong (Ghost Cost Leak)** | 1. **Penyimpanan State Tanpa Pengecekan Output Aktif**: `loadStepOutputs()` memuat `stepOutputs['_cost_tracker']` dari sesi lama dan mengisi `pesatXJevTokensCurrentArticle` secara mentah pada event `init()`.<br>2. **Ketidaksesuaian State Form vs Header**: Input keyword kosong (`wv-keyword = ''`), tetapi header badge menampilkan `pesat-x-jev: 30.269 / 4.000 tok` dan `Cost: $0.1621 USD`.<br>3. **Akumulasi Multi-Run**: Token dan biaya bertambah tanpa isolasi sesi saat test step dijalankan berulang.<br>4. **Kebutuhan Logika UX**: Biaya token dan komputasi seharusnya hanya dihitung & ditampilkan **setelah** ada output artikel nyata yang dihasilkan (`hasActiveArticleOutput`). | 1. **Active Article Output Guard (`hasActiveArticleOutput()`)**: Biaya dan token hanya bernilai positif jika artikel sedang running aktif atau output teks artikel (>300 kata) nyata dihasilkan untuk keyword tersebut. Saat form kosong atau baru di-refresh, biaya dan token dijamin baseline `0 tok ($0.0000)` dan `Cost: $0.0000 USD`.<br>2. **Clean Session Initialization**: Pada event `init()`, jika `wv-keyword` kosong, cache sementara `stepOutputs` dibersihkan dari RAM agar tidak ada ghost metrics yang bocor ke sesi baru.<br>3. **Dynamic Keyword Sync**: Mengubah atau mengosongkan keyword otomatis me-reset tracker biaya dan deliverable card ke state `NOT STARTED`.<br>4. **Dedicated Reset Button**: Menambahkan tombol `[🔄 Reset Form]` di header form "Buat Artikel Baru" untuk memudahkan user memulai sesi bersih dalam 1 klik.<br>5. **Full History Preservation**: Seluruh artikel riwayat tetap tersimpan aman di modal History (`loadArticleHistory`) dan dapat dimuat kembali lengkap dengan biaya & gambarnya melalui tombol `[👁 Lihat Deliverable]`. |
+| **Infografis Ter-generate 16:9 (3 Gambar Duplikat Gabung Jadi 1) & Prompting Visual Kurang Alami / Tidak Ada Negative Space** | 1. **Canvas Mismatch pada Infografis**: Parameter `size` untuk infografis sebelumnya memakai default widescreen `1792x1024` (16:9). Saat AI model diminta membuat infografis vertikal di atas canvas melebar 16:9, model membuat 3 kolom vertikal berdampingan (triptych/duplikasi).<br>2. **Prompt Terlalu Artifisial / Cinematic Cliché**: Prompt visual Step 3A sebelumnya menggunakan frasa klise ("cinematic", "8k", "studio lighting", "hyperdetailed", "professional portrait") yang terasa artifisial, kaku, dan kehilangan sentuhan naturalitas hidup.<br>3. **Ketiadaan Negative Space Bermakna**: Subjek diletakkan di tengah tanpa ruang kosong bernapas (negative space) yang disengaja. | 1. **Strict 9:16 Portrait Canvas Locking (`1024×1792`)**: Infografis dikunci wajib berasio **9:16** (`size: '1024x1792'`) di seluruh alur (generator, single regeneration, trigger concurrent). Ditambahkan negative prompt tegas terhadap `16:9, widescreen, horizontal, split screen, multi-panel, duplicate images, side-by-side triptych, collage`.<br>2. **Amateur Photography over Style**: Prompt Step 3A dirombak total menerapkan candid snapshot oleh non-profesional (smartphone/compact camera behavior, pencahayaan alami/ambient, framing kasual tak sempurna, sedikit tilt, natural grain, ekspresi unposed otentik). Dilarang keras menggunakan kata "cinematic, 8k, hyperdetailed".<br>3. **Meaningful Negative Space (40–65%)**: Subjek diletakkan off-center dengan 40–65% area frame difungsikan sebagai ruang napas emosional (meja kosong, lantai hening, dinding berbayang, langit mendung lembut).<br>4. **Context First (5–8 Detail Konkret)**: Menyimpulkan lokasi nyata, era modern, pencahayaan alami, busana kasual, alat praktis, jarak sosial, dan siapa pemegang kamera.<br>5. **Adaptive 9:16 Display UI**: Kartu Visual Deck dan Galeri menampilkan infografis dalam container potret vertikal proporsional (`aspect-[9/16]`) tanpa terpotong atau tertekan mode video widescreen. Unduhan otomatis dilabeli `...-infographic-poster-9x16.jpg`. |
+| **Tabel Rincian Biaya Terlalu Verbose (23 Baris Step Pipeline) & Tidak Scannable** | Sebelumnya rincian biaya menampilkan tabel per-step 1A–6A yang sangat panjang (23 baris), menyulitkan user melihat ringkasan biaya esensial per artikel. | 1. **Konsolidasi Pipeline LLM**: Seluruh step pipeline LLM disatukan menjadi 1 komponen ringkas (`Pipeline LLM Synthesis & Optimization`).<br>2. **Pemisahan Layanan Spesifik**: Hanya memisahkan 3 pos utama yang relevan secara fungsional:<br>   - **`pesat-x-jev` (Step 2J)**: Token fact-check terisolasi dengan batas testing.<br>   - **Live Web Search (Firecrawl API)**: Jumlah query, credit, dan biaya pencarian.<br>   - **AI Visual Generation (PesatRouter)**: Jumlah gambar (16:9 + 9:16) dan biaya visual.<br>3. **Clean Markdown & UI Table**: Menghapus tabel per-step dari modal dan bundle markdown, menggantikannya dengan tabel ringkas 4-baris komposisi biaya produksi artikel yang bersih dan to-the-point. |
 
 
 ---
@@ -219,10 +234,20 @@ Berdasarkan audit evaluasi kualitas editorial, diterapkan 4 pilar standar baru d
 	- **Bahasa Kausal vs Asosiatif**: Data observasional wajib menggunakan bahasa asosiatif ("berkorelasi dengan", "berhubungan dengan"); bahasa kausalitas langsung ("menyebabkan") hanya untuk eksperimen ilmiah/RCT terkontrol.
 	- **Universal E-E-A-T Byline**: Byline editorial menggunakan frasa agnostik-domain: `*By [Brand] Editorial Team | Independently Fact-Checked by Subject Specialists | Updated 2026*`.
 
-	### 7. Integrasi Model `pesat-x-jev` & Token Budget Limiter (Testing)
-	- **Fokus Eksklusif (Solely Fact-Check & Fix)**: Model `pesat-x-jev` diintegrasikan khusus untuk Step 2J (`Quality + Fact Check Analysis`) guna mengaudit validitas klaim, rasio teknis, kepatuhan kutipan verbatim, dan integritas link.
-	- **Token Budget Limiter per Artikel**: Untuk tahap pengujian (testing), konsumsi token `pesat-x-jev` dibatasi secara ketat per proses pembuatan artikel (default: 4.000 tokens). Batas ini dapat dikonfigurasi langsung via Settings Modal.
-	- **Fail-Safe Fallback**: Jika kuota token testing tercapai saat eksekusi pipeline berlangsung, sistem otomatis mengalihkan proses audit ke `pesat-flash` tanpa memutus jalannya pipeline.
+			### 7. Integrasi Model `pesat-x-jev` & Rincian Biaya USD per Artikel (Multi-Layer Cost Tracking)
+			- **Fokus Eksklusif (Solely Fact-Check & Fix)**: Model `pesat-x-jev` diintegrasikan khusus untuk Step 2J (`Quality + Fact Check Analysis`) guna mengaudit validitas klaim, rasio teknis, kepatuhan kutipan verbatim, dan integritas link.
+			- **Token Budget Limiter per Artikel**: Untuk tahap pengujian (testing), konsumsi token `pesat-x-jev` dibatasi secara ketat per proses pembuatan artikel (default: 4.000 tokens). Batas ini dapat dikonfigurasi langsung via Settings Modal.
+			- **Fail-Safe Fallback & Billing Model Aktual**: Jika kuota token testing tercapai atau gagal saat eksekusi pipeline berlangsung, sistem otomatis mengalihkan proses audit ke `pesat-flash` tanpa memutus pipeline, dan `callLLM()` mencatat biaya sesuai model aktual yang melayani request.
+			- **Rincian Biaya Lengkap dalam USD per Artikel (`getArticleCostSummary`)**:
+			  1. **LLM Synthesis & Optimization (`1A`–`4B`)**: Akumulasi biaya per step & per model dari `input_tokens` & `output_tokens` aktual (`PRICING` per 1K tokens, termasuk subtotal khusus `pesat-x-jev` Step 2J).
+			  2. **Live Web Search (Firecrawl API)**: Melacak jumlah query, credits, dan live sources (`DEFAULT_SERVICE_PRICING.firecrawlPerSearch`, default `$0.005`/query, dapat diatur di Settings Modal).
+			  3. **AI Image Generation (PesatRouter)**: Melacak jumlah gambar berhasil digenerate beserta resolusi (`DEFAULT_SERVICE_PRICING.imagePerUnit`, default `$0.03`/gambar, dapat diatur di Settings Modal; otomatis pakai `usage.cost` bila API menyertakan).
+			  4. **System Steps (`4A` skip, `5A`, `6A`)**: Tercatat `$0.0000`.
+			- **Multi-Layer Cost & Token Persistence**:
+			  1. **Markdown Bundle (.md Export & Copy Markdown)**: Dicatat permanen di Metadata Box atas artikel (`> **Fact-Check (Step 2J):** ... USD` & `> **Total Cost / Article:** **$0.XXXX USD**`) serta di section lengkap `## Cost Breakdown (USD per Article)` (Ringkasan Komponen, Per Model LLM, Per Step Pipeline, Detail Firecrawl Search, Detail Generasi Gambar AI). Tombol **Copy Article Only** tetap murni menyalin artikel bersih untuk CMS tanpa metadata/cost box.
+			  2. **Google Sheets Sync (`tab HISTORY`)**: Mengirimkan `pesat_x_jev_tokens`, `pesat_x_jev_input_tokens`, `pesat_x_jev_output_tokens`, `pesat_x_jev_cost_usd`, `pesat_x_jev_limit`, `llm_total_tokens`, `llm_cost_usd`, `firecrawl_queries`, `firecrawl_cost_usd`, `image_count`, `image_cost_usd`, dan `total_cost_usd`.
+			  3. **Local History Ring Buffer**: Disimpan di `localStorage` (`cost_tracker` & `total_cost_usd`, maks 20 entri) dengan badge token + USD pada kartu riwayat serta dukungan penuh saat `restoreArticleFromHistory()` dan `downloadHistoryArticleMd()`.
+			  4. **UI Live Badges & Deliverable Modal**: Tampil pada header Writer Mode (`#wv-pesat-jev-badge` & `#wv-article-cost-badge`), Deliverable Card (`#wv-total-cost-usd`), sidebar Dev Mode (`#stat-run-cost`), Reading View Metadata Card, Tab 3 Raw Markdown (perbaikan bug duplikat `id="bundle-content"`), dan Tab 4 `Scores & Cost (USD)`.
 
 	### 8. Fitur Histori Pembuatan Artikel (Minimal 10 Artikel Terakhir)
 	- **Penyimpanan Lokal Persisten**: Menyimpan riwayat artikel yang dibuat ke `localStorage` (ring buffer hingga 20 artikel, menjamin ketersediaan minimal 10 artikel lampau).
@@ -258,9 +283,26 @@ Berdasarkan audit evaluasi kualitas editorial, diterapkan 4 pilar standar baru d
 
 	  2\. [“Search engine optimisation (SEO) - driving visitors to your web pages.”](https://www.gcis.gov.za/guidelines/website/seo) Government Communication and Information System (GCIS), publication date not specified. Accessed October 30, 2026.
 	  ```
-	- **Zero-Trust Metadata Extraction**: Judul (`<h1>`), nama situs resmi (e.g. *Wiz Research*, *Cloud Security Alliance*, *Unit 42*), dan tanggal diekstrak langsung dari metadata terverifikasi riset live Firecrawl tanpa fabrikasi.
-	- **Preservasi URL Asli**: Tautan sitasi selalu merujuk ke URL asli yang diberikan, bukan URL mirror/fallback snapshot.
-	- **Eksekusi Ganda**: Dihasilkan langsung oleh model pada Step 4B, serta divalidasi/disintesis otomatis oleh helper `formatWikipediaReferences()` pada bundle modal export dan fitur Copy Article Only.
+		- **Zero-Trust Metadata Extraction**: Judul (`<h1>`), nama situs resmi (e.g. *Wiz Research*, *Cloud Security Alliance*, *Unit 42*), dan tanggal diekstrak langsung dari metadata terverifikasi riset live Firecrawl tanpa fabrikasi.
+		- **Preservasi URL Asli**: Tautan sitasi selalu merujuk ke URL asli yang diberikan, bukan URL mirror/fallback snapshot.
+		- **Eksekusi Ganda**: Dihasilkan langsung oleh model pada Step 4B, serta divalidasi/disintesis otomatis oleh helper `formatWikipediaReferences()` pada bundle modal export dan fitur Copy Article Only.
+
+	### 12. Standar Pembuatan Gambar AI & Visual Assets (PesatRouter Integration)
+	- **Engine API**: PesatRouter Image Generations API (`POST https://api.pesatrouter.com/v1/images/generations`).
+	- **Resolusi & Rasio**: Ukuran default `1792x1024` (16:9 Widescreen landscape), otomatis di-scale optimal ke resolusi ~1376×768; opsi 1:1 (`1024x1024`) dan 9:16 (`1024x1792`).
+	- **Cloudflare Bypass**: Wajib header kustom `User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)` agar request bebas error HTTP 403 (Cloudflare Error 1010).
+	- **Fidelitas Visual & Strict No-Text**: Prompt visual Step 3A & 3B mewajibkan instruksi mutlak **STRICT NO TEXT** (bebas tulisan, tipografi, atau logo buatan) demi menghasilkan ilustrasi/fotografi fotorealistik bersih.
+	- **Two-Stage Concurrent Trigger (Zero Idle-Time)**:
+	  * **Tahap 1 (Setelah Step 3A)**: 4 gambar (Hero Banner + 3 Supporting Images) langsung dikirim paralel ke PesatRouter begitu prompt Step 3A selesai.
+	  * **Tahap 2 (Setelah Step 3B)**: Jika opsi `5 Gambar` dipilih, gambar Infografis langsung dikirim menyusul secara paralel segera setelah prompt Step 3B selesai dibuat.
+	  * Seluruh aset gambar dan naskah artikel selesai berbarengan saat pipeline selesai.
+	- **Alur Eksekusi (Otomatis vs Manual)**:
+	  * **Otomatis Bersamaan**: Berjalan secara default saat user menekan **"Mulai Pipeline Sekarang"**.
+	  * **Manual Shortcut**: Tombol `[⚡ Generate Images]` di panel hero berfungsi untuk generate/regenerate gambar ad-hoc tanpa harus mengulang 24 step pipeline dari awal.
+	- **Fleksibilitas Unduhan Terpisah & Batch**:
+	  * **Unduh Terpisah (Per Image)**: Tombol `[⬇️ Download JPG]` pada tiap kartu gambar langsung menyimpan file binary `.jpg` lokal tanpa reload browser.
+	  * **Unduh Sekaligus (Batch ZIP)**: Tombol `[📦 Download All (.zip)]` mengompres seluruh gambar aktif ke dalam file `<slug>-images.zip` secara in-memory menggunakan library JSZip.
+	  * **Modal Lightbox Preview**: Klik pada kartu preview gambar membuka tampilan resolusi penuh dengan zoom dan deskripsi prompt.
 
 ---
 
@@ -269,9 +311,9 @@ Berdasarkan audit evaluasi kualitas editorial, diterapkan 4 pilar standar baru d
 - **Audit Framework**: Jakob Nielsen 10 Usability Heuristics & Cognitive Load Theory.
 - **Evaluasi Skor Keseluruhan**: **9.2 / 10** (Status: *Production Ready & Highly User Friendly*).
 - **Fitur UX Terpasang**:
-  - **Dual Mode (Role-based)**: *Writer Mode* (fokus keyword, CTA, multi-internal links textarea, dan deliverable) vs *Developer Mode* (konfigurasi prompt 23 step, model router, & test panel).
+  - **Dual Mode (Role-based)**: *Writer Mode* (fokus keyword, CTA, multi-internal links textarea, dan deliverable) vs *Developer Mode* (konfigurasi prompt 24 step, model router, & test panel).
   - **Header De-cluttering**: 1 Primary CTA tunggal (`Run Pipeline`), menu sekunder terstruktur rapi.
-  - **Sidebar Accordion 5 Fase**: Pengelompokan 23 step dengan counter dan status dot dinamis (`idle`, `running pulse`, `success ✓`, `error !`).
+  - **Sidebar Accordion 5 Fase**: Pengelompokan 24 step dengan counter dan status dot dinamis (`idle`, `running pulse`, `success ✓`, `error !`).
   - **Comprehensive Deliverable Viewer (4 Tab)**: Reading View HTML (WYSIWYG dengan metadata card rapi bebas emoji), Visual Deck (5 kartu prompt gambar + copy instan), Raw Markdown, dan Evaluator Gate Scores.
   - **Toast & Feedback System**: Floating notification non-intrusif dengan status warna real-time.
 
@@ -297,7 +339,7 @@ Berdasarkan audit evaluasi kualitas editorial, diterapkan 4 pilar standar baru d
 - **AI Watermark & Steganography Hygiene**: 0 Invisible Unicode (`\u200B`, `\uFEFF`, `\u00AD`), 0 Space Homoglyphs (`\u00A0`), 100% Emoji Integrity
 - **Skor SEO**: 88–92/100 · **Skor GEO**: 89–93/100 · **Overall**: **90.8 / 100**
 - **Threshold Evaluator (2K)**: Lolos minimal 70 (Win Rate: **100% pada 10/10 keyword target pengujian multi-niche**)
-- **Kecepatan & Latensi Pipeline**: **~70–80 detik** untuk **seluruh 23 step aktif & terintegrasi penuh** (dipangkas ~40% dari sebelumnya ~120+ detik berkat 3-track parallel branching [2K // Phase 4 // Phase 3], concurrent 2A/2B pass, dan pemangkasan delay artificial tanpa memangkas kualitas atau step sedikit pun)
+- **Kecepatan & Latensi Pipeline**: **~70–80 detik** untuk **seluruh 24 step aktif & terintegrasi penuh** (dipangkas ~40% dari sebelumnya ~120+ detik berkat 3-track parallel branching [2K // Phase 4 // Phase 3], concurrent 2A/2B pass, dan pemangkasan delay artificial tanpa memangkas kualitas atau step sedikit pun)
 - **Status Otomatisasi**: 100% tersimpan ke Google Sheets tab `HISTORY`
 - **UX Usability Score**: 9.2 / 10 (Target >8.0 terpenuhi; deliverable card reactive + audit recommendations display terpasang)
 
@@ -317,3 +359,107 @@ Pengujian end-to-end 3 keyword niche berbeda dengan Firecrawl Live Search API & 
 - **Evaluator Win Rate**: **100% lolos Gate 2K** pada percobaan pertama (threshold >= 70).
 - **Anti-Hallucination Rate**: **0 PDF palsu, 0 DOI palsu, 0 fabrikasi kutipan**, data riset terhubung ke pencarian live Firecrawl.
 - **Konfigurasi Pengguna**: Input Firecrawl API Key tersedia langsung di UI Settings & badge Writer Mode (`Web Search: Firecrawl [API Key]`).
+
+---
+
+## 2026-11-11 — Detailed USD Cost Breakdown per Article & Audit Fix
+
+- **Status:** COMPLETED
+- **Files touched:** `admin-ui.html`, `worker-deploy/worker.js`, `scripts/test-cost-usd-breakdown.js`, `coldstart.md`, `coldstart/coldstart.md`
+- **Decisions:**
+  - Menghitung biaya USD per artikel secara terperinci dari 4 sumber: semua LLM calls (`1A`–`4B` berdasarkan model aktual + in/out tokens), `pesat-x-jev` Step 2J (in/out/limit + fallback tracking), Firecrawl `/v1/search` (`creditsUsed * rate`), dan PesatRouter `/v1/images/generations` (jumlah gambar * rate / `usage.cost`).
+  - Menyertakan unit rate Firecrawl Search & AI Image Generation di Settings Modal (`localStorage`) dengan default `$0.005`/query & `$0.03`/gambar.
+  - Mencatat ringkasan USD di metadata blockquote atas dan tabel rincian lengkap `## Cost Breakdown (USD per Article)` di seluruh output Markdown (`buildFullArticleBundle`, `downloadBundleAsMd`, Tab 3 `Raw Markdown`, `downloadHistoryArticleMd`) sambil menjaga `copyCleanArticleOnly` tetap bersih untuk CMS.
+- **Audit Fixes (`/gsd-audit-fix`):**
+  - Menghapus duplikat atribut `id` pada `#bundle-tab-raw` / `#bundle-content` agar tab Raw Markdown tampil utuh.
+  - Mengembalikan model aktual di `callLLM()` agar billing fallback (`pesat-x-jev` → `pesat-flash`) akurat di `showResults()`.
+  - Memperbaiki payload objek saat Step `4A` skip di `runTestInternal()` agar tidak melempar `TypeError`.
+- **Verification:** `scripts/test-cost-usd-breakdown.js` (7/7 PASS) + seluruh QA test suite aktif (`test-pesat-x-jev-history.js`, `test-speed-quality-qa.js`, `qa-pipeline-tool.js`, `test-fact-check-autofix.js`, `test-writer-mode-pipeline.js`, `test-universal-fact-checking.js`) PASS.
+- **Deploy:** Live di `https://jdpwriter.com` & `https://jdp-pipeline-admin.emerilansel.workers.dev` (Modified `2026-11-11T09:58:20.092759Z`).
+- **Next:** Monitor hasil Google Sheets `HISTORY` pada artikel berikutnya dan sesuaikan unit rate Settings jika tarif plan Firecrawl/PesatRouter berubah.
+
+---
+
+## 2026-11-24 — Step 1D2 Outline QA & Sharpening (post-outline quality gate)
+
+- **Status:** COMPLETED · **Deploy:** ✅ LIVE `https://jdpwriter.com` & `https://jdp-pipeline-admin.emerilansel.workers.dev` (Modified `2026-11-24T11:16:12.652205Z`)
+- **Apa:** Step baru `1D2` di antara `1D` → `1E` (total 23 → **24 steps**). QA & perbaiki outline sebelum generate: 7 langkah outline optimization + 7-point pre-publish QA checklist (anti-generic/clickbait, information-gain sections, evidence-anchored headings).
+- **Wiring:** `upstreamMap['1D2'] = {outline:'1D', serp_data, info_gain, lsi_keywords}` · `vars.outline` → `1D2||1D||textarea` · Phase 1 loop `['1A','1B','1C','1D','1D2','1E']` · `2A` outline upstream → `1D2`.
+- **Files:** `admin-ui.html`, `scripts/test-speed-quality-qa.js` (assert 24+1D2), `populate-prompts-direct.js`, `simulate-full-pipeline.js`, `deploy-bulletproof-pipeline.js`, `update-all-pipeline-n8n.js`, `generate-n8n-templates.js`, `pipeline-prompts-v2.1.md`, `worker-deploy/worker.js`.
+- **Verification:** `test-speed-quality-qa` 11/11 · `qa-pipeline-tool` 9/9 · `test-writer-mode-pipeline` · `test-fact-check-autofix` · `test-universal-fact-checking` · `test-pesat-x-jev-history` · `test-cost-usd-breakdown` 7/7 — semua PASS.
+- **Next:** (1) E2E 1 keyword live. (2) n8n orchestrator VPS belum punya node 1D2 — generate `step-1d2-outline-qa.json` + wire bila jalur n8n dipakai. (3) Commit.
+
+---
+
+## 2026-11-24 — Audit Fix: 1D2 outline refinement corrupted downstream article
+
+- **Status:** COMPLETED
+- **Gejala (laporan user):** Output artikel "how to sleep fast" jauh lebih jelek — tidak komprehensif, tanpa heading H2 (murni Q&A), outline generic, unique information hilang, refinement tampak *mengurangi* bukan memperbaiki.
+- **Root cause (4 temuan):**
+  1. **`maxTokens:2500` pada step 1D2** — outline lengkap 1D (~10 H2 + FAQ plan + word allocations) + instruksi QA > 2500 token output → LLM kehabisan token → outline terpotong/truncated. Ini penyebab utama: 1E menerima outline rusak → artikel tanpa H2.
+  2. **Tidak ada guard integritas** — `stepOutputs['1D2']` dipakai apa adanya meski output lebih pendek/JSON rusak; fallback `1D2 || 1D` tidak berguna karena 1D2 selalu "ada" (walau sampah).
+  3. **Prompt 1D2 bukan QA tapi rewrite penuh** — sistem prompt "ruthless outline editor... You rewrite article outlines" mendorong LLM menulis ulang dari nol, mengabaikan outline input → struktur runtuh.
+  4. **Tidak ada self-check** struktural sebelum return.
+- **Fix (`admin-ui.html`):**
+  - `1D2.maxTokens` 2500 → **6000** (outline lengkap muat).
+  - Prompt 1D2 ditulis ulang jadi **NON-DESTRUCTIVE QA pass**: sharpen headings saja + tambah 2-4 info-gain sections; **STRUCTURAL INVARIANTS** — "MUST contain at least as many H2 as input (NEVER fewer)", preserve `?`/statement + 60/40, FAQ plan, word allocations, zero-hallucination links; **SELF-CHECK** sebelum return.
+  - **Outline Integrity Guard** di `showResults()`: untuk `activeStepId==='1D2'`, hitung H2 & panjang output vs outline 1D asli. Jika `outLen < 60% inLen` (truncated) ATAU `outH2 < inH2` (kehilangan section) ATAU `outH2===0 || outLen<200` (garbage) → **revert `output = stepOutputs['1D']`** + toast peringatan. 1E/2A selalu terima outline lengkap.
+- **Files touched:** `admin-ui.html` (prompt 1D2, maxTokens, guard), `scripts/test-speed-quality-qa.js` (test #12: guard presence + unit test good/bad/trunc + prompt invariants + maxTokens>=5000), `worker-deploy/worker.js` (rebuilt).
+- **Deploy:** ✅ LIVE — `https://jdp-pipeline-admin.emerilansel.workers.dev` & `https://jdpwriter.com` (Modified `2026-11-24T13:29:13.685633Z`). Live markers: `Outline Integrity Guard`, `NON-DESTRUCTIVE`, `maxTokens:6000`.
+- **Verification:** `test-speed-quality-qa` **12/12 PASS** (guard unit test: refined=pass, FAQ-only=reject, truncated=reject) · `qa-pipeline-tool` 9/9 · `test-writer-mode-pipeline` · `test-fact-check-autofix` · `test-universal-fact-checking` · `test-pesat-x-jev-history` · `test-cost-usd-breakdown` 7/7 — semua PASS. Embedded worker script syntax OK.
+- **Next:** (1) Re-run E2E "how to sleep fast" — outline 1D2 harus ≥ jumlah H2 1D, artikel harus punya H2 lengkap. (2) Bila kualitas 1D2 masih kurang, naikkan `pesat-flash` → `pesat-x-jev` khusus step 1D2. (3) Commit.
+
+---
+
+## 2026-11-24 — 1D2 Prompt Hardening (feedback: unique sections + sharpened question headings)
+
+- **Status:** COMPLETED
+- **Feedback user:** (1) minimal tambah 2-3 outline unik yang tidak generik; (2) pertahankan rasio tanya 60% tapi heading tanya harus di-sharpen, tidak boleh generik.
+- **Evaluasi:** perlu implementasi — "ADD 2-4 information-gain sections" terlalu lemah (ada escape hatch `if research data cannot support → do NOT add`), dan invariant `?`/60/40 tidak menjamin ketajaman question heading.
+- **Fix (`admin-ui.html`, prompt 1D2):**
+  - Rule 2 diubah jadi **hard requirement**: `ADD 2-3 NEW UNIQUE INFORMATION-GAIN H2/H3 SECTIONS (hard requirement, not optional)` + **competitor-paste test** ("a reader comparing five guides would see this section ONLY here"). Escape hatch dihapus — kalau research tipis, pakai LSI entities + anchor outline, tetap wajib tambah 2-3.
+  - Rule 1 diperluas: sharpen berlaku untuk **question headings juga** — "a question with a generic noun ('Why do I have trouble sleeping?') is a FAILURE even if it ends in '?'" + contoh generic → sharp untuk question ("Why Do I Lie Awake for Hours?" → "Why a Racing To-Do List at 10 p.m. Keeps You Awake Past Midnight?").
+  - Self-check diperkuat jadi 4 bagian: (a) H2 output ≥ input + 2 section baru; (b) tiap `?` heading punya anchor spesifik (number/mechanism/framework/failure mode/trade-off), bukan noun generik; (c) FAQ plan utuh; (d) tidak ada heading bernomor.
+  - Invariant 60/40 ditegas: question headings wajib di-sharpen per rule 1, tidak boleh dibiarkan generik.
+- **Files touched:** `admin-ui.html`, `scripts/test-speed-quality-qa.js` (3 assert baru: hard-require 2-3 unique, competitor-paste test, sharpen question headings), `worker-deploy/worker.js`.
+- **Deploy:** ✅ LIVE `2026-11-24T13:55:42.892599Z`. Live markers: `ADD 2-3 NEW UNIQUE`, `competitor-paste test`, `question with a generic noun`.
+- **Verification:** `test-speed-quality-qa` **12/12 PASS**. Guard tetap aktif (outline 1D2 yang memperpendek H2 → revert ke 1D).
+- **Next:** E2E "how to sleep fast" — outline harus punya ≥ H2 asli + 2-3 section unik, semua `?` heading tajam, artikel ber-H2 lengkap.
+
+---
+
+## 2026-11-24 — 1D2 Prompt Hardening v2 (grounded anchors + transformation patterns + semantic intent)
+
+- **Status:** COMPLETED
+- **Konteks:** User memberi contoh proses optimasi outline dari tool lain (10p.ai) sebagai pembanding. Dievaluasi terhadap prompt 1D2 saat itu.
+- **Evaluasi — sudah tercakup (tidak perlu ditambah):**
+  - Sharpen semua heading + pertahankan tanda tanya → sudah ada (rule 1 + invariant).
+  - Contoh generic → sharp untuk question heading → sudah ada.
+  - Self-check anchor spesifik di tiap `?` → sudah ada (self-check b).
+- **Evaluasi — 3 celah nyata (perlu diperkuat):**
+  1. **Grounding ke draft:** contoh tool lain mengikat sharpen ke "specific mechanisms, case studies, and trade-offs inside your draft". Prompt kita cuma "from research context" → LLM bisa mengarang anchor yang tidak ada di outline/draft.
+  2. **Pola transformational monoton:** contoh tool lain memakai negation, named-framework, trade-off pair, outcome-framing. Prompt kita cuma 2 contoh pola → output repetitif.
+  3. **Semantic preservation:** contoh tool lain menjamin intent tiap section tetap sama. Prompt kita tidak eksplisit.
+- **Fix (`admin-ui.html`, prompt 1D2):**
+  - Rule 1: anchor wajib "already present in the INPUT OUTLINE and the RESEARCH CONTEXT" — larangan eksplisit memakai fakta baru untuk membuat heading terdengar tajam.
+  - **6 transformation patterns** eksplisit dengan contoh masing-masing: Negation/failure mode · Named framework/mechanism (Tufte) · Trade-off pair · Outcome instead of activity · Concrete number/threshold · Named entity dari research context.
+  - Rule baru **PRESERVE SEMANTIC INTENT**: sharpening mengubah wording/anchor saja, tidak pernah mengganti topik section.
+  - Self-check diperluas jadi 6 bagian (a-f): termasuk (c) heading berurutan tidak boleh memakai pola yang sama, (d) heading hasil sharpen harus masih membahas topik yang sama.
+- **Files touched:** `admin-ui.html`, `scripts/test-speed-quality-qa.js` (4 assert baru: grounded anchors, transformation patterns, semantic intent, no-adjacent-repeat-pattern), `worker-deploy/worker.js`.
+- **Deploy:** ✅ LIVE `2026-11-24T15:04:44.150795Z`. Live markers: `Transformation patterns`, `PRESERVE SEMANTIC INTENT`, `already present in the INPUT OUTLINE`, `Negation / failure mode`.
+- **Verification:** `test-speed-quality-qa` **12/12 PASS**. Guard revert tetap aktif.
+- **Next:** E2E "how to sleep fast" — outline harus punya anchor spesifik di tiap heading, pola transformation bervariasi, intent section terjaga, ≥ H2 asli + 2-3 section unik.
+
+---
+
+## 2026-11-26 — Audit Fix: test suite flaky & crash (F-01..F-03)
+
+- **Status:** COMPLETED · **Scope:** test-only (`admin-ui.html` TIDAK diubah → tak perlu redeploy)
+- **Konteks:** Jalankan regression suite sebagai audit (default `audit-uat`; gsd-tools phases dir tidak ada di workspace ini).
+- **Findings & Fixes:**
+  - **F-01 (medium)** `scripts/test-search-failover.js` — hardcode reset date `2026-11-24T10:35:22.262Z` sudah lewat → `pruneDeadFirecrawlKeys()` (benar) anggap stale → 5 FAIL di skenario 2/4/5/6/7. Fix: `FUTURE_RESET = now + 1h` dinamis. **49/49 PASS.**
+  - **F-02 (medium)** `scripts/test-search-e2e-live.js` — assert "key1 otomatis ditandai dead" fail saat kena 429 rate-limit (by-design tidak mark dead — F-01 sesi 17 Nov) + hardcode date sama. Fix: assert longgar `key1Dead || Array.isArray(res)` + `FUTURE_RESET`. **6/6 PASS (live).**
+  - **F-03 (medium)** `scripts/test-ui-fixes.js` — ekstrak `sanitizeArticleContent` tanpa helper transitive (`deClutterExcessiveBolding` dkk) → `ReferenceError`. Fix: `extractFn` boundary = baris berikutnya yang diawali `function ` (brace-count biasa salah di body berisi regex literal seperti `/^\s*\{/`) + inject stub `document`/`localStorage`. **ALL PASS.**
+- **Files touched:** `scripts/test-search-failover.js`, `scripts/test-search-e2e-live.js`, `scripts/test-ui-fixes.js`, `coldstart.md`
+- **Verification (full regression):** speed-quality-qa 12/12 · writer-mode · fact-check-autofix · universal-fact-check · pesat-x-jev-history · cost-usd 7/7 · qa-pipeline-tool 9/9 · ui-fixes ALL · search-failover **49/49** · search-e2e-live **6/6** — semua PASS.
+- **Next:** (1) Run E2E live pipeline "how to sleep fast" (PesatRouter outage sesi lalu). (2) n8n orchestrator belum punya node 1D2. (3) Commit.
