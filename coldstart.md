@@ -468,7 +468,7 @@ Pengujian end-to-end 3 keyword niche berbeda dengan Firecrawl Live Search API & 
 
 ## 2026-11-26 — n8n 1D2 Wiring + E2E Live Pipeline
 
-- **Status:** IN PROGRESS · **Scope:** n8n orchestrator + simulate resilience (admin-ui hanya n8nId)
+- **Status:** COMPLETED · **Scope:** n8n orchestrator + simulate resilience (admin-ui hanya n8nId)
 - **n8n 1D2 (fix lama: "orchestrator belum punya node 1D2"):**
   - Sub-workflow `JDP Step 1D2 — Outline QA & Sharpening` dibuat (clone struktur 1D, id `EjN5G4w0LubekfCY`), activated. find_config baca baris `1D2` dari PROMPTS sheet; call_llm timeout 150s.
   - Orchestrator `cQiEML8ZSa1UcmqH` di-wire: `Merge 1D → Step 1D2 → Merge 1D2 → Step 1E`.
@@ -478,6 +478,6 @@ Pengujian end-to-end 3 keyword niche berbeda dengan Firecrawl Live Search API & 
   - callLLM: timeout 150s + retry 3x backoff utk Cloudflare 524/timeout (sebelumnya hard-fail).
   - Step 1D2 trim outline spt admin-ui (cap ~2000 chars: H2/H3 + FAQ) — prompt 27k chars menyebabkan 524.
   - Step-level try/catch: gagal LLM → fallback ke upstream, pipeline lanjut.
-- **BLOCKED:** credential n8n `google-sheets-jdp` OAuth revoked (refresh token expired) → `populate-prompts-direct` + orchestrator `Read INPUT Row` gagal. **User perlu reconnect Google di n8n UI** sebelum jalur n8n end-to-end jalan. Baris PROMPTS `1D2` belum terisi.
+- **BLOCKED → RESOLVED:** credential `google-sheets-jdp` sempat OAuth revoked (user reconnect di n8n UI). Setelah reconnect: read Sheets 200 OK; `populate-prompts-direct` sukses **24 rows** `PROMPTS!A2:J25` (termasuk `1D2`: pesat-flash, sysLen 400, userLen 5384); orchestrator + sub-workflow 1D2 active, wire `Merge 1D → Step 1D2 → Merge 1D2 → Step 1E` terverifikasi.
 - **E2E "how to sleep fast" (run5, live, 17 step):** 16/17 sukses (retry 524 menang di 1C/1D/1D2/1E). 1D2 OK (trim 2028 chars, output 2572). 1E 2008 kata. **2K: SEO 83 / GEO 75 / overall 79 / pass=false** — blockers: kutipan blockquote kemungkinan fabrikasi, `{{brand_name}}` belum diresolve, link NIH belum terpakai, 4/5 referensi Wikipedia. 2H gagal 3x 524 → fallback upstream (pipeline tetap lanjut).
-- **Next:** (1) Reconnect Google credential n8n (`google-sheets-jdp`). (2) Run `populate-prompts-direct.js` (PUT overwrite, aman re-run) utk isi baris PROMPTS `1D2`. (3) E2E via webhook n8n (orchestrator sudah wire 1D2). (4) Iterasi quality utk 2K pass (fix blockers).
+- **Next:** (1) E2E via webhook n8n `pipeline-orchestrator` (orchestrator + 1D2 + PROMPTS row sudah siap). (2) Iterasi quality utk 2K pass (fix blockers: kutipan, `{{brand_name}}`, external links).
