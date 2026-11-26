@@ -481,3 +481,15 @@ Pengujian end-to-end 3 keyword niche berbeda dengan Firecrawl Live Search API & 
 - **BLOCKED → RESOLVED:** credential `google-sheets-jdp` sempat OAuth revoked (user reconnect di n8n UI). Setelah reconnect: read Sheets 200 OK; `populate-prompts-direct` sukses **24 rows** `PROMPTS!A2:J25` (termasuk `1D2`: pesat-flash, sysLen 400, userLen 5384); orchestrator + sub-workflow 1D2 active, wire `Merge 1D → Step 1D2 → Merge 1D2 → Step 1E` terverifikasi.
 - **E2E "how to sleep fast" (run5, live, 17 step):** 16/17 sukses (retry 524 menang di 1C/1D/1D2/1E). 1D2 OK (trim 2028 chars, output 2572). 1E 2008 kata. **2K: SEO 83 / GEO 75 / overall 79 / pass=false** — blockers: kutipan blockquote kemungkinan fabrikasi, `{{brand_name}}` belum diresolve, link NIH belum terpakai, 4/5 referensi Wikipedia. 2H gagal 3x 524 → fallback upstream (pipeline tetap lanjut).
 - **Next:** (1) E2E via webhook n8n `pipeline-orchestrator` (orchestrator + 1D2 + PROMPTS row sudah siap). (2) Iterasi quality utk 2K pass (fix blockers: kutipan, `{{brand_name}}`, external links).
+
+---
+
+## 2026-11-26 — n8n E2E Live Webhook + 3 Bug Fix
+
+- **Status:** COMPLETED · **Scope:** E2E via webhook n8n + fix 3 bug yang memblokir pipeline
+- **Bug 1 — parse_result regex rusak (22 sub-workflow):** backslash hilang (`s`→`s`, `d`→`d`, `)`→`)`) → `SyntaxError: Unmatched ')'` di step pertama yang baca PROMPTS. Root cause: `deploy-bulletproof-pipeline.js` menulis regex dgn satu backslash di template literal (escape dibuang). Fix: patch 22 wf via API (regex kompilasi ✓) + deploy script doubled backslash (`41,92,92,115,42` ✓ template output kompilasi ✓).
+- **Bug 2 — 1D2 `find_config` sheet-based gagal:** clone dari template baca PROMPTS via `sheetItem` tapi `read_prompts` tidak execute (koneksi `trigger→find_config` saja, pola 1A/1D juga hardcode). Fix: ganti `find_config` 1D2 dgn hardcoded default dari STEPS admin-ui (pola 1A). **1D2 EXEC SUCCESS.**
+- **Bug 3 — 6A `return` node `$input` hilang:** `const input = .first().json` → `SyntaxError: Unexpected token '.'`. Fix: `$input.first().json` ✓ compile ✓.
+- **E2E n8n webhook `pipeline-orchestrator` "how to sleep fast" (run3):** HTTP 200, 199s. **Exec 212: 1A→1D2→1E→2A..2K→3A..3C→4A→4B→5A semua SUCCESS**, 6A error (Bug 3, sudah fix). 2K gate: **evaluator 85, SEO 85 / GEO 82 / overall 84, action=proceed**. HISTORY row baru: `2026-11-26T08:49:43`, seo 85, geo 82, ov 84, status Completed.
+- **Verifikasi tambahan:** return 6A compiles; deploy template output regex compiles; HISTORY 4 rows (3 lama + 1 baru run3).
+- **Next:** (1) Re-fire E2E utk 6A full success (optional - GSC config kosong, akan throw `GSC site URL not configured`). (2) Isi CONFIG `gsc_site_url`/`gsc_service_account_*` bila mau indexing aktif. (3) Iterasi quality 2K pass (blockers run5: kutipan, {{brand_name}}, external links). (4) Commit.

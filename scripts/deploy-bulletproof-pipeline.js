@@ -190,7 +190,7 @@ const outputVariable = originalInput.output_variable || 'output';
 
 // Sanitize article content to enforce ONLY tables, lists, and text (NO ascii diagrams / arrow boxes / numbered headings)
 if (outputVariable === 'article' && typeof content === 'string') {
-  content = content.replace(/^(#{1,6})\s*(?:(?:Section|Step|Bagian)\s+)?(?:\d+\.|\d+\)|\d+\s*[-–—]|\d+\:)\s*/gim, '$1 ');
+  content = content.replace(/^(#{1,6})\\s*(?:(?:Section|Step|Bagian)\\s+)?(?:\\d+\\.|\\d+\\)|\\d+\\s*[-–—]|\\d+\\:)\\s*/gim, '$1 ');
 
   content = content.replace(/\`\`\`(?:[a-zA-Z]*\\n)?([\\s\\S]*?)\`\`\`/g, (match, code) => {
     if ((code.includes('↓') || code.includes('->') || code.includes('-->') || code.includes('→')) && code.includes('[')) {
